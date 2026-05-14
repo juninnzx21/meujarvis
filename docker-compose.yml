@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: jarvis-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: jarvis_db
       POSTGRES_USER: jarvis
@@ -19,6 +20,7 @@ services:
   backend:
     build: ./backend
     container_name: jarvis-backend
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,6 +37,7 @@ services:
       args:
         VITE_API_URL: /api
     container_name: jarvis-frontend
+    restart: unless-stopped
     depends_on:
       - backend
     ports:

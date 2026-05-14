@@ -2,7 +2,7 @@
 
 ## Status final
 
-APROVADO.
+APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 
 ## Diretorio usado
 
@@ -10,47 +10,38 @@ APROVADO.
 
 ## Data/hora
 
-2026-05-14 14:53:00 -03:00
+2026-05-14 15:20:00 -03:00
 
-## Resultado
+## Producao validada
 
-A Fase 6 foi implementada e validada sem quebrar a Fase 5. O JARVIS Home AI agora possui scheduler automatico seguro para rotinas agendadas, lembretes de tarefas, tarefas vencidas e notificacoes internas.
+- `https://jarvis.juninnzxtec.com.br`
+- `https://jarvis.juninnzxtec.com.br/api/health`
+- `https://jarvis.juninnzxtec.com.br/api/health/full`
+- `https://apijarvis.juninnzxtec.com.br/api/health` quando DNS local resolve para a VPS.
 
-## Evidencias
+## Resultado tecnico
 
-- Backend: 24 testes aprovados.
-- Frontend: 7 testes aprovados.
-- `npm run validate` backend/frontend aprovado.
-- PostgreSQL Docker healthy.
-- Prisma generate, validate, migrate e seed aprovados.
-- Scripts status, backup, validate e start aprovados.
-- Health full mostra scheduler `enabled=true`, `running=true`, `intervalSeconds=60`.
-- Login demo validado com JWT.
-- Fallbacks n8n, WhatsApp e Home Assistant retornam `not_configured` sem quebrar.
-- Varredura de segredos fora de `.env` sem segredo real encontrado.
+- Frontend respondeu `HTTP 200`.
+- Backend respondeu `app=ok`.
+- Banco respondeu `database=ok`.
+- Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
+- Fallbacks n8n, WhatsApp e Home Assistant responderam `not_configured`.
+- Containers Docker ativos.
+- Caddy ativo.
+- Postgres healthy.
+- Portas JARVIS internas presas em `127.0.0.1`.
 
-## Evidencia HTTP final
+## Segurança
 
-```json
-{
-  "login": true,
-  "authUser": "admin@jarvis.local",
-  "schedulerEnabled": true,
-  "schedulerRunning": true,
-  "schedulerInterval": 60,
-  "commands": 13,
-  "commandIntent": "report.daily",
-  "routines": 4,
-  "unreadNotifications": 6,
-  "overdueTasks": 0,
-  "reportOverdue": 0,
-  "n8n": "not_configured",
-  "whatsapp": "not_configured",
-  "homeAssistant": "not_configured",
-  "homeAssistantEntities": "not_configured"
-}
-```
+- `.env`, backups, dumps, `node_modules` e `dist` nao aparecem no Git.
+- Varredura local nao encontrou chaves reais fora de `.env`.
+- Logs recentes do backend foram revisados por padroes sensiveis.
+- Documentacao de rotacao e hardening criada.
 
-## Conclusao
+## Pendencias manuais
 
-Fase 6 APROVADA. O projeto esta pronto para versionamento da Fase 6 e tag `v0.6.0-scheduler`.
+- Rotacionar senhas/chaves compartilhadas.
+- Criar usuario `deploy` com chave SSH.
+- Desabilitar login root por senha apos validar chave.
+- Revisar regras UFW extras `5678` e `8081` antes de remover.
+- Aguardar/validar propagacao DNS completa do `apijarvis` em todos os resolvedores.

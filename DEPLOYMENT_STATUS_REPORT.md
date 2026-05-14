@@ -2,7 +2,7 @@
 
 ## Data/hora
 
-2026-05-14 15:10:00 -03:00
+2026-05-14 15:20:00 -03:00
 
 ## Dominio
 
@@ -35,6 +35,7 @@ API dedicada:
 - Frontend: `127.0.0.1:15173 -> 5173`
 - PostgreSQL: `127.0.0.1:15432 -> 5432`
 - Publico: Caddy em `80/443`
+- Containers com `restart: unless-stopped`.
 
 ## Caddy
 
@@ -48,6 +49,7 @@ Roteamento:
 
 - Frontend HTTPS respondeu `HTTP 200`.
 - API health respondeu `app=ok` e `database=ok`.
+- API full health respondeu sem falhas recentes.
 - Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
 - Login demo validado via API.
 - Fallbacks n8n, WhatsApp e Home Assistant retornam `not_configured`.
@@ -59,7 +61,8 @@ Roteamento:
 - Credenciais reais ficam somente em `.env` remoto/local e nao foram versionadas.
 - O GitHub nao recebeu `.env`, backups, `node_modules`, `dist` ou dumps.
 - O resolvedor local pode manter cache antigo de DNS por ate o TTL da zona. O nameserver autoritativo ja responde o IP novo.
-- O certificado HTTPS do `apijarvis` pode levar ate a propagacao DNS expirar, pois a CA pode consultar resolvers que ainda tinham o IP antigo em cache.
+- `apijarvis` pode depender de propagacao/cache DNS em alguns resolvedores. Se falhar, validar no nameserver autoritativo e aguardar TTL.
+- UFW esta ativo. Portas `22`, `80` e `443` estao abertas. Portas extras `5678` e `8081` aparecem abertas e devem ser revisadas antes de qualquer remocao por poderem pertencer a outros servicos.
 
 ## Status
 

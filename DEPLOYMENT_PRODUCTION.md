@@ -16,6 +16,7 @@
 - Docker Compose roda PostgreSQL, backend e frontend.
 - Portas Docker ficam presas em `127.0.0.1` para evitar exposicao direta.
 - Na VPS, use portas alternativas se `3001`, `5173` ou `5432` ja estiverem ocupadas.
+- Containers usam `restart: unless-stopped`.
 
 ## Variaveis obrigatorias no servidor
 
@@ -48,4 +49,9 @@ docker compose exec backend npx prisma db seed
 curl -I https://jarvis.juninnzxtec.com.br
 curl https://jarvis.juninnzxtec.com.br/api/health
 curl https://jarvis.juninnzxtec.com.br/api/health/full
+curl https://apijarvis.juninnzxtec.com.br/api/health
 ```
+
+## Hardening
+
+Consulte `PRODUCTION_SECURITY_HARDENING.md` antes de alterar SSH, firewall, senhas ou tokens.
