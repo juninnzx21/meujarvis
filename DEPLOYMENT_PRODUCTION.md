@@ -12,6 +12,7 @@
 - Caddy envia o restante para `127.0.0.1:5173`.
 - Docker Compose roda PostgreSQL, backend e frontend.
 - Portas Docker ficam presas em `127.0.0.1` para evitar exposicao direta.
+- Na VPS, use portas alternativas se `3001`, `5173` ou `5432` ja estiverem ocupadas.
 
 ## Variaveis obrigatorias no servidor
 
@@ -24,6 +25,9 @@ O arquivo `.env` fica somente na VPS e nunca deve ser commitado.
 - `GEMINI_API_KEY`
 - `SCHEDULER_ENABLED`
 - `SCHEDULER_INTERVAL_SECONDS`
+- `BACKEND_HOST_PORT`
+- `FRONTEND_HOST_PORT`
+- `POSTGRES_HOST_PORT`
 
 ## Comandos na VPS
 
