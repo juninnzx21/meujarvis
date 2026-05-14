@@ -25,6 +25,7 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 - Frontend publicado contem `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api`.
 - Login real funcionou no frontend publicado.
 - Chat funcionou via API dedicada e persistiu conversa.
+- Preflight CORS e login tambem funcionaram quando `apijarvis` resolve temporariamente para a Fabweb, usando proxy PHP seguro para a VPS.
 - Backend respondeu `app=ok`.
 - Banco respondeu `database=ok`.
 - Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
@@ -49,3 +50,4 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 - Revisar regras UFW extras `5678` e `8081` antes de remover.
 - Aguardar/validar cache DNS residual em resolvedores locais.
 - Resultado DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
+- Proxy temporario na Fabweb pode ser removido apos propagacao completa de `apijarvis`.

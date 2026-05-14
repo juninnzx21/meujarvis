@@ -65,6 +65,18 @@ Enviar o conteudo de `frontend\dist` para:
 
 `domains/jarvis.juninnzxtec.com.br/public_html`
 
+## Proxy temporario de API na Fabweb
+
+Enquanto alguns resolvedores ainda entregarem `apijarvis -> 166.0.186.20`, a pasta abaixo na Fabweb possui um proxy PHP minimo que encaminha `/api/*` para a VPS:
+
+`domains/apijarvis.juninnzxtec.com.br/public_html`
+
+Arquivos-fonte:
+
+`deploy/fabweb-apijarvis-proxy`
+
+Esse proxy existe apenas para absorver cache DNS antigo e evitar erro de CORS no navegador. Quando todos os resolvedores estiverem apontando `apijarvis -> 45.76.251.177`, ele pode ser removido da hospedagem se desejado.
+
 ## Hardening
 
 Consulte `PRODUCTION_SECURITY_HARDENING.md` antes de alterar SSH, firewall, senhas ou tokens.

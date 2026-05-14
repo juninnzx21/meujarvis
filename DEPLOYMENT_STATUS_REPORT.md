@@ -50,6 +50,7 @@ O dominio `jarvis.juninnzxtec.com.br` nao usa mais Caddy como rota publica ofici
 - Frontend Fabweb respondeu `HTTP 200` e entregou `JARVIS Home AI`.
 - Rota SPA `/login` respondeu `HTTP 200` via `.htaccess`.
 - Asset JavaScript publicado contem `https://apijarvis.juninnzxtec.com.br/api`.
+- Proxy temporario na Fabweb para `apijarvis` respondeu preflight CORS e encaminhou login para a VPS quando o dominio resolve para `166.0.186.20`.
 - API health respondeu `app=ok` e `database=ok`.
 - API full health respondeu sem falhas recentes.
 - Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
@@ -67,6 +68,7 @@ O dominio `jarvis.juninnzxtec.com.br` nao usa mais Caddy como rota publica ofici
 - O resolvedor local pode manter cache antigo de DNS por ate o TTL da zona.
 - Resultado esperado de DNS: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
 - Se o navegador ainda mostrar pagina reservada ou API 404, limpar cache DNS/navegador e aguardar TTL.
+- Enquanto houver cache DNS antigo, o proxy PHP em `domains/apijarvis.juninnzxtec.com.br/public_html` evita bloqueio de CORS para `/api/*`.
 - UFW esta ativo. Portas `22`, `80` e `443` estao abertas. Portas extras `5678` e `8081` aparecem abertas e devem ser revisadas antes de qualquer remocao por poderem pertencer a outros servicos.
 
 ## Status
