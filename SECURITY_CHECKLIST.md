@@ -21,8 +21,9 @@
 - [x] Scheduler bloqueia WhatsApp direto, Home Assistant sensivel, shell e envio em massa.
 - [x] Scheduler evita repeticao por `lastRunAt`, `reminderSentAt` e `overdueNotifiedAt`.
 - [x] Notificacoes criadas pelo scheduler passam por redaction.
-- [x] Producao publica HTTP/HTTPS via Caddy.
-- [x] Backend, frontend e Postgres do JARVIS estao presos em `127.0.0.1` na VPS.
+- [x] Frontend publico em HTTPS pela Fabweb.
+- [x] API publica em HTTPS via Caddy na VPS.
+- [x] Backend e Postgres do JARVIS estao presos em `127.0.0.1` na VPS.
 - [x] Docker Compose usa `restart: unless-stopped`.
 - [x] API dedicada `apijarvis.juninnzxtec.com.br` documentada.
 - [ ] Rotacionar DirectAdmin/hospedagem.

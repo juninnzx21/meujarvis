@@ -10,18 +10,21 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 
 ## Data/hora
 
-2026-05-14 15:20:00 -03:00
+2026-05-14 15:50:00 -03:00
 
 ## Producao validada
 
 - `https://jarvis.juninnzxtec.com.br`
-- `https://jarvis.juninnzxtec.com.br/api/health`
-- `https://jarvis.juninnzxtec.com.br/api/health/full`
-- `https://apijarvis.juninnzxtec.com.br/api/health` quando DNS local resolve para a VPS.
+- `https://jarvis.juninnzxtec.com.br/login`
+- `https://apijarvis.juninnzxtec.com.br/api/health`
+- `https://apijarvis.juninnzxtec.com.br/api/health/full`
 
 ## Resultado tecnico
 
-- Frontend respondeu `HTTP 200`.
+- Frontend Fabweb respondeu `HTTP 200`.
+- Frontend publicado contem `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api`.
+- Login real funcionou no frontend publicado.
+- Chat funcionou via API dedicada e persistiu conversa.
 - Backend respondeu `app=ok`.
 - Banco respondeu `database=ok`.
 - Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
@@ -44,4 +47,5 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 - Criar usuario `deploy` com chave SSH.
 - Desabilitar login root por senha apos validar chave.
 - Revisar regras UFW extras `5678` e `8081` antes de remover.
-- Aguardar/validar propagacao DNS completa do `apijarvis` em todos os resolvedores.
+- Aguardar/validar cache DNS residual em resolvedores locais.
+- Resultado DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.

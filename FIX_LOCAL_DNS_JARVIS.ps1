@@ -15,5 +15,8 @@ Resolve-DnsName jarvis.juninnzxtec.com.br -Type A | Format-Table -AutoSize
 Resolve-DnsName apijarvis.juninnzxtec.com.br -Type A | Format-Table -AutoSize
 
 Write-Host ""
-Write-Host "Se os dois dominios mostrarem 45.76.251.177, feche e abra o Chrome novamente." -ForegroundColor Green
+Write-Host "Resultado esperado:" -ForegroundColor Green
+Write-Host "- jarvis.juninnzxtec.com.br     -> 166.0.186.20  (frontend Fabweb)" -ForegroundColor Green
+Write-Host "- apijarvis.juninnzxtec.com.br  -> 45.76.251.177 (API VPS)" -ForegroundColor Green
+Write-Host "Depois feche e abra o Chrome novamente." -ForegroundColor Green
 Write-Host "URL: https://jarvis.juninnzxtec.com.br/?v=novo" -ForegroundColor Green

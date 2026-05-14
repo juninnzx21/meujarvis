@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const productionApiUrl =
+  typeof window !== "undefined" && window.location.hostname === "jarvis.juninnzxtec.com.br"
+    ? "https://apijarvis.juninnzxtec.com.br/api"
+    : "/api";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: import.meta.env.VITE_API_URL || productionApiUrl,
   timeout: 20000
 });
 

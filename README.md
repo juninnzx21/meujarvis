@@ -14,6 +14,13 @@ Base full stack para um assistente pessoal inteligente com painel web, chat com 
 - Email: `admin@jarvis.local`
 - Senha: `12345678`
 
+## Producao
+
+- Frontend publico: `https://jarvis.juninnzxtec.com.br`
+- API publica: `https://apijarvis.juninnzxtec.com.br/api`
+- DNS esperado: `jarvis -> 166.0.186.20` (Fabweb) e `apijarvis -> 45.76.251.177` (VPS).
+- O frontend de producao e publicado como build estatico na Fabweb e consome a API dedicada na VPS.
+
 ## Rodando local
 
 ```powershell
@@ -54,6 +61,14 @@ npm run validate
 ```
 
 `npm run validate` roda typecheck, testes automatizados e build. No backend tambem gera Prisma Client.
+
+Build do frontend para Fabweb:
+
+```powershell
+cd E:\jarvis-home-assistant\frontend
+$env:VITE_API_URL="https://apijarvis.juninnzxtec.com.br/api"
+npm run build
+```
 
 ## Modulos
 

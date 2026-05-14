@@ -2,7 +2,7 @@
 
 ## Data/hora
 
-2026-05-14 15:20:00 -03:00
+2026-05-14 15:50:00 -03:00
 
 ## Diretorio
 
@@ -18,15 +18,16 @@
 ## Producao
 
 - Painel: `https://jarvis.juninnzxtec.com.br`
-- API no painel: `https://jarvis.juninnzxtec.com.br/api`
 - API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
-- VPS: Ubuntu 24.04, Docker Compose e Caddy.
+- Frontend: Fabweb/DirectAdmin em `domains/jarvis.juninnzxtec.com.br/public_html`.
+- API/backend/banco: VPS Ubuntu 24.04, Docker Compose e Caddy.
 
 ## Validacao
 
 | Item | Resultado |
 | --- | --- |
-| Frontend HTTPS | OK, `HTTP 200` |
+| Frontend Fabweb HTTPS | OK, `HTTP 200`, entregando `JARVIS Home AI` |
+| React Router na Fabweb | OK, `.htaccess` validado em `/login` |
 | API health | OK |
 | API full health | OK |
 | Banco | OK |
@@ -38,6 +39,8 @@
 | Postgres container | OK, healthy |
 | Caddy | OK, active |
 | Webmail | OK em verificacao anterior |
+| Login frontend Fabweb | OK |
+| Chat API dedicada | OK, conversa persistida |
 
 ## Portas
 
@@ -50,7 +53,6 @@ Publicas:
 JARVIS internas:
 
 - Backend: `127.0.0.1:13001`
-- Frontend: `127.0.0.1:15173`
 - PostgreSQL: `127.0.0.1:15432`
 
 Observacao: UFW tambem mostra `5678` e `8081` abertos. Revisar antes de remover porque podem pertencer a outros servicos.
@@ -70,6 +72,7 @@ Observacao: UFW tambem mostra `5678` e `8081` abertos. Revisar antes de remover 
 - Desabilitar login root por senha apos validar chave.
 - Revisar portas UFW extras.
 - Aguardar cache DNS residual do `apijarvis` em resolvedores locais, se aparecer.
+- DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
 
 ## Resultado
 

@@ -5,8 +5,8 @@
 Ambiente revisado:
 
 - Painel: `https://jarvis.juninnzxtec.com.br`
-- API no mesmo dominio: `https://jarvis.juninnzxtec.com.br/api`
 - API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
+- Frontend estatico na Fabweb/DirectAdmin.
 - VPS Ubuntu 24.04 com Docker Compose e Caddy.
 
 ## Segredos e rotacao
@@ -116,19 +116,22 @@ docker compose logs --tail=100 frontend
 
 ## Caddy e HTTPS
 
-Caddy publica:
+Caddy publica a API:
 
-- `jarvis.juninnzxtec.com.br`
 - `apijarvis.juninnzxtec.com.br`
 
 Validar:
 
 ```bash
 curl -I https://jarvis.juninnzxtec.com.br
-curl https://jarvis.juninnzxtec.com.br/api/health
-curl https://jarvis.juninnzxtec.com.br/api/health/full
 curl https://apijarvis.juninnzxtec.com.br/api/health
+curl https://apijarvis.juninnzxtec.com.br/api/health/full
 ```
+
+DNS esperado:
+
+- `jarvis.juninnzxtec.com.br` -> Fabweb (`166.0.186.20`)
+- `apijarvis.juninnzxtec.com.br` -> VPS (`45.76.251.177`)
 
 Se `apijarvis` falhar logo apos alterar DNS, aguarde o TTL. O nameserver autoritativo deve apontar para a VPS antes do Let's Encrypt emitir o certificado.
 

@@ -4,16 +4,15 @@
 
 - Aplicacao: `https://jarvis.juninnzxtec.com.br`
 - API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
-- DNS: A record `jarvis` apontando para a VPS.
-  A record `apijarvis` tambem deve apontar para a VPS.
+- DNS: A record `jarvis` apontando para a Fabweb (`166.0.186.20`).
+  A record `apijarvis` apontando para a VPS (`45.76.251.177`).
 
 ## Arquitetura
 
-- Caddy na VPS publica HTTPS.
-- Caddy envia `/api/*` para `127.0.0.1:3001`.
-- Caddy envia o restante para `127.0.0.1:5173`.
-- Caddy tambem publica `apijarvis.juninnzxtec.com.br` apontando diretamente para o backend.
-- Docker Compose roda PostgreSQL, backend e frontend.
+- Frontend estatico publicado na Fabweb em `domains/jarvis.juninnzxtec.com.br/public_html`.
+- O build do frontend usa `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api`.
+- Caddy na VPS publica HTTPS para `apijarvis.juninnzxtec.com.br` apontando diretamente para o backend.
+- Docker Compose na VPS roda PostgreSQL e backend. O frontend em container pode existir para validacao/rollback, mas a URL publica oficial do app usa a Fabweb.
 - Portas Docker ficam presas em `127.0.0.1` para evitar exposicao direta.
 - Na VPS, use portas alternativas se `3001`, `5173` ou `5432` ja estiverem ocupadas.
 - Containers usam `restart: unless-stopped`.
@@ -30,8 +29,11 @@ O arquivo `.env` fica somente na VPS e nunca deve ser commitado.
 - `SCHEDULER_ENABLED`
 - `SCHEDULER_INTERVAL_SECONDS`
 - `BACKEND_HOST_PORT`
-- `FRONTEND_HOST_PORT`
 - `POSTGRES_HOST_PORT`
+
+No build local do frontend para Fabweb:
+
+- `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api`
 
 ## Comandos na VPS
 
@@ -47,10 +49,21 @@ docker compose exec backend npx prisma db seed
 
 ```bash
 curl -I https://jarvis.juninnzxtec.com.br
-curl https://jarvis.juninnzxtec.com.br/api/health
-curl https://jarvis.juninnzxtec.com.br/api/health/full
 curl https://apijarvis.juninnzxtec.com.br/api/health
+curl https://apijarvis.juninnzxtec.com.br/api/health/full
 ```
+
+## Publicacao do frontend na Fabweb
+
+```powershell
+Set-Location E:\jarvis-home-assistant\frontend
+$env:VITE_API_URL="https://apijarvis.juninnzxtec.com.br/api"
+npm run build
+```
+
+Enviar o conteudo de `frontend\dist` para:
+
+`domains/jarvis.juninnzxtec.com.br/public_html`
 
 ## Hardening
 
