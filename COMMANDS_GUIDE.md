@@ -26,3 +26,4 @@ A Central de Comandos fica em `/commands`.
 - WhatsApp prepara mensagem, mas nao envia automaticamente.
 - Logs registram a execucao com redaction.
 - Comandos perigosos, destrutivos ou shell arbitrario sao bloqueados.
+- O scheduler da Fase 6 reaproveita as mesmas regras de seguranca: nenhuma rotina agendada pode disparar WhatsApp direto, comandos shell, envio em massa ou Home Assistant sensivel sem confirmacao.

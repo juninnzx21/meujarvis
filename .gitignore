@@ -27,6 +27,7 @@ frontend/vite.config.d.ts.map
 backups/
 backups/*.sql
 *.sql
+!backend/prisma/migrations/**/*.sql
 *.dump
 *.backup
 

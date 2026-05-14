@@ -3,6 +3,7 @@ $Root = "E:\jarvis-home-assistant"
 Set-Location $Root
 
 Write-Host "Starting JARVIS Home AI in local production mode..."
+Write-Host "Scheduler follows backend .env: SCHEDULER_ENABLED and SCHEDULER_INTERVAL_SECONDS."
 docker compose up -d postgres
 
 Set-Location "$Root\backend"

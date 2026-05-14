@@ -27,6 +27,11 @@ export function RoutinesPage() {
           <div key={routine.id} className="glass rounded-2xl p-4">
             <div className="mb-3 flex items-center justify-between"><strong className="text-white">{routine.name}</strong><StatusPill status={routine.enabled ? "configured" : "disabled"} /></div>
             <p className="min-h-12 text-sm text-slate-400">{routine.description}</p>
+            {routine.triggerType === "schedule" && (
+              <p className="mt-3 rounded-xl bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100">
+                Agenda: {routine.config?.schedule?.type ?? routine.config?.schedule ?? "configurada"} {routine.lastRunAt ? `- ultima ${new Date(routine.lastRunAt).toLocaleString("pt-BR")}` : "- aguardando primeira execucao"}
+              </p>
+            )}
             <button onClick={() => run(routine)} className="btn btn-primary mt-4" disabled={!routine.enabled}><Play size={18} /> Rodar</button>
           </div>
         ))}

@@ -3,6 +3,7 @@ import { prisma } from "../prisma/client.js";
 import { homeAssistantService } from "./homeAssistantService.js";
 import { n8nService } from "./n8nService.js";
 import { openAiService } from "./openAiService.js";
+import { schedulerService } from "./schedulerService.js";
 import { geminiService } from "./geminiService.js";
 import { whatsappService } from "./whatsappService.js";
 
@@ -38,6 +39,7 @@ export async function getHealth(full = false) {
     whatsappConfigured: whatsappService.configured,
     homeAssistantConfigured: homeAssistantService.configured,
     uptimeSeconds: Math.round(process.uptime()),
+    scheduler: schedulerService.status(),
     timestamp: new Date().toISOString(),
     version: env.APP_VERSION
   };

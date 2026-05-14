@@ -7,8 +7,24 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get("/", asyncHandler(async (req, res) => {
-  const notifications = await prisma.notification.findMany({ where: { userId: req.user!.id }, orderBy: { createdAt: "desc" }, take: 100 });
-  res.json({ notifications });
+  const unread = req.query.unread === "true";
+  const type = typeof req.query.type === "string" ? req.query.type : undefined;
+  const today = req.query.today === "true";
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+  const where = {
+    userId: req.user!.id,
+    ...(unread ? { readAt: null } : {}),
+    ...(type ? { type: type as never } : {}),
+    ...(today ? { createdAt: { gte: todayStart, lte: todayEnd } } : {})
+  };
+  const [notifications, unreadCount] = await Promise.all([
+    prisma.notification.findMany({ where, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.notification.count({ where: { userId: req.user!.id, readAt: null } })
+  ]);
+  res.json({ notifications, unreadCount });
 }));
 
 router.patch("/read-all", asyncHandler(async (req, res) => {

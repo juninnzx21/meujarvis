@@ -139,6 +139,8 @@ model Task {
   description String?
   dueDate     DateTime?
   reminderAt  DateTime?
+  reminderSentAt DateTime?
+  overdueNotifiedAt DateTime?
   status      TaskStatus   @default(pending)
   priority    TaskPriority @default(medium)
   createdAt   DateTime     @default(now())
@@ -154,6 +156,7 @@ model Routine {
   triggerType TriggerType  @default(manual)
   config      Json
   enabled     Boolean      @default(true)
+  lastRunAt   DateTime?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)

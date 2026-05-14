@@ -20,4 +20,5 @@ npm run test
 npm run validate
 
 Set-Location $Root
+Write-Host "Scheduler validation: backend tests cover disabled mode, scheduled routines, reminders and duplicate prevention."
 Write-Host "Validation completed."

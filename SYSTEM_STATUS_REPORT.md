@@ -2,7 +2,7 @@
 
 ## Data/hora da validacao
 
-2026-05-14 14:18:00 -03:00
+2026-05-14 14:53:00 -03:00
 
 ## Diretorio usado
 
@@ -10,117 +10,112 @@
 
 ## Fase
 
-Fase 5 - comandos, rotinas, relatorios, notificacoes, lembretes e uso diario.
+Fase 6 - scheduler automatico seguro para rotinas, lembretes, tarefas vencidas e notificacoes.
 
-## Ambiente
+## Git
 
-- Windows PowerShell
-- Docker e Docker Compose disponiveis
-- PostgreSQL Docker: `jarvis-postgres`
-- Backend: `http://localhost:3001`
-- Frontend: `http://localhost:5173`
-- Banco: `postgresql://jarvis:***@localhost:5432/jarvis_db?schema=public`
+- Repositorio remoto: `https://github.com/juninnzx21/meujarvis.git`
+- Branch: `main`
+- Commit Fase 5 enviado: `a1c09ea feat: approve jarvis home ai phase 5`
+- Tag Fase 5 enviada: `v0.5.0-phase5-approved`
+- `.gitignore` reforcado para bloquear `.env`, backups, `node_modules`, `dist`, logs, dumps SQL e artefatos locais.
 
-## Implementado
+## Implementado na Fase 6
 
-- Central de comandos com listagem, exemplos, classificacao de seguranca e execucao pelo painel/API.
-- Modulo de rotinas com `Routine`, `RoutineRun`, CRUD, execucao manual e historico.
-- Relatorios inteligentes: resumo diario, tarefas, sistema e atividade.
-- Notificacoes internas com leitura individual e leitura em massa.
-- Tarefas com `reminderAt`, filtros de hoje, vencidas e pendentes/vencidas.
-- Comandos de IA para tarefas de hoje, atrasos, pendencias e memoria.
-- WhatsApp seguro com preparo de mensagem e confirmacao antes de envio.
-- n8n com templates documentados para eventos seguros.
-- Home Assistant com suporte a acao segura de luz e bloqueio de acoes sensiveis.
-- Redaction mantida para tokens, API keys, Authorization, cookies, senhas, secrets e JWT.
-- Frontend atualizado com rotas `/commands`, `/routines`, `/reports` e `/notifications`.
-- Documentacao criada/atualizada: `COMMANDS_GUIDE.md`, `ROUTINES_GUIDE.md`, `README.md`, `ARCHITECTURE.md`, `INTEGRATIONS_SETUP.md`, `SECURITY_CHECKLIST.md` e este relatorio.
+- `SchedulerService` no backend, iniciado junto com o servidor.
+- Variaveis `SCHEDULER_ENABLED` e `SCHEDULER_INTERVAL_SECONDS`.
+- `Routine.lastRunAt` para deduplicar rotinas agendadas.
+- `Task.reminderSentAt` para deduplicar lembretes.
+- `Task.overdueNotifiedAt` para deduplicar alertas de vencimento.
+- Suporte a `config.schedule` com `daily`, `weekly` e `interval_minutes`.
+- Rotina agendada cria `RoutineRun`, `SystemLog` e `Notification`.
+- Lembrete vencido cria `Notification`, `SystemLog` e marca `reminderSentAt`.
+- Tarefa vencida cria resumo por usuario, `Notification`, `SystemLog` e marca `overdueNotifiedAt`.
+- Scheduler bloqueia WhatsApp direto, Home Assistant sensivel, shell, envio em massa e acoes destrutivas.
+- `/api/health/full` retorna status do scheduler.
+- Tela `/status` mostra scheduler.
+- Tela `/notifications` ganhou filtros, contador e leitura individual.
+- Sidebar/header exibem contador de notificacoes nao lidas.
+- Scripts `start-jarvis.ps1`, `status-jarvis.ps1` e `validate-jarvis.ps1` atualizados com informacoes do scheduler.
 
-## Comandos executados
+## Validacao executada
 
 | Comando | Resultado |
 | --- | --- |
-| `docker compose ps` | OK, `jarvis-postgres` healthy |
-| `Test-NetConnection localhost -Port 5432` | OK, `TcpTestSucceeded: True` |
-| `npm audit --omit=dev` backend | OK, 0 vulnerabilidades |
-| `npm audit --omit=dev` frontend | OK, 0 vulnerabilidades |
+| `docker compose ps` | OK, PostgreSQL healthy |
+| `Test-NetConnection localhost -Port 5432` | OK |
+| `npm install` backend/frontend | OK |
+| `npm audit --omit=dev` backend/frontend | OK, 0 vulnerabilidades |
 | `npx prisma generate` | OK |
 | `npx prisma validate` | OK |
-| `npx prisma migrate dev --name phase5_daily_assistant` | OK |
+| `npx prisma migrate dev --name phase6_scheduler` | OK |
 | `npx prisma migrate dev` | OK, schema em sincronia |
 | `npx prisma db seed` | OK |
-| `npm run test` backend | OK, 19 testes aprovados |
+| `npm run test` backend | OK, 24 testes aprovados |
 | `npm run validate` backend | OK |
-| `npm run test` frontend | OK, 6 testes aprovados |
+| `npm run test` frontend | OK, 7 testes aprovados |
 | `npm run validate` frontend | OK |
-| `.\status-jarvis.ps1` | OK, reportou estado dos servicos sem quebrar |
-| `.\backup-jarvis.ps1` | OK, backup criado em `backups\jarvis_db_20260514_141557.sql` |
-| `.\validate-jarvis.ps1` | OK, auditoria operacional completa aprovada |
-| `.\start-jarvis.ps1` | OK, backend e frontend iniciados |
-| Varredura de segredos fora de `.env` | OK, nenhum segredo encontrado |
-| Varredura de caminho antigo | OK, nenhuma referencia encontrada |
+| `.\status-jarvis.ps1` | OK, reportou estado e scheduler quando backend ativo |
+| `.\backup-jarvis.ps1` | OK, backup local criado e ignorado pelo Git |
+| `.\validate-jarvis.ps1` | OK |
+| `.\start-jarvis.ps1` | OK, backend/frontend iniciados e scheduler ativo |
+| Varredura de segredos fora de `.env` | OK, nenhum segredo real encontrado |
 
-## Evidencias funcionais
-
-Validacao HTTP autenticada executada contra backend e frontend em execucao:
+## Evidencia HTTP final
 
 ```json
 {
   "login": true,
-  "dashboard": 200,
-  "status": 200,
+  "authUser": "admin@jarvis.local",
+  "schedulerEnabled": true,
+  "schedulerRunning": true,
+  "schedulerInterval": 60,
   "commands": 13,
-  "commandRun": "report.daily",
+  "commandIntent": "report.daily",
   "routines": 4,
-  "reports": 1,
-  "notifications": 0,
-  "tasks": 24,
-  "chat": "task.list",
-  "voice": "task.list",
+  "unreadNotifications": 6,
+  "overdueTasks": 0,
+  "reportOverdue": 0,
   "n8n": "not_configured",
   "whatsapp": "not_configured",
-  "home": "not_configured"
+  "homeAssistant": "not_configured",
+  "homeAssistantEntities": "not_configured"
 }
 ```
+
+## Erros encontrados e correcoes
+
+- `git commit` inicial falhou por identidade Git ausente; configurado `user.name` e `user.email` apenas no repositorio local.
+- `prisma generate` falhou uma vez com `EPERM` por processo Node segurando DLL no Windows; executado `stop-jarvis.ps1` e repetida a validacao com sucesso.
+- Teste frontend falhou por renders acumulados; adicionado `cleanup()`.
+- Typecheck backend apontou cast JSON em `routineRunnerService`; corrigido com `Prisma.InputJsonValue`.
+- Testes de deduplicacao contavam notificacoes de rodadas anteriores; corrigidos com titulos unicos por teste.
+- Script HTTP usou `$home`, variavel reservada do PowerShell; repetido com `$haStatus` e Home Assistant validado.
 
 ## Status por modulo
 
 | Modulo | Status |
 | --- | --- |
+| Git seguro | APROVADO |
 | Docker/PostgreSQL | APROVADO |
 | Prisma/migrations/seed | APROVADO |
-| Backend API | APROVADO |
+| Backend/API | APROVADO |
 | Frontend | APROVADO |
 | Login demo/JWT | APROVADO |
-| Dashboard/status | APROVADO |
 | Chat/voz | APROVADO |
-| Memorias | APROVADO |
 | Tarefas/lembretes | APROVADO |
-| Automacoes/logs | APROVADO |
-| Central de comandos | APROVADO |
-| Rotinas | APROVADO |
-| Relatorios | APROVADO |
+| Rotinas agendadas | APROVADO |
+| Scheduler | APROVADO |
 | Notificacoes | APROVADO |
-| n8n fallback | APROVADO |
-| WhatsApp fallback | APROVADO |
-| Home Assistant fallback | APROVADO |
-| Backup/scripts operacionais | APROVADO |
-| Redaction/seguranca | APROVADO |
-
-## Erros encontrados e correcoes
-
-- Ajustado schema Prisma para incluir `Routine`, `RoutineRun`, `Notification` e `Task.reminderAt`.
-- Criadas rotas faltantes para comandos, rotinas, relatorios e notificacoes.
-- Ajustado `read-all` de notificacoes para nao conflitar com rota parametrizada.
-- Ajustado `reportService` para lidar corretamente com o tipo retornado pelo health full.
-- Atualizados testes backend/frontend para cobrir os novos modulos.
-- Atualizados documentos operacionais e guias da Fase 5.
+| Relatorios | APROVADO |
+| Logs/redaction | APROVADO |
+| Fallbacks n8n/WhatsApp/Home Assistant | APROVADO |
+| Scripts operacionais/backup | APROVADO |
 
 ## Pendencias reais
 
-- Rotinas com `triggerType: schedule` ja existem no modelo/API, mas a execucao automatica por scheduler ainda e uma evolucao futura.
-- Integrações reais de n8n, Evolution API/WhatsApp e Home Assistant dependem de credenciais e ambientes externos configurados.
-- Envio real de WhatsApp permanece protegido por confirmacao e sem disparo em massa.
+- Integracoes externas reais dependem de credenciais e ambientes n8n/Evolution/Home Assistant configurados fora do projeto.
+- O scheduler executa apenas acoes internas seguras; qualquer acao sensivel segue exigindo confirmacao explicita.
 
 ## Resultado final
 

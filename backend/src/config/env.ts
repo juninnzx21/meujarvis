@@ -32,7 +32,9 @@ const envSchema = z.object({
   WHATSAPP_AUTO_REPLY: booleanFromEnv.default(false),
   HOME_ASSISTANT_URL: z.string().optional().default(""),
   HOME_ASSISTANT_TOKEN: z.string().optional().default(""),
-  LOG_LEVEL: z.string().default("info")
+  LOG_LEVEL: z.string().default("info"),
+  SCHEDULER_ENABLED: booleanFromEnv.default(true),
+  SCHEDULER_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60)
 });
 
 export const env = envSchema.parse(process.env);

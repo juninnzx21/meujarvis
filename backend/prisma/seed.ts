@@ -91,7 +91,7 @@ async function main() {
     config: { domain: "scene", service: "turn_on", entity_id: "scene.cinema" }
   });
 
-  await ensureRoutine(admin.id, "Resumo diário", { description: "Gera resumo diario de tarefas, memorias, erros e integracoes.", triggerType: "manual", enabled: true, config: { report: "daily-summary" } });
+  await ensureRoutine(admin.id, "Resumo diário", { description: "Gera resumo diario de tarefas, memorias, erros e integracoes.", triggerType: "schedule", enabled: true, config: { report: "daily-summary", schedule: { type: "daily", time: "08:00" } } });
   await ensureRoutine(admin.id, "Revisão de tarefas pendentes", { description: "Lista pendencias e atrasos.", triggerType: "manual", enabled: true, config: { report: "tasks" } });
   await ensureRoutine(admin.id, "Checagem do sistema", { description: "Consulta status operacional.", triggerType: "manual", enabled: true, config: { report: "system" } });
   await ensureRoutine(admin.id, "Teste de integrações", { description: "Executa verificacoes seguras de integracoes.", triggerType: "manual", enabled: false, config: { report: "integrations" } });

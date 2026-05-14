@@ -1,7 +1,8 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Activity, Bell, Bot, Brain, Gauge, Home, ListTodo, LogOut, Menu, MessageSquare, Mic, PlaySquare, ScrollText, Settings, Share2, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { api } from "../services/api";
 
 const items = [
   { to: "/", label: "Dashboard", icon: Gauge },
@@ -24,7 +25,13 @@ const items = [
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user, logout } = useAuth();
+  useEffect(() => {
+    api.get("/notifications?unread=true")
+      .then((res) => setUnreadCount(res.data.unreadCount ?? 0))
+      .catch(() => setUnreadCount(0));
+  }, []);
   return (
     <div className="min-h-screen lg:flex">
       <aside className={`${open ? "block" : "hidden"} fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto border-r border-white/10 bg-slate-950/95 p-5 lg:static lg:block`}>
@@ -39,6 +46,7 @@ export function AppLayout() {
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-cyan-400/15 text-cyan-100" : "text-slate-300 hover:bg-white/5"}`}>
               <Icon size={18} /> {label}
+              {to === "/notifications" && unreadCount > 0 && <span className="ml-auto rounded-full bg-cyan-400 px-2 py-0.5 text-xs font-black text-slate-950">{unreadCount}</span>}
             </NavLink>
           ))}
         </nav>
@@ -53,6 +61,7 @@ export function AppLayout() {
             </div>
             <div className="flex items-center gap-3">
               <span className="hidden items-center gap-2 rounded-full bg-cyan-400/10 px-3 py-1 text-sm text-cyan-100 sm:flex"><Activity size={14} /> online</span>
+              {unreadCount > 0 && <NavLink to="/notifications" className="relative rounded-xl bg-white/5 p-2 text-cyan-100"><Bell size={18} /><span className="absolute -right-1 -top-1 rounded-full bg-cyan-400 px-1.5 text-[10px] font-black text-slate-950">{unreadCount}</span></NavLink>}
               <button className="btn btn-ghost" onClick={logout}><LogOut size={18} /></button>
             </div>
           </div>

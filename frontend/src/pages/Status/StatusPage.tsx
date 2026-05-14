@@ -36,6 +36,7 @@ export function StatusPage() {
         <div className="glass rounded-2xl p-5"><Clock className="mb-3 text-cyanx" /><p className="text-sm text-slate-400">Uptime backend</p><strong className="text-xl text-white">{formatUptime(health.uptimeSeconds)}</strong></div>
         <div className="glass rounded-2xl p-5"><Database className="mb-3 text-cyanx" /><p className="text-sm text-slate-400">Banco</p><StatusPill status={health.database} /></div>
         <div className="glass rounded-2xl p-5"><ScrollText className="mb-3 text-cyanx" /><p className="text-sm text-slate-400">Logs</p><strong className="text-xl text-white">{health.observability?.logsCount ?? 0}</strong></div>
+        <div className="glass rounded-2xl p-5"><Activity className="mb-3 text-cyanx" /><p className="text-sm text-slate-400">Scheduler</p><StatusPill status={health.scheduler?.enabled ? "configured" : "disabled"} /><p className="mt-2 text-xs text-slate-500">{health.scheduler?.intervalSeconds ?? "-"}s</p></div>
         <div className="glass rounded-2xl p-5"><Activity className="mb-3 text-cyanx" /><p className="text-sm text-slate-400">Versao</p><strong className="text-xl text-white">{health.version || "-"}</strong></div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">

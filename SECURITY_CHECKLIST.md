@@ -18,3 +18,6 @@
 - [x] Notificacoes passam por redaction antes de armazenar mensagens internas.
 - [x] Backups SQL estao ignorados por `.gitignore`.
 - [x] WhatsApp por IA apenas prepara mensagem; envio exige confirmacao no painel.
+- [x] Scheduler bloqueia WhatsApp direto, Home Assistant sensivel, shell e envio em massa.
+- [x] Scheduler evita repeticao por `lastRunAt`, `reminderSentAt` e `overdueNotifiedAt`.
+- [x] Notificacoes criadas pelo scheduler passam por redaction.

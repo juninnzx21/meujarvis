@@ -14,6 +14,9 @@ Write-Host "`nBackend health:"
 try {
   $health = Invoke-RestMethod "http://localhost:3001/api/health/full"
   $health | ConvertTo-Json -Depth 8
+  if ($health.scheduler) {
+    Write-Host "Scheduler: enabled=$($health.scheduler.enabled) running=$($health.scheduler.running) intervalSeconds=$($health.scheduler.intervalSeconds)"
+  }
 } catch {
   Write-Host "Backend health unavailable: $($_.Exception.Message)"
 }

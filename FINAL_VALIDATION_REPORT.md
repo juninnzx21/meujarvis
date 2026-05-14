@@ -10,68 +10,47 @@ APROVADO.
 
 ## Data/hora
 
-2026-05-14 14:18:00 -03:00
+2026-05-14 14:53:00 -03:00
 
-## Resultado resumido
+## Resultado
 
-A Fase 5 foi implementada e validada sem quebrar a base aprovada das fases anteriores. O sistema segue com Docker, PostgreSQL, backend, frontend, login demo, chat, voz, memorias, tarefas, automacoes, logs, settings, OpenAI/Gemini/fallback local e fallbacks seguros de integracoes funcionando.
+A Fase 6 foi implementada e validada sem quebrar a Fase 5. O JARVIS Home AI agora possui scheduler automatico seguro para rotinas agendadas, lembretes de tarefas, tarefas vencidas e notificacoes internas.
 
-## Novos modulos validados
+## Evidencias
 
-- Central de comandos: 13 comandos disponiveis, execucao de comando pelo painel/API e log de resultado.
-- Rotinas: CRUD, seed inicial, execucao manual e historico de runs.
-- Relatorios: resumo diario, tarefas, sistema e atividade.
-- Notificacoes: listagem, leitura individual e leitura em massa.
-- Tarefas: `reminderAt`, filtro de tarefas de hoje, vencidas e pendentes/vencidas.
-- Integracoes seguras: WhatsApp com preparo/confirmacao, n8n com templates, Home Assistant com acao segura de luz.
-
-## Validacao executada
-
-| Area | Resultado |
-| --- | --- |
-| Docker/PostgreSQL | OK |
-| Prisma generate/validate/migrate/seed | OK |
-| Backend tests | OK, 19 testes |
-| Backend validate | OK |
-| Frontend tests | OK, 6 testes |
-| Frontend validate | OK |
-| Scripts status/backup/validate/start | OK |
-| Login demo | OK |
-| Health/status | OK |
-| Chat/voz | OK |
-| Comandos/rotinas/relatorios/notificacoes | OK |
-| Tarefas/lembretes | OK |
-| Fallbacks n8n/WhatsApp/Home Assistant | OK |
-| Varredura de segredos fora de `.env` | OK |
-| Varredura de referencias ao caminho antigo | OK |
+- Backend: 24 testes aprovados.
+- Frontend: 7 testes aprovados.
+- `npm run validate` backend/frontend aprovado.
+- PostgreSQL Docker healthy.
+- Prisma generate, validate, migrate e seed aprovados.
+- Scripts status, backup, validate e start aprovados.
+- Health full mostra scheduler `enabled=true`, `running=true`, `intervalSeconds=60`.
+- Login demo validado com JWT.
+- Fallbacks n8n, WhatsApp e Home Assistant retornam `not_configured` sem quebrar.
+- Varredura de segredos fora de `.env` sem segredo real encontrado.
 
 ## Evidencia HTTP final
 
 ```json
 {
   "login": true,
-  "dashboard": 200,
-  "status": 200,
+  "authUser": "admin@jarvis.local",
+  "schedulerEnabled": true,
+  "schedulerRunning": true,
+  "schedulerInterval": 60,
   "commands": 13,
-  "commandRun": "report.daily",
+  "commandIntent": "report.daily",
   "routines": 4,
-  "reports": 1,
-  "notifications": 0,
-  "tasks": 24,
-  "chat": "task.list",
-  "voice": "task.list",
+  "unreadNotifications": 6,
+  "overdueTasks": 0,
+  "reportOverdue": 0,
   "n8n": "not_configured",
   "whatsapp": "not_configured",
-  "home": "not_configured"
+  "homeAssistant": "not_configured",
+  "homeAssistantEntities": "not_configured"
 }
 ```
 
-## Pendencias reais
-
-- Scheduler real para rotinas agendadas ainda nao foi implementado.
-- Integracoes externas reais dependem de credenciais, instancias e webhooks configurados fora do projeto.
-- O envio real de WhatsApp continua protegido por confirmacao e nao suporta envio em massa.
-
 ## Conclusao
 
-Fase 5 APROVADA. O JARVIS Home AI esta validado para uso local com os novos modulos diarios e permanece seguro quando integracoes externas nao estao configuradas.
+Fase 6 APROVADA. O projeto esta pronto para versionamento da Fase 6 e tag `v0.6.0-scheduler`.

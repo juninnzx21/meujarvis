@@ -12,3 +12,4 @@
 - Se `prisma generate` falhar com `EPERM` no Windows, encerre processos Node do projeto e rode novamente.
 - Nunca mostre valores de `.env`; relate apenas se uma variavel esta configurada ou ausente.
 - Ao testar integracoes reais, use endpoints de teste seguros e confirme que logs redigiram request/response.
+- Scheduler deve permanecer seguro: sem shell, sem WhatsApp automatico, sem envio em massa e sem Home Assistant sensivel sem confirmacao.

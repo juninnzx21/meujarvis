@@ -4,10 +4,12 @@ import axios from "axios";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { app } from "./app.js";
+import { env } from "./config/env.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
 import { n8nService } from "./services/n8nService.js";
 import { openAiService } from "./services/openAiService.js";
+import { schedulerService } from "./services/schedulerService.js";
 import { writeSystemLog } from "./services/systemLogService.js";
 import { whatsappService } from "./services/whatsappService.js";
 
@@ -22,8 +24,10 @@ const credentials = { email: "admin@jarvis.local", password: "12345678" };
 let token = "";
 let automationId = "";
 let routineId = "";
+let scheduledRoutineId = "";
 let notificationId = "";
 let userId = "";
+const schedulerTaskIds: string[] = [];
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
 
@@ -41,11 +45,17 @@ describe("JARVIS Home AI API", () => {
     if (routineId) {
       await prisma.routine.deleteMany({ where: { id: routineId } });
     }
+    if (scheduledRoutineId) {
+      await prisma.routine.deleteMany({ where: { id: scheduledRoutineId } });
+    }
     if (notificationId) {
       await prisma.notification.deleteMany({ where: { id: notificationId } });
     }
     await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
+    if (schedulerTaskIds.length > 0) {
+      await prisma.task.deleteMany({ where: { id: { in: schedulerTaskIds } } });
+    }
     await prisma.$disconnect();
   });
 
@@ -355,6 +365,116 @@ describe("JARVIS Home AI API", () => {
     expect(overdue.body.tasks.some((item: { id: string }) => item.id === created.body.task.id)).toBe(true);
     await request(app).get("/api/tasks/pending-overdue").set(auth()).expect(200);
     await request(app).delete(`/api/tasks/${created.body.task.id}`).set(auth()).expect(204);
+  });
+
+  it("keeps scheduler disabled when configured off", async () => {
+    const previous = env.SCHEDULER_ENABLED;
+    env.SCHEDULER_ENABLED = false;
+    const result = await schedulerService.runOnce();
+    expect(result).toMatchObject({ skipped: true, reason: "disabled" });
+    env.SCHEDULER_ENABLED = previous;
+  });
+
+  it("executes safe scheduled routines once and creates run, notification and log", async () => {
+    const previous = env.SCHEDULER_ENABLED;
+    env.SCHEDULER_ENABLED = true;
+    const routine = await prisma.routine.create({
+      data: {
+        userId,
+        name: "Teste automatizado rotina scheduler",
+        description: "Scheduler seguro",
+        triggerType: "schedule",
+        enabled: true,
+        config: { report: "tasks", schedule: { type: "interval_minutes", minutes: 1 } }
+      }
+    });
+    scheduledRoutineId = routine.id;
+
+    const result = await schedulerService.runOnce(new Date());
+    expect(result).toMatchObject({ skipped: false });
+
+    const runs = await prisma.routineRun.findMany({ where: { routineId: routine.id } });
+    expect(runs.length).toBe(1);
+    expect(runs[0].status).toBe("success");
+
+    const notifications = await prisma.notification.findMany({ where: { userId, title: "Rotina agendada executada" } });
+    expect(notifications.length).toBeGreaterThan(0);
+
+    await schedulerService.runOnce(new Date());
+    const runsAfterDuplicateAttempt = await prisma.routineRun.count({ where: { routineId: routine.id } });
+    expect(runsAfterDuplicateAttempt).toBe(1);
+    env.SCHEDULER_ENABLED = previous;
+  });
+
+  it("creates task reminder notifications without duplicating them", async () => {
+    const previous = env.SCHEDULER_ENABLED;
+    env.SCHEDULER_ENABLED = true;
+    const title = `Teste automatizado reminder scheduler ${Date.now()}`;
+    const task = await prisma.task.create({
+      data: {
+        userId,
+        title,
+        priority: "urgent",
+        reminderAt: new Date(Date.now() - 60_000)
+      }
+    });
+    schedulerTaskIds.push(task.id);
+
+    await schedulerService.runOnce(new Date());
+    await schedulerService.runOnce(new Date(Date.now() + 60_000));
+
+    const updated = await prisma.task.findUniqueOrThrow({ where: { id: task.id } });
+    expect(updated.reminderSentAt).toBeTruthy();
+    const notifications = await prisma.notification.findMany({ where: { userId, message: { contains: title } } });
+    expect(notifications.length).toBe(1);
+    env.SCHEDULER_ENABLED = previous;
+  });
+
+  it("creates overdue task summary without duplicating alerts", async () => {
+    const previous = env.SCHEDULER_ENABLED;
+    env.SCHEDULER_ENABLED = true;
+    const title = `Teste automatizado overdue scheduler ${Date.now()}`;
+    const task = await prisma.task.create({
+      data: {
+        userId,
+        title,
+        priority: "high",
+        dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
+      }
+    });
+    schedulerTaskIds.push(task.id);
+
+    await schedulerService.runOnce(new Date());
+    await schedulerService.runOnce(new Date(Date.now() + 60_000));
+
+    const updated = await prisma.task.findUniqueOrThrow({ where: { id: task.id } });
+    expect(updated.overdueNotifiedAt).toBeTruthy();
+    const notifications = await prisma.notification.findMany({ where: { userId, message: { contains: title } } });
+    expect(notifications.length).toBe(1);
+    env.SCHEDULER_ENABLED = previous;
+  });
+
+  it("blocks sensitive scheduled routine actions and redacts logs", async () => {
+    const previous = env.SCHEDULER_ENABLED;
+    env.SCHEDULER_ENABLED = true;
+    const routine = await prisma.routine.create({
+      data: {
+        userId,
+        name: "Teste automatizado rotina sensivel scheduler",
+        triggerType: "schedule",
+        enabled: true,
+        config: { action: "whatsapp.send", token: "secret-token", schedule: { type: "interval_minutes", minutes: 1 } }
+      }
+    });
+
+    await schedulerService.runOnce(new Date());
+
+    const run = await prisma.routineRun.findFirstOrThrow({ where: { routineId: routine.id } });
+    expect(run.status).toBe("error");
+    const logs = await prisma.systemLog.findMany({ where: { module: "routines", action: "run_error" }, orderBy: { createdAt: "desc" }, take: 5 });
+    expect(JSON.stringify(logs)).not.toContain("secret-token");
+    await prisma.routine.delete({ where: { id: routine.id } });
+    env.SCHEDULER_ENABLED = previous;
   });
 
   it("ships local production and backup PowerShell scripts", () => {

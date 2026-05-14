@@ -3,7 +3,7 @@ import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../prisma/client.js";
-import { buildActivityReport, buildDailySummary, buildSystemReport, buildTaskReport } from "../../services/reportService.js";
+import { runRoutineSafely } from "../../services/routineRunnerService.js";
 import { writeSystemLog } from "../../services/systemLogService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -17,13 +17,6 @@ const schema = z.object({
   config: z.record(z.unknown()).default({}),
   enabled: z.boolean().default(true)
 });
-
-async function runRoutineReport(userId: string, report: string) {
-  if (report === "tasks") return buildTaskReport(userId);
-  if (report === "system" || report === "integrations") return buildSystemReport(userId);
-  if (report === "activity") return buildActivityReport(userId);
-  return buildDailySummary(userId);
-}
 
 router.get("/", asyncHandler(async (req, res) => {
   const routines = await prisma.routine.findMany({ where: { userId: req.user!.id }, orderBy: { createdAt: "desc" } });
@@ -50,17 +43,9 @@ router.post("/:id/run", asyncHandler(async (req, res) => {
   const routine = await prisma.routine.findFirst({ where: { id: String(req.params.id), userId: req.user!.id } });
   if (!routine) return res.status(404).json({ message: "Rotina nao encontrada" });
   if (!routine.enabled) return res.status(400).json({ message: "Rotina desativada" });
-  const run = await prisma.routineRun.create({ data: { routineId: routine.id, status: "pending", input: req.body ?? {} } });
-  try {
-    const config = routine.config as Record<string, unknown>;
-    const output = await runRoutineReport(req.user!.id, String(config.report ?? "daily-summary"));
-    const updated = await prisma.routineRun.update({ where: { id: run.id }, data: { status: "success", output: output as never } });
-    await writeSystemLog({ userId: req.user!.id, module: "routines", action: "run", message: "Rotina executada", metadata: { routineId: routine.id, runId: updated.id } });
-    return res.json({ run: updated, output });
-  } catch (error) {
-    const updated = await prisma.routineRun.update({ where: { id: run.id }, data: { status: "error", error: error instanceof Error ? error.message : "Erro desconhecido" } });
-    return res.status(500).json({ run: updated, message: "Erro ao executar rotina" });
-  }
+  const result = await runRoutineSafely(routine, { ...(req.body ?? {}), source: "manual" });
+  if ("error" in result) return res.status(500).json({ run: result.run, message: "Erro ao executar rotina" });
+  return res.json(result);
 }));
 
 router.get("/:id/runs", asyncHandler(async (req, res) => {

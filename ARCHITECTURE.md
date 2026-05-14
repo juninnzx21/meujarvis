@@ -106,3 +106,14 @@ Scripts PowerShell na raiz controlam ciclo local:
 - `tasks`: campo `reminderAt` e filtros para vencidas/hoje.
 - `whatsapp`: comandos de IA preparam mensagem e exigem confirmacao antes de envio.
 - `n8n`: templates padronizados para eventos operacionais.
+
+## Fase 6
+
+- `SchedulerService` inicializa com o backend quando `SCHEDULER_ENABLED=true`.
+- Intervalo configuravel por `SCHEDULER_INTERVAL_SECONDS`.
+- Rotinas agendadas usam `Routine.triggerType=schedule`, `Routine.config.schedule` e `Routine.lastRunAt`.
+- Lembretes usam `Task.reminderAt` e `Task.reminderSentAt`.
+- Alertas de vencimento usam `Task.dueDate` e `Task.overdueNotifiedAt`.
+- Cada execucao segura cria `RoutineRun`, `SystemLog` e `Notification`.
+- O scheduler bloqueia WhatsApp direto, Home Assistant sensivel, shell, envio em massa e acoes destrutivas.
+- `/api/health/full` inclui status do scheduler para a tela `/status` e scripts operacionais.

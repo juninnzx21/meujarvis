@@ -25,6 +25,7 @@ powershell -ExecutionPolicy Bypass -File .\status-jarvis.ps1
 ```
 
 Mostra containers, portas, health full do backend e HTTP do frontend.
+Tambem mostra se o scheduler esta habilitado, rodando e qual intervalo esta configurado.
 
 ## Validacao
 
@@ -33,3 +34,14 @@ powershell -ExecutionPolicy Bypass -File .\validate-jarvis.ps1
 ```
 
 Roda audit, Prisma, testes, typecheck e build em backend/frontend.
+
+## Scheduler
+
+O scheduler roda junto com o backend quando `SCHEDULER_ENABLED=true`.
+
+```env
+SCHEDULER_ENABLED=true
+SCHEDULER_INTERVAL_SECONDS=60
+```
+
+Ele executa rotinas agendadas seguras, lembretes e alertas de tarefas vencidas. Consulte `SCHEDULER_GUIDE.md`.

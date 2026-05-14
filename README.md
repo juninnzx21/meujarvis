@@ -81,6 +81,8 @@ Copie `.env.example` para `.env` e `backend\.env.example` para `backend\.env`. A
 - `N8N_WEBHOOK_URL`
 - `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`
 - `HOME_ASSISTANT_URL`, `HOME_ASSISTANT_TOKEN`
+- `SCHEDULER_ENABLED`
+- `SCHEDULER_INTERVAL_SECONDS`
 
 ## Documentacao complementar
 
@@ -91,6 +93,9 @@ Copie `.env.example` para `.env` e `backend\.env.example` para `backend\.env`. A
 - [BACKUP_RESTORE.md](./BACKUP_RESTORE.md)
 - [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md)
 - [MEMORY_SEMANTIC.md](./MEMORY_SEMANTIC.md)
+- [COMMANDS_GUIDE.md](./COMMANDS_GUIDE.md)
+- [ROUTINES_GUIDE.md](./ROUTINES_GUIDE.md)
+- [SCHEDULER_GUIDE.md](./SCHEDULER_GUIDE.md)
 - [SYSTEM_STATUS_REPORT.md](./SYSTEM_STATUS_REPORT.md)
 - [FINAL_VALIDATION_REPORT.md](./FINAL_VALIDATION_REPORT.md)
 
@@ -129,3 +134,13 @@ Copie `.env.example` para `.env` e `backend\.env.example` para `backend\.env`. A
 - WhatsApp ganhou teste de conexao, validacao de numero e confirmacao visual para envio teste.
 - Home Assistant ganhou teste de conexao, agrupamento de entidades e bloqueio reforcado para lock, alarm, cover, garagem e portao.
 - Logs de integracoes passam por redaction centralizada antes de persistir metadata.
+
+## Fase 6
+
+- Scheduler automatico seguro dentro do backend.
+- Rotinas com `triggerType: schedule` e `config.schedule` real para `daily`, `weekly` e `interval_minutes`.
+- Lembretes de tarefas usam `reminderAt` e gravam `reminderSentAt` para evitar repeticao.
+- Tarefas vencidas geram resumo interno e gravam `overdueNotifiedAt`.
+- Tela de notificacoes ganhou filtros, contador de nao lidas e leitura individual.
+- Tela `/status` mostra status do scheduler.
+- Guia operacional: [SCHEDULER_GUIDE.md](./SCHEDULER_GUIDE.md).

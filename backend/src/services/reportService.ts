@@ -4,7 +4,7 @@ import { getHealth } from "./healthService.js";
 export async function buildDailySummary(userId: string) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [openTasks, doneTasks, memories, automationLogs, errors, health] = await Promise.all([
-    prisma.task.findMany({ where: { userId, status: { not: "done" } }, orderBy: { createdAt: "desc" }, take: 20 }),
+    prisma.task.findMany({ where: { userId, status: { notIn: ["done", "canceled"] } }, orderBy: { createdAt: "desc" }, take: 20 }),
     prisma.task.findMany({ where: { userId, status: "done", updatedAt: { gte: since } }, orderBy: { updatedAt: "desc" }, take: 20 }),
     prisma.memory.findMany({ where: { userId, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.automationLog.findMany({ where: { automation: { userId }, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 10 }),
@@ -33,8 +33,8 @@ export async function buildTaskReport(userId: string) {
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);
   const [open, overdue, today, done] = await Promise.all([
-    prisma.task.findMany({ where: { userId, status: { not: "done" } }, orderBy: { dueDate: "asc" } }),
-    prisma.task.findMany({ where: { userId, status: { not: "done" }, dueDate: { lt: now } }, orderBy: { dueDate: "asc" } }),
+    prisma.task.findMany({ where: { userId, status: { notIn: ["done", "canceled"] } }, orderBy: { dueDate: "asc" } }),
+    prisma.task.findMany({ where: { userId, status: { notIn: ["done", "canceled"] }, dueDate: { lt: now } }, orderBy: { dueDate: "asc" } }),
     prisma.task.findMany({ where: { userId, dueDate: { gte: start, lte: end } }, orderBy: { dueDate: "asc" } }),
     prisma.task.count({ where: { userId, status: "done" } })
   ]);

@@ -33,7 +33,7 @@ router.get("/", asyncHandler(async (req, res) => {
       userId: req.user!.id,
       ...(status ? { status: status as never } : {}),
       ...(priority ? { priority: priority as never } : {}),
-      ...(overdue ? { status: { not: "done" as const }, dueDate: { lt: now } } : {}),
+      ...(overdue ? { status: { notIn: ["done", "canceled"] as const }, dueDate: { lt: now } } : {}),
       ...(today ? { dueDate: { gte: todayStart, lte: todayEnd } } : {})
     },
     orderBy: { createdAt: "desc" }
@@ -44,8 +44,8 @@ router.get("/", asyncHandler(async (req, res) => {
 router.get("/pending-overdue", asyncHandler(async (req, res) => {
   const now = new Date();
   const [pending, overdue] = await Promise.all([
-    prisma.task.findMany({ where: { userId: req.user!.id, status: { not: "done" } }, orderBy: { dueDate: "asc" } }),
-    prisma.task.findMany({ where: { userId: req.user!.id, status: { not: "done" }, dueDate: { lt: now } }, orderBy: { dueDate: "asc" } })
+    prisma.task.findMany({ where: { userId: req.user!.id, status: { notIn: ["done", "canceled"] } }, orderBy: { dueDate: "asc" } }),
+    prisma.task.findMany({ where: { userId: req.user!.id, status: { notIn: ["done", "canceled"] }, dueDate: { lt: now } }, orderBy: { dueDate: "asc" } })
   ]);
   res.json({ pending, overdue });
 }));
