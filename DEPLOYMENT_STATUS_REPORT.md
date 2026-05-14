@@ -8,6 +8,10 @@
 
 `https://jarvis.juninnzxtec.com.br`
 
+API dedicada:
+
+`https://apijarvis.juninnzxtec.com.br/api`
+
 ## Infra usada
 
 - VPS Ubuntu 24.04
@@ -21,6 +25,7 @@
 
 - Nameservers do dominio conferidos: `ns1-da5.srvhr.com.br` e `ns2-da5.srvhr.com.br`.
 - A record `jarvis.juninnzxtec.com.br` atualizado no DirectAdmin para a VPS.
+- A record `apijarvis.juninnzxtec.com.br` atualizado no DirectAdmin para a VPS.
 - Webmail mantido na hospedagem compartilhada.
 - MX do dominio aponta para `mail.juninnzxtec.com.br`.
 
@@ -37,6 +42,7 @@ Roteamento:
 
 - `/api/*` -> backend
 - restante -> frontend
+- `apijarvis.juninnzxtec.com.br` -> backend
 
 ## Validacao
 
@@ -46,12 +52,14 @@ Roteamento:
 - Login demo validado via API.
 - Fallbacks n8n, WhatsApp e Home Assistant retornam `not_configured`.
 - Webmail respondeu `HTTP 200`.
+- `apijarvis` respondeu no nameserver autoritativo com o IP da VPS.
 
 ## Observacoes
 
 - Credenciais reais ficam somente em `.env` remoto/local e nao foram versionadas.
 - O GitHub nao recebeu `.env`, backups, `node_modules`, `dist` ou dumps.
 - O resolvedor local pode manter cache antigo de DNS por ate o TTL da zona. O nameserver autoritativo ja responde o IP novo.
+- O certificado HTTPS do `apijarvis` pode levar ate a propagacao DNS expirar, pois a CA pode consultar resolvers que ainda tinham o IP antigo em cache.
 
 ## Status
 

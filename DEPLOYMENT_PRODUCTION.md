@@ -3,13 +3,16 @@
 ## Dominio
 
 - Aplicacao: `https://jarvis.juninnzxtec.com.br`
+- API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
 - DNS: A record `jarvis` apontando para a VPS.
+  A record `apijarvis` tambem deve apontar para a VPS.
 
 ## Arquitetura
 
 - Caddy na VPS publica HTTPS.
 - Caddy envia `/api/*` para `127.0.0.1:3001`.
 - Caddy envia o restante para `127.0.0.1:5173`.
+- Caddy tambem publica `apijarvis.juninnzxtec.com.br` apontando diretamente para o backend.
 - Docker Compose roda PostgreSQL, backend e frontend.
 - Portas Docker ficam presas em `127.0.0.1` para evitar exposicao direta.
 - Na VPS, use portas alternativas se `3001`, `5173` ou `5432` ja estiverem ocupadas.
