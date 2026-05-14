@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: jarvis
       POSTGRES_PASSWORD: jarvis_password
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - jarvis_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -27,15 +27,18 @@ services:
     environment:
       DATABASE_URL: postgresql://jarvis:jarvis_password@postgres:5432/jarvis_db?schema=public
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
     container_name: jarvis-frontend
     depends_on:
       - backend
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
 
 volumes:
   jarvis_postgres_data:
