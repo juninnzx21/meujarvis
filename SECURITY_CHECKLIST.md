@@ -1,0 +1,20 @@
+# Security checklist
+
+- [x] Senhas sao armazenadas com bcrypt.
+- [x] JWT protege rotas privadas.
+- [x] Zod valida entradas principais.
+- [x] Helmet, CORS e rate limit ativos.
+- [x] Logs redigem `apiKey`, `token`, `authorization`, `cookie`, `password`, `secret` e JWT-like strings.
+- [x] `.env` nao e servido pelo frontend.
+- [x] Chaves OpenAI/Gemini/n8n/Evolution/Home Assistant ficam somente no backend/local env.
+- [x] WhatsApp exige confirmacao para envio.
+- [x] Auto reply WhatsApp fica desligado por padrao e ignora mensagens do proprio JARVIS.
+- [x] Home Assistant exige confirmacao para lock, alarm, cover, garage e portao.
+- [x] Automacoes bloqueiam shell arbitrario e comandos destrutivos.
+- [x] Backups ficam em pasta local e devem ser protegidos pelo usuario do Windows.
+- [x] Restore exige confirmacao manual `RESTORE`.
+- [x] Central de comandos classifica comandos seguros, com confirmacao ou bloqueados.
+- [x] Relatorios nao retornam chaves ou tokens.
+- [x] Notificacoes passam por redaction antes de armazenar mensagens internas.
+- [x] Backups SQL estao ignorados por `.gitignore`.
+- [x] WhatsApp por IA apenas prepara mensagem; envio exige confirmacao no painel.

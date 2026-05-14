@@ -1,0 +1,38 @@
+import { Router } from "express";
+import authRoutes from "../modules/auth/routes.js";
+import automationRoutes from "../modules/automations/routes.js";
+import chatRoutes from "../modules/chat/routes.js";
+import commandRoutes from "../modules/commands/routes.js";
+import healthRoutes from "../modules/health/routes.js";
+import homeAssistantRoutes from "../modules/home-assistant/routes.js";
+import logsRoutes from "../modules/logs/routes.js";
+import memoryRoutes from "../modules/memory/routes.js";
+import n8nRoutes from "../modules/n8n/routes.js";
+import notificationRoutes from "../modules/notifications/routes.js";
+import reportRoutes from "../modules/reports/routes.js";
+import routineRoutes from "../modules/routines/routes.js";
+import settingsRoutes from "../modules/settings/routes.js";
+import tasksRoutes from "../modules/tasks/routes.js";
+import voiceRoutes from "../modules/voice/routes.js";
+import whatsappRoutes from "../modules/whatsapp/routes.js";
+
+const router = Router();
+
+router.use("/auth", authRoutes);
+router.use("/automations", automationRoutes);
+router.use("/chat", chatRoutes);
+router.use("/commands", commandRoutes);
+router.use("/health", healthRoutes);
+router.use("/home-assistant", homeAssistantRoutes);
+router.use("/logs", logsRoutes);
+router.use("/memories", memoryRoutes);
+router.use("/n8n", n8nRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/reports", reportRoutes);
+router.use("/routines", routineRoutes);
+router.use("/settings", settingsRoutes);
+router.use("/tasks", tasksRoutes);
+router.use("/voice", voiceRoutes);
+router.use("/whatsapp", whatsappRoutes);
+
+export default router;

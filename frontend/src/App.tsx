@@ -1,0 +1,53 @@
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "./layouts/AppLayout";
+import { useAuth } from "./contexts/AuthContext";
+import { AutomationsPage } from "./pages/Automations/AutomationsPage";
+import { ChatPage } from "./pages/Chat/ChatPage";
+import { CommandsPage } from "./pages/Commands/CommandsPage";
+import { DashboardPage } from "./pages/Dashboard/DashboardPage";
+import { LoginPage } from "./pages/Login/LoginPage";
+import { LogsPage } from "./pages/Logs/LogsPage";
+import { MemoryPage } from "./pages/Memory/MemoryPage";
+import { N8nPage } from "./pages/N8n/N8nPage";
+import { NotificationsPage } from "./pages/Notifications/NotificationsPage";
+import { ReportsPage } from "./pages/Reports/ReportsPage";
+import { RoutinesPage } from "./pages/Routines/RoutinesPage";
+import { SettingsPage } from "./pages/Settings/SettingsPage";
+import { SmartHomePage } from "./pages/SmartHome/SmartHomePage";
+import { StatusPage } from "./pages/Status/StatusPage";
+import { TasksPage } from "./pages/Tasks/TasksPage";
+import { VoicePage } from "./pages/Voice/VoicePage";
+import { WhatsAppPage } from "./pages/WhatsApp/WhatsAppPage";
+
+function Private({ children }: { children: React.ReactNode }) {
+  const { user, ready } = useAuth();
+  if (!ready) return <div className="grid min-h-screen place-items-center text-cyan-100">Inicializando JARVIS...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<Private><AppLayout /></Private>}>
+        <Route index element={<DashboardPage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="voice" element={<VoicePage />} />
+        <Route path="commands" element={<CommandsPage />} />
+        <Route path="routines" element={<RoutinesPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="automations" element={<AutomationsPage />} />
+        <Route path="memory" element={<MemoryPage />} />
+        <Route path="tasks" element={<TasksPage />} />
+        <Route path="n8n" element={<N8nPage />} />
+        <Route path="whatsapp" element={<WhatsAppPage />} />
+        <Route path="smart-home" element={<SmartHomePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="logs" element={<LogsPage />} />
+        <Route path="status" element={<StatusPage />} />
+      </Route>
+    </Routes>
+  );
+}

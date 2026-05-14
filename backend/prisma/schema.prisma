@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+  tool
+}
+
+enum MemoryType {
+  preference
+  fact
+  reminder
+  note
+  system
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  done
+  canceled
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum TriggerType {
+  manual
+  webhook
+  schedule
+  ai_command
+}
+
+enum ActionType {
+  n8n
+  whatsapp
+  home_assistant
+  internal
+}
+
+enum AutomationLogStatus {
+  success
+  error
+  pending
+}
+
+enum SystemLogLevel {
+  info
+  warning
+  error
+  security
+}
+
+enum WhatsAppDirection {
+  inbound
+  outbound
+}
+
+enum NotificationType {
+  info
+  success
+  warning
+  error
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  passwordHash     String
+  role             UserRole          @default(user)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  conversations    Conversation[]
+  memories         Memory[]
+  tasks            Task[]
+  automations      Automation[]
+  routines         Routine[]
+  notifications    Notification[]
+  systemLogs       SystemLog[]
+  settings         Setting[]
+  whatsappMessages WhatsAppMessage[]
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Memory {
+  id         String     @id @default(cuid())
+  userId     String
+  type       MemoryType @default(note)
+  title      String
+  content    String
+  tags       String[]
+  importance Int        @default(3)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  dueDate     DateTime?
+  reminderAt  DateTime?
+  status      TaskStatus   @default(pending)
+  priority    TaskPriority @default(medium)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Routine {
+  id          String       @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  triggerType TriggerType  @default(manual)
+  config      Json
+  enabled     Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs        RoutineRun[]
+}
+
+model RoutineRun {
+  id        String   @id @default(cuid())
+  routineId String
+  status    String
+  input     Json?
+  output    Json?
+  error     String?
+  createdAt DateTime @default(now())
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(info)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Automation {
+  id          String          @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  triggerType TriggerType     @default(manual)
+  actionType  ActionType
+  config      Json
+  enabled     Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs        AutomationLog[]
+}
+
+model AutomationLog {
+  id           String              @id @default(cuid())
+  automationId String
+  status       AutomationLogStatus @default(pending)
+  input        Json?
+  output       Json?
+  error        String?
+  createdAt    DateTime            @default(now())
+  automation   Automation          @relation(fields: [automationId], references: [id], onDelete: Cascade)
+}
+
+model SystemLog {
+  id        String         @id @default(cuid())
+  userId    String?
+  level     SystemLogLevel @default(info)
+  module    String
+  action    String
+  message   String
+  metadata  Json?
+  createdAt DateTime       @default(now())
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}
+
+model WhatsAppMessage {
+  id         String            @id @default(cuid())
+  userId     String?
+  phone      String
+  direction  WhatsAppDirection
+  content    String
+  status     String
+  rawPayload Json?
+  createdAt  DateTime          @default(now())
+  user       User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

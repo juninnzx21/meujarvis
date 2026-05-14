@@ -1,0 +1,369 @@
+import request from "supertest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import axios from "axios";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { app } from "./app.js";
+import { prisma } from "./prisma/client.js";
+import { homeAssistantService } from "./services/homeAssistantService.js";
+import { n8nService } from "./services/n8nService.js";
+import { openAiService } from "./services/openAiService.js";
+import { writeSystemLog } from "./services/systemLogService.js";
+import { whatsappService } from "./services/whatsappService.js";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn()
+  }
+}));
+
+const credentials = { email: "admin@jarvis.local", password: "12345678" };
+let token = "";
+let automationId = "";
+let routineId = "";
+let notificationId = "";
+let userId = "";
+
+const auth = () => ({ Authorization: `Bearer ${token}` });
+
+describe("JARVIS Home AI API", () => {
+  beforeAll(async () => {
+    const login = await request(app).post("/api/auth/login").send(credentials).expect(200);
+    token = login.body.token;
+    userId = login.body.user.id;
+  });
+
+  afterAll(async () => {
+    if (automationId) {
+      await prisma.automation.deleteMany({ where: { id: automationId } });
+    }
+    if (routineId) {
+      await prisma.routine.deleteMany({ where: { id: routineId } });
+    }
+    if (notificationId) {
+      await prisma.notification.deleteMany({ where: { id: notificationId } });
+    }
+    await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
+    await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
+    await prisma.$disconnect();
+  });
+
+  it("authenticates the demo user without exposing password data", async () => {
+    const login = await request(app).post("/api/auth/login").send(credentials).expect(200);
+    expect(login.body.token).toEqual(expect.any(String));
+    expect(JSON.stringify(login.body)).not.toMatch(/password|passwordHash/i);
+
+    const me = await request(app).get("/api/auth/me").set(auth()).expect(200);
+    expect(me.body.user.email).toBe(credentials.email);
+  });
+
+  it("reports health and safe integration fallback status", async () => {
+    const health = await request(app).get("/api/health").expect(200);
+    expect(health.body.app).toBe("ok");
+    expect(health.body.database).toBe("ok");
+
+    const full = await request(app).get("/api/health/full").expect(200);
+    expect(full.body.integrations.n8n.status).toMatch(/configured|not_configured/);
+    expect(full.body.integrations.whatsapp.autoReply).toBe(false);
+    expect(full.body.observability.uptimeSeconds).toEqual(expect.any(Number));
+    expect(full.body.observability.logsCount).toEqual(expect.any(Number));
+    expect(Array.isArray(full.body.observability.recentFailures)).toBe(true);
+  });
+
+  it("persists chat conversations and messages", async () => {
+    const chat = await request(app)
+      .post("/api/chat/send")
+      .set(auth())
+      .send({ content: "Olá Jarvis, qual o status do sistema?" })
+      .expect(200);
+
+    expect(chat.body.reply).toContain("Status do sistema");
+    expect(chat.body.conversation.id).toEqual(expect.any(String));
+
+    const detail = await request(app).get(`/api/chat/conversations/${chat.body.conversation.id}`).set(auth()).expect(200);
+    expect(detail.body.conversation.messages.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("supports memory CRUD and memory creation through chat intent", async () => {
+    const created = await request(app)
+      .post("/api/memories")
+      .set(auth())
+      .send({ title: "Teste automatizado memória", content: "Conteúdo de teste", type: "note", tags: ["test"], importance: 3 })
+      .expect(201);
+
+    await request(app)
+      .put(`/api/memories/${created.body.memory.id}`)
+      .set(auth())
+      .send({ title: "Teste automatizado memória editada", content: "Editado", type: "note", tags: ["test"], importance: 4 })
+      .expect(200);
+
+    const chat = await request(app)
+      .post("/api/chat/send")
+      .set(auth())
+      .send({ content: "lembre que eu gosto de automações com n8n" })
+      .expect(200);
+    expect(chat.body.intent).toBe("memory.create");
+
+    const list = await request(app).get("/api/memories?q=n8n").set(auth()).expect(200);
+    expect(list.body.memories.length).toBeGreaterThan(0);
+
+    await request(app).delete(`/api/memories/${created.body.memory.id}`).set(auth()).expect(204);
+  });
+
+  it("supports task CRUD and task creation through chat intent", async () => {
+    const created = await request(app)
+      .post("/api/tasks")
+      .set(auth())
+      .send({ title: "Teste automatizado tarefa", description: "Teste", priority: "high", status: "pending" })
+      .expect(201);
+
+    await request(app)
+      .put(`/api/tasks/${created.body.task.id}`)
+      .set(auth())
+      .send({ title: "Teste automatizado tarefa editada", description: "Editado", priority: "urgent", status: "in_progress" })
+      .expect(200);
+
+    const done = await request(app).patch(`/api/tasks/${created.body.task.id}/status`).set(auth()).send({ status: "done" }).expect(200);
+    expect(done.body.task.status).toBe("done");
+
+    const chat = await request(app)
+      .post("/api/chat/send")
+      .set(auth())
+      .send({ content: "crie uma tarefa para testar o sistema amanhã às 9h" })
+      .expect(200);
+    expect(chat.body.intent).toBe("task.create");
+
+    await request(app).delete(`/api/tasks/${created.body.task.id}`).set(auth()).expect(204);
+  });
+
+  it("runs safe automations, writes logs, and blocks dangerous actions", async () => {
+    const created = await request(app)
+      .post("/api/automations")
+      .set(auth())
+      .send({ name: "Teste automatizado automação", triggerType: "manual", actionType: "internal", enabled: true, config: { action: "test" } })
+      .expect(201);
+    automationId = created.body.automation.id;
+
+    const run = await request(app).post(`/api/automations/${automationId}/run`).set(auth()).send({ input: "test" }).expect(200);
+    expect(run.body.log.status).toBe("success");
+
+    const logs = await request(app).get(`/api/automations/${automationId}/logs`).set(auth()).expect(200);
+    expect(logs.body.logs.length).toBeGreaterThan(0);
+
+    await request(app)
+      .post("/api/automations")
+      .set(auth())
+      .send({ name: "Teste automatizado perigoso", triggerType: "manual", actionType: "internal", enabled: true, config: { cmd: "rm -rf /" } })
+      .expect(400);
+  });
+
+  it("returns friendly fallback responses for disabled integrations", async () => {
+    await request(app).get("/api/n8n/status").set(auth()).expect(200).expect((res) => {
+      expect(res.body.configured).toBe(false);
+    });
+    await request(app).post("/api/n8n/trigger").set(auth()).send({ test: true }).expect(200).expect((res) => {
+      expect(res.body.status).toBe("not_configured");
+    });
+    await request(app).get("/api/whatsapp/status").set(auth()).expect(200).expect((res) => {
+      expect(res.body.autoReply).toBe(false);
+    });
+    await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "5511999999999", content: "teste", confirmed: true }).expect(200).expect((res) => {
+      expect(res.body.status).toBe("not_configured");
+    });
+    await request(app).get("/api/home-assistant/status").set(auth()).expect(200).expect((res) => {
+      expect(res.body.configured).toBe(false);
+    });
+    await request(app).get("/api/home-assistant/entities").set(auth()).expect(200).expect((res) => {
+      expect(res.body.status).toBe("not_configured");
+    });
+  });
+
+  it("uses OpenAI fallback safely when the provider returns quota errors", async () => {
+    openAiService.setClientForTests({
+      chat: {
+        completions: {
+          create: vi.fn().mockRejectedValue(new Error("429 quota exceeded"))
+        }
+      }
+    } as never);
+
+    const reply = await openAiService.complete([{ role: "user", content: "teste" }]);
+    expect(reply).toContain("modo seguro local");
+    expect(openAiService.status().status).toBe("quota_exceeded");
+    openAiService.setClientForTests(null);
+  });
+
+  it("uses Gemini when OpenAI fails and Gemini is configured", async () => {
+    openAiService.setClientForTests({
+      chat: {
+        completions: {
+          create: vi.fn().mockRejectedValue(new Error("429 quota exceeded"))
+        }
+      }
+    } as never);
+    vi.mocked(axios.post).mockResolvedValueOnce({
+      status: 200,
+      data: {
+        candidates: [
+          {
+            content: {
+              parts: [{ text: "Resposta via Gemini fallback." }]
+            }
+          }
+        ]
+      }
+    });
+
+    const reply = await openAiService.complete([{ role: "user", content: "teste fallback gemini" }]);
+    expect(reply).toContain("Gemini fallback");
+    expect(openAiService.status().fallbackProvider).toBe("gemini");
+    openAiService.setClientForTests(null);
+  });
+
+  it("tests configured n8n webhook with redacted logs through a mocked HTTP call", async () => {
+    const previous = n8nService.configured;
+    n8nService.configured = true;
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, token: "secret-token" } });
+
+    const res = await request(app).post("/api/n8n/test").set(auth()).send({ ignored: true }).expect(200);
+    expect(res.body.status).toBe("success");
+
+    const logs = await request(app).get("/api/logs?module=n8n").set(auth()).expect(200);
+    expect(JSON.stringify(logs.body)).not.toContain("secret-token");
+    n8nService.configured = previous;
+  });
+
+  it("validates WhatsApp phone numbers and sends through a mocked Evolution API", async () => {
+    await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "abc", content: "teste", confirmed: true }).expect(400);
+
+    const previous = whatsappService.configured;
+    whatsappService.configured = true;
+    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { instance: "open" } });
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, apikey: "secret-key" } });
+
+    const test = await request(app).post("/api/whatsapp/test-connection").set(auth()).expect(200);
+    expect(test.body.status).toBe("success");
+
+    const send = await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "5511999999999", content: "teste", confirmed: true }).expect(200);
+    expect(send.body.status).toBe("success");
+    whatsappService.configured = previous;
+  });
+
+  it("groups mocked Home Assistant entities and blocks sensitive actions without confirmation", async () => {
+    const previous = homeAssistantService.configured;
+    homeAssistantService.configured = true;
+    vi.mocked(axios.get).mockResolvedValueOnce({
+      status: 200,
+      data: [
+        { entity_id: "light.sala", state: "on", attributes: { friendly_name: "Luz da sala" } },
+        { entity_id: "sensor.temperatura", state: "24", attributes: { friendly_name: "Temperatura" } }
+      ]
+    });
+
+    const entities = await request(app).get("/api/home-assistant/entities").set(auth()).expect(200);
+    expect(entities.body.grouped.light.length).toBe(1);
+    expect(entities.body.grouped.sensor.length).toBe(1);
+
+    const sensitive = await request(app)
+      .post("/api/home-assistant/call-service")
+      .set(auth())
+      .send({ domain: "cover", service: "open_cover", data: { entity_id: "cover.garagem" } })
+      .expect(200);
+    expect(sensitive.body.status).toBe("confirmation_required");
+
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: [{ ok: true }] });
+    const light = await request(app).post("/api/home-assistant/light").set(auth()).send({ entityId: "light.sala", action: "turn_on" }).expect(200);
+    expect(light.body.status).toBe("success");
+    homeAssistantService.configured = previous;
+  });
+
+  it("redacts sensitive metadata persisted in system logs", async () => {
+    await writeSystemLog({
+      userId,
+      module: "security-test",
+      action: "redact",
+      message: "Teste de redaction",
+      metadata: { apiKey: "secret-api-key", headers: { authorization: "Bearer secret-token", cookie: "session=secret" }, nested: { password: "123456" } }
+    });
+
+    const logs = await request(app).get("/api/logs?module=security-test").set(auth()).expect(200);
+    const payload = JSON.stringify(logs.body);
+    expect(payload).toContain("[REDACTED]");
+    expect(payload).not.toContain("secret-api-key");
+    expect(payload).not.toContain("secret-token");
+    expect(payload).not.toContain("123456");
+  });
+
+  it("lists and runs command center commands", async () => {
+    const list = await request(app).get("/api/commands").set(auth()).expect(200);
+    expect(list.body.commands.length).toBeGreaterThanOrEqual(10);
+    const run = await request(app).post("/api/commands/run").set(auth()).send({ phrase: "gerar relatório de pendências" }).expect(200);
+    expect(run.body.intent).toBe("report.tasks");
+  });
+
+  it("supports routines CRUD, run history, and seed routines", async () => {
+    const seed = await request(app).get("/api/routines").set(auth()).expect(200);
+    expect(seed.body.routines.length).toBeGreaterThanOrEqual(4);
+    const created = await request(app)
+      .post("/api/routines")
+      .set(auth())
+      .send({ name: "Teste automatizado rotina", description: "Rotina de teste", triggerType: "manual", enabled: true, config: { report: "tasks" } })
+      .expect(201);
+    routineId = created.body.routine.id;
+    const run = await request(app).post(`/api/routines/${routineId}/run`).set(auth()).send({ source: "test" }).expect(200);
+    expect(run.body.run.status).toBe("success");
+    const runs = await request(app).get(`/api/routines/${routineId}/runs`).set(auth()).expect(200);
+    expect(runs.body.runs.length).toBeGreaterThan(0);
+  });
+
+  it("generates intelligent reports", async () => {
+    await request(app).get("/api/reports/daily-summary").set(auth()).expect(200).expect((res) => {
+      expect(res.body.recommendations.length).toBeGreaterThan(0);
+    });
+    await request(app).get("/api/reports/tasks").set(auth()).expect(200).expect((res) => {
+      expect(Array.isArray(res.body.open)).toBe(true);
+    });
+    await request(app).get("/api/reports/system").set(auth()).expect(200).expect((res) => {
+      expect(res.body.health.database).toBe("ok");
+    });
+    await request(app).get("/api/reports/activity").set(auth()).expect(200).expect((res) => {
+      expect(Array.isArray(res.body.logs)).toBe(true);
+    });
+  });
+
+  it("supports notifications and read state", async () => {
+    const notification = await prisma.notification.create({ data: { userId, title: "Teste automatizado notificacao", message: "Aviso seguro", type: "info" } });
+    notificationId = notification.id;
+    const list = await request(app).get("/api/notifications").set(auth()).expect(200);
+    expect(list.body.notifications.some((item: { id: string }) => item.id === notificationId)).toBe(true);
+    const read = await request(app).patch(`/api/notifications/${notificationId}/read`).set(auth()).expect(200);
+    expect(read.body.notification.readAt).toEqual(expect.any(String));
+    await request(app).patch("/api/notifications/read-all").set(auth()).expect(200);
+  });
+
+  it("supports reminderAt, today and overdue task filters", async () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const today = new Date().toISOString();
+    const created = await request(app)
+      .post("/api/tasks")
+      .set(auth())
+      .send({ title: "Teste automatizado lembrete", dueDate: yesterday, reminderAt: today, priority: "high" })
+      .expect(201);
+    expect(created.body.task.reminderAt).toEqual(expect.any(String));
+    const overdue = await request(app).get("/api/tasks?overdue=true").set(auth()).expect(200);
+    expect(overdue.body.tasks.some((item: { id: string }) => item.id === created.body.task.id)).toBe(true);
+    await request(app).get("/api/tasks/pending-overdue").set(auth()).expect(200);
+    await request(app).delete(`/api/tasks/${created.body.task.id}`).set(auth()).expect(204);
+  });
+
+  it("ships local production and backup PowerShell scripts", () => {
+    const root = resolve(process.cwd(), "..");
+    const scripts = ["start-jarvis.ps1", "stop-jarvis.ps1", "status-jarvis.ps1", "backup-jarvis.ps1", "restore-jarvis.ps1", "validate-jarvis.ps1"];
+    for (const script of scripts) {
+      const path = resolve(root, script);
+      expect(existsSync(path), `${script} should exist`).toBe(true);
+      expect(readFileSync(path, "utf8")).toContain("E:\\jarvis-home-assistant");
+    }
+  });
+});
