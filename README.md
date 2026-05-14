@@ -162,3 +162,9 @@ Copie `.env.example` para `.env` e `backend\.env.example` para `backend\.env`. A
 - Tela de notificacoes ganhou filtros, contador de nao lidas e leitura individual.
 - Tela `/status` mostra status do scheduler.
 - Guia operacional: [SCHEDULER_GUIDE.md](./SCHEDULER_GUIDE.md).
+
+## Banco de dados
+
+- O backend usa PostgreSQL via Prisma.
+- Banco MySQL/MariaDB da hospedagem compartilhada nao deve substituir o PostgreSQL sem uma fase de migracao.
+- Plano seguro: [DATABASE_MIGRATION_PLAN.md](./DATABASE_MIGRATION_PLAN.md).

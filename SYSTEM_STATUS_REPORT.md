@@ -75,6 +75,7 @@ Observacao: UFW tambem mostra `5678` e `8081` abertos. Revisar antes de remover 
 - Aguardar cache DNS residual do `apijarvis` em resolvedores locais, se aparecer.
 - DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
 - Remover proxy temporario de `apijarvis` na Fabweb quando nao houver mais cache DNS antigo.
+- Banco MySQL/MariaDB da Fabweb recebido nao foi aplicado ao JARVIS porque a aplicacao usa PostgreSQL. Ver `DATABASE_MIGRATION_PLAN.md`.
 
 ## Resultado
 
