@@ -11,7 +11,7 @@ const router = Router();
 
 const configSchema = z.object({
   apiUrl: z.string().url("Informe a URL da Evolution API.").transform((value) => value.replace(/\/+$/, "")),
-  apiKey: z.string().optional(),
+  apiKey: z.string().optional().refine((value) => !value || !/^https?:\/\//i.test(value), "API key nao pode ser uma URL. Cole a chave da Evolution API."),
   instance: z.string().min(1, "Informe a instancia."),
   autoReply: z.boolean().default(false)
 });

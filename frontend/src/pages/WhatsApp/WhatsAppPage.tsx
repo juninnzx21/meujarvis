@@ -27,6 +27,10 @@ export function WhatsAppPage() {
 
   async function saveConfig(event: FormEvent) {
     event.preventDefault();
+    if (/^https?:\/\//i.test(config.apiKey.trim())) {
+      setMessage("O campo API Key recebeu uma URL. Cole a chave da Evolution API, nao o webhook.");
+      return;
+    }
     const res = await api.put("/whatsapp/config", config);
     setStatus(res.data);
     setConfig((current) => ({ ...current, apiKey: "" }));

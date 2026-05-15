@@ -185,12 +185,23 @@ export const whatsappService = {
       await writeSystemLog({ userId, level: "warning", module: "whatsapp", action: "test_connection", message: "WhatsApp nao configurado" });
       return { status: "not_configured", message: "Evolution API nao configurada." };
     }
-    const response = await axios.get(`${config.apiUrl}/instance/connectionState/${config.instance}`, {
-      headers: { apikey: config.apiKey },
-      timeout: 15000
-    });
-    await writeSystemLog({ userId, module: "whatsapp", action: "test_connection", message: "Conexao Evolution API testada", metadata: { status: response.status } });
-    return { status: "success", data: response.data };
+    try {
+      const response = await axios.get(`${config.apiUrl}/instance/connectionState/${config.instance}`, {
+        headers: { apikey: config.apiKey },
+        timeout: 15000
+      });
+      await writeSystemLog({ userId, module: "whatsapp", action: "test_connection", message: "Conexao Evolution API testada", metadata: { status: response.status } });
+      return { status: "success", data: response.data };
+    } catch (error) {
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      const message = statusCode === 404
+        ? "Evolution API respondeu, mas a instancia nao foi encontrada. Confira o nome da instancia e a API key."
+        : statusCode === 401 || statusCode === 403
+          ? "Evolution API recusou a chave. Confira a API key."
+          : "Nao foi possivel testar a Evolution API agora.";
+      await writeSystemLog({ userId, level: "warning", module: "whatsapp", action: "test_connection_failed", message, metadata: { statusCode } });
+      return { status: "error", message };
+    }
   },
   async send(phone: string, content: string, userId?: string) {
     if (!this.isValidPhone(phone)) return { status: "invalid_phone", message: "Numero deve conter apenas digitos, com DDI, entre 10 e 15 caracteres." };
