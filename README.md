@@ -1,6 +1,6 @@
 # JARVIS Home AI Assistant
 
-Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs e integracoes preparadas com OpenAI, n8n, Evolution API/WhatsApp e Home Assistant.
+Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs e integracoes preparadas com OpenAI, n8n, Evolution API/WhatsApp, Home Assistant e Controle Financeiro.
 
 ## Stack
 
@@ -80,6 +80,7 @@ npm run build
 - Tarefas CRUD e reconhecimento simples por comando.
 - Automacoes com allowlist, logs e bloqueio de acoes perigosas.
 - n8n, WhatsApp/Evolution API e Home Assistant com status `not_configured` quando faltam credenciais.
+- Controle Financeiro em `/finance`, com configuracao por usuario, teste de token, lancamento manual, resumo mensal e comandos financeiros por WhatsApp.
 - Telas de integracao para n8n, WhatsApp e Casa Inteligente com testes seguros via backend.
 - Logs estruturados em banco.
 - Configuracoes por usuario com status das credenciais.
@@ -98,6 +99,8 @@ Copie `.env.example` para `.env` e `backend\.env.example` para `backend\.env`. A
 - `HOME_ASSISTANT_URL`, `HOME_ASSISTANT_TOKEN`
 - `SCHEDULER_ENABLED`
 - `SCHEDULER_INTERVAL_SECONDS`
+
+O Controle Financeiro externo e configurado pelo painel `/finance`, nao por variavel no frontend. Cole apenas a URL publica do sistema e um token de API; nunca salve senha do painel financeiro dentro do JARVIS.
 
 ## Documentacao complementar
 
@@ -162,6 +165,18 @@ Copie `.env.example` para `.env` e `backend\.env.example` para `backend\.env`. A
 - Tela de notificacoes ganhou filtros, contador de nao lidas e leitura individual.
 - Tela `/status` mostra status do scheduler.
 - Guia operacional: [SCHEDULER_GUIDE.md](./SCHEDULER_GUIDE.md).
+
+## Integracao financeira
+
+- Painel: `/finance`.
+- API backend: `/api/finance/status`, `/api/finance/config`, `/api/finance/test-connection`, `/api/finance/transactions`, `/api/finance/summary/month` e `/api/finance/parse`.
+- Destino esperado: `https://controlefinanceiro.juninnzxtec.com.br`.
+- O token do controle financeiro fica salvo somente no backend/banco e e retornado apenas mascarado.
+- Pelo WhatsApp, com Evolution API e auto reply ativos, o JARVIS entende mensagens como:
+  - `entrada pix recebido R$ 120,00 cliente Joao`
+  - `saida pix enviado R$ 45,90 mercado`
+  - `resumo financeiro do mes`
+- Comprovantes em imagem/PDF ainda precisam ser enviados como texto ou audio nesta fase. OCR de comprovantes pode ser a proxima evolucao.
 
 ## Banco de dados
 

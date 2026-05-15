@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppLayout } from "../layouts/AppLayout";
 import { CommandsPage } from "./Commands/CommandsPage";
+import { FinancePage } from "./Finance/FinancePage";
 import { NotificationsPage } from "./Notifications/NotificationsPage";
 import { ReportsPage } from "./Reports/ReportsPage";
 import { RoutinesPage } from "./Routines/RoutinesPage";
@@ -16,10 +17,15 @@ vi.mock("../services/api", () => ({
     get: vi.fn((url: string) => {
       if (url === "/commands") return Promise.resolve({ data: { commands: [{ id: "system.status", title: "status do sistema", example: "status do sistema", safety: "safe" }] } });
       if (url === "/routines") return Promise.resolve({ data: { routines: [{ id: "r1", name: "Resumo diario", description: "Resumo", enabled: true, triggerType: "schedule", config: { schedule: { type: "daily" } } }] } });
+      if (url === "/finance/status") return Promise.resolve({ data: { status: "not_configured", apiUrl: "https://controlefinanceiro.juninnzxtec.com.br", tokenConfigured: false } });
       if (url.startsWith("/notifications")) return Promise.resolve({ data: { unreadCount: 1, notifications: [{ id: "n1", title: "Aviso", message: "Mensagem", type: "warning", createdAt: new Date().toISOString() }] } });
+      if (url === "/finance/summary/month") return Promise.resolve({ data: { status: "success", data: { income: 100, expense: 50, pending_expense: 10 } } });
       return Promise.resolve({ data: { recommendations: ["ok"], open: [], overdue: [], logs: [] } });
     }),
-    post: vi.fn(() => Promise.resolve({ data: { ok: true } })),
+    post: vi.fn((url: string) => {
+      if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
+      return Promise.resolve({ data: { ok: true } });
+    }),
     patch: vi.fn(() => Promise.resolve({ data: { ok: true } }))
   },
   friendlyError: () => "erro"
@@ -45,6 +51,13 @@ describe("Phase 5 and 6 pages", () => {
     render(<ReportsPage />);
     expect(await screen.findByText("Relatorios")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Resumo do dia")).toBeInTheDocument());
+  });
+
+  it("renders finance integration page and parser", async () => {
+    render(<FinancePage />);
+    expect(await screen.findByText("Controle Financeiro")).toBeInTheDocument();
+    expect(screen.getByText("Configuração segura")).toBeInTheDocument();
+    expect(screen.getByText("Analisar texto, comprovante ou extrato")).toBeInTheDocument();
   });
 
   it("renders notification filters and unread count", async () => {

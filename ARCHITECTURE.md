@@ -59,6 +59,8 @@ A pagina Voz usa Web Speech API quando disponivel, envia transcricao para `POST 
 - n8n teste: `POST /api/n8n/test` envia payload seguro e grava logs redigidos.
 - WhatsApp: `WhatsAppService` usa Evolution API, exige confirmacao para envio, valida telefone e nao faz disparo em massa.
 - WhatsApp webhook: auto reply ignora mensagens do proprio JARVIS e grupos para reduzir risco de loop.
+- Controle Financeiro: `FinanceIntegrationService` guarda URL/token por usuario em `Setting`, retorna token apenas mascarado, testa `/api/v1/me`, consulta `/api/v1/summary/month` e cria lancamentos em `/api/v1/transactions`.
+- Controle Financeiro via WhatsApp: antes do orquestrador geral, o webhook tenta interpretar mensagens financeiras com entrada/saida e valor; se reconhecer, registra no sistema externo ou pede complemento sem expor segredo.
 - Home Assistant: `HomeAssistantService` lista entidades agrupadas, chama servicos e conversa via `conversation.process`; dominios sensiveis exigem confirmacao.
 - Home Assistant sensivel: `lock`, `alarm_control_panel`, `cover`, garagem, portao, abrir/destravar e termos similares exigem confirmacao.
 

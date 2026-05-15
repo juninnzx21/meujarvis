@@ -4,6 +4,7 @@ import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../prisma/client.js";
 import { aiOrchestratorService } from "../../services/aiOrchestratorService.js";
+import { financeIntegrationService } from "../../services/financeIntegrationService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -52,8 +53,13 @@ router.post("/webhook", asyncHandler(async (req, res) => {
   if (admin) {
     const config = await whatsappService.runtimeConfig(admin.id);
     if (config.autoReply && content && !inbound.fromJarvis && !inbound.isGroup) {
-      const response = await aiOrchestratorService.process(admin.id, content);
-      await whatsappService.send(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
+      const financeReply = await financeIntegrationService.handleWhatsAppText(admin.id, content);
+      if (financeReply) {
+        await whatsappService.send(inbound.cleanPhone || inbound.phone, financeReply, admin.id);
+      } else {
+        const response = await aiOrchestratorService.process(admin.id, content);
+        await whatsappService.send(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
+      }
     } else if (inbound.hasAudio && !content) {
       await whatsappService.send(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);
     }

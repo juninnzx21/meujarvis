@@ -152,3 +152,56 @@ POST /api/home-assistant/light
 ```
 
 Somente entidades `light.*` sao aceitas nesse endpoint.
+
+## Controle Financeiro
+
+Objetivo: permitir que o JARVIS registre entradas/saidas e consulte resumo mensal no sistema `controlefinanceiro.juninnzxtec.com.br`, inclusive por comandos de WhatsApp.
+
+Configuracao pelo painel:
+
+1. Acesse `Financeiro` no menu lateral do JARVIS.
+2. Informe a URL:
+
+```text
+https://controlefinanceiro.juninnzxtec.com.br
+```
+
+3. Cole um token de API/Bearer do Controle Financeiro.
+4. Clique em `Salvar` e depois `Testar conexao`.
+
+Seguranca:
+
+- Nao salve usuario/senha do Controle Financeiro no JARVIS.
+- O token fica somente no backend/banco.
+- O frontend recebe apenas `tokenConfigured=true/false` e uma mascara do token.
+- Logs nunca devem gravar o token.
+
+Endpoints JARVIS:
+
+- `GET /api/finance/status`
+- `GET /api/finance/config`
+- `PUT /api/finance/config`
+- `DELETE /api/finance/config`
+- `POST /api/finance/test-connection`
+- `GET /api/finance/summary/month`
+- `POST /api/finance/transactions`
+- `POST /api/finance/parse`
+
+Comandos WhatsApp:
+
+```text
+entrada pix recebido R$ 120,00 cliente Maria
+saida pix enviado R$ 89,90 internet
+paguei R$ 35,00 estacionamento
+recebi R$ 250,00 servico de manutencao
+resumo financeiro do mes
+extrato financeiro do mes
+```
+
+Regras:
+
+- Informe sempre se e entrada ou saida.
+- Informe o valor com `R$` quando possivel.
+- Se a mensagem parecer financeira, mas faltar tipo ou valor, o JARVIS pede complemento.
+- Audio funciona quando a Evolution API envia midia acessivel para transcricao.
+- Imagem/PDF de comprovante ainda nao tem OCR nesta fase; envie tambem o texto ou valor.

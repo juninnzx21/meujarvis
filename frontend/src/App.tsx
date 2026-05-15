@@ -5,6 +5,7 @@ import { AutomationsPage } from "./pages/Automations/AutomationsPage";
 import { ChatPage } from "./pages/Chat/ChatPage";
 import { CommandsPage } from "./pages/Commands/CommandsPage";
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
+import { FinancePage } from "./pages/Finance/FinancePage";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { LogsPage } from "./pages/Logs/LogsPage";
 import { MemoryPage } from "./pages/Memory/MemoryPage";
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="commands" element={<CommandsPage />} />
         <Route path="routines" element={<RoutinesPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="finance" element={<FinancePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="automations" element={<AutomationsPage />} />
         <Route path="memory" element={<MemoryPage />} />

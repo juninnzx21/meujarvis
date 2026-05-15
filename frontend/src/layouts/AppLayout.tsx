@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Activity, Bell, Bot, Brain, Gauge, Home, ListTodo, LogOut, Menu, MessageSquare, Mic, PlaySquare, ScrollText, Settings, Share2, Smartphone } from "lucide-react";
+import { Activity, Bell, Bot, Brain, Gauge, Home, ListTodo, LogOut, Menu, MessageSquare, Mic, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
@@ -11,6 +11,7 @@ const items = [
   { to: "/commands", label: "Comandos", icon: PlaySquare },
   { to: "/routines", label: "Rotinas", icon: Activity },
   { to: "/reports", label: "Relatorios", icon: ScrollText },
+  { to: "/finance", label: "Financeiro", icon: WalletCards },
   { to: "/notifications", label: "Notificacoes", icon: Bell },
   { to: "/automations", label: "Automacoes", icon: Share2 },
   { to: "/memory", label: "Memoria", icon: Brain },

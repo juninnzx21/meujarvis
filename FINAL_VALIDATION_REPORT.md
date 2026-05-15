@@ -30,6 +30,7 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 - Banco respondeu `database=ok`.
 - Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
 - Fallbacks n8n, WhatsApp e Home Assistant responderam `not_configured`.
+- Controle Financeiro recebeu modulo local para configuracao segura, parser e comandos WhatsApp; requer token real para validacao end-to-end com o sistema externo.
 - Containers Docker ativos.
 - Caddy ativo.
 - Postgres healthy.
@@ -51,3 +52,4 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 - Aguardar/validar cache DNS residual em resolvedores locais.
 - Resultado DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
 - Proxy temporario na Fabweb pode ser removido apos propagacao completa de `apijarvis`.
+- Configurar token do Controle Financeiro em `/finance` e testar conexao antes de usar comandos financeiros por WhatsApp.

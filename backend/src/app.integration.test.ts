@@ -15,7 +15,8 @@ import { writeSystemLog } from "./services/systemLogService.js";
 vi.mock("axios", () => ({
   default: {
     get: vi.fn(),
-    post: vi.fn()
+    post: vi.fn(),
+    request: vi.fn()
   }
 }));
 
@@ -52,6 +53,7 @@ describe("JARVIS Home AI API", () => {
     }
     await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
+    await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token"] } } });
     if (schedulerTaskIds.length > 0) {
       await prisma.task.deleteMany({ where: { id: { in: schedulerTaskIds } } });
     }
@@ -186,6 +188,42 @@ describe("JARVIS Home AI API", () => {
     await request(app).get("/api/home-assistant/entities").set(auth()).expect(200).expect((res) => {
       expect(res.body.status).toBe("not_configured");
     });
+  });
+
+  it("configures finance integration, parses transactions, and masks tokens", async () => {
+    const fallback = await request(app).get("/api/finance/status").set(auth()).expect(200);
+    expect(fallback.body.status).toMatch(/configured|not_configured/);
+
+    const saved = await request(app)
+      .put("/api/finance/config")
+      .set(auth())
+      .send({ apiUrl: "https://controlefinanceiro.test", token: "fake-finance-token" })
+      .expect(200);
+    expect(saved.body.status).toBe("configured");
+    expect(JSON.stringify(saved.body)).not.toContain("fake-finance-token");
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 200, data: { data: { id: "u1", name: "Finance Admin" } } });
+    const test = await request(app).post("/api/finance/test-connection").set(auth()).expect(200);
+    expect(test.body.status).toBe("success");
+
+    const parsed = await request(app)
+      .post("/api/finance/parse")
+      .set(auth())
+      .send({ text: "entrada pix recebido R$ 120,00 cliente teste" })
+      .expect(200);
+    expect(parsed.body.parsed.type).toBe("income");
+    expect(parsed.body.parsed.amount).toBe(120);
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 201, data: { data: { id: "t1" } } });
+    const created = await request(app)
+      .post("/api/finance/transactions")
+      .set(auth())
+      .send({ type: "income", status: "received", description: "Teste automatizado financeiro", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" })
+      .expect(200);
+    expect(created.body.status).toBe("success");
+
+    const cleared = await request(app).delete("/api/finance/config").set(auth()).expect(200);
+    expect(cleared.body.status).toBe("not_configured");
   });
 
   it("uses OpenAI fallback safely when the provider returns quota errors", async () => {

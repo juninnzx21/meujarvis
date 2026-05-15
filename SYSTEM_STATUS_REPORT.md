@@ -44,6 +44,7 @@
 | Proxy temporario apijarvis Fabweb | OK, preflight CORS e login encaminhados para VPS |
 | Configuracao WhatsApp/Evolution pelo painel | OK, CRUD seguro sem expor API key |
 | WhatsApp texto/audio para comandos | Preparado, texto executa via orquestrador e audio transcreve quando Evolution envia midia acessivel |
+| Controle Financeiro | Implementado localmente em `/finance`; valida configuracao, token mascarado, parser de entrada/saida, resumo mensal e envio para API externa |
 
 ## Portas
 
@@ -78,6 +79,8 @@ Observacao: UFW tambem mostra `5678` e `8081` abertos. Revisar antes de remover 
 - DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
 - Remover proxy temporario de `apijarvis` na Fabweb quando nao houver mais cache DNS antigo.
 - Banco MySQL/MariaDB da Fabweb recebido nao foi aplicado ao JARVIS porque a aplicacao usa PostgreSQL. Ver `DATABASE_MIGRATION_PLAN.md`.
+- Controle Financeiro depende de token valido do sistema `controlefinanceiro.juninnzxtec.com.br` configurado em `/finance`.
+- OCR de comprovantes em imagem/PDF ainda nao foi implementado; por enquanto use texto/audio com tipo e valor.
 
 ## Resultado
 
