@@ -111,7 +111,15 @@ Numeros devem conter apenas digitos, com DDI, entre 10 e 15 caracteres. Grupos e
 
 Comandos de IA devem apenas preparar mensagem. O envio final deve acontecer pela tela WhatsApp com confirmacao.
 
-Audio recebido por WhatsApp ainda exige uma fase propria de transcricao. O caminho planejado e: Evolution API baixa midia, JARVIS transcreve, envia o texto para o orquestrador e executa comandos seguros com confirmacao quando necessario.
+Audio recebido por WhatsApp:
+
+- O webhook detecta audio quando a Evolution API envia `audioMessage`, URL de midia ou base64.
+- Se a midia vier como base64 ou URL acessivel, o JARVIS transcreve com OpenAI/Whisper.
+- O texto transcrito entra no mesmo orquestrador usado pelo chat.
+- Exemplo de audio: "Jarvis, crie uma tarefa para amanha as nove ligar para o cliente".
+- Se a Evolution enviar apenas metadados sem midia baixavel, o JARVIS registra o recebimento e pede para reenviar em texto.
+
+Para execucao automatica via WhatsApp, habilite `Resposta automatica pelo WhatsApp` somente depois de testar webhook e conexao. Acoes sensiveis continuam exigindo confirmacao.
 
 ## Home Assistant
 

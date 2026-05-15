@@ -31,20 +31,34 @@ router.post("/send", authMiddleware, validate(z.object({ phone: z.string().regex
 }));
 
 router.post("/webhook", asyncHandler(async (req, res) => {
-  const phone = String(req.body?.data?.key?.remoteJid ?? req.body?.phone ?? "desconhecido");
-  const content = String(req.body?.data?.message?.conversation ?? req.body?.content ?? "");
-  await prisma.whatsAppMessage.create({ data: { phone, content, direction: "inbound", status: "received", rawPayload: req.body } });
-  const fromJarvis = Boolean(req.body?.jarvisAutoReply || req.body?.data?.key?.fromMe);
-  const isGroup = phone.includes("@g.us");
+  const inbound = whatsappService.extractInbound(req.body);
   const admin = await prisma.user.findFirst({ where: { role: "admin" } });
+  let content = inbound.text;
+  let transcriptionStatus = "";
+  if (!content && inbound.hasAudio && admin) {
+    const transcription = await whatsappService.transcribeInboundAudio(req.body, admin.id);
+    content = transcription.text;
+    transcriptionStatus = transcription.status;
+  }
+  await prisma.whatsAppMessage.create({
+    data: {
+      phone: inbound.phone,
+      content: content || (inbound.hasAudio ? "[audio recebido sem transcricao]" : ""),
+      direction: "inbound",
+      status: content ? "received" : "received_unprocessed",
+      rawPayload: req.body
+    }
+  });
   if (admin) {
     const config = await whatsappService.runtimeConfig(admin.id);
-    if (config.autoReply && content && !fromJarvis && !isGroup) {
+    if (config.autoReply && content && !inbound.fromJarvis && !inbound.isGroup) {
       const response = await aiOrchestratorService.process(admin.id, content);
-      await whatsappService.send(phone, response.reply, admin.id);
+      await whatsappService.send(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
+    } else if (inbound.hasAudio && !content) {
+      await whatsappService.send(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);
     }
   }
-  res.json({ received: true });
+  res.json({ received: true, processedText: Boolean(content), transcriptionStatus: transcriptionStatus || undefined });
 }));
 
 router.get("/messages", authMiddleware, asyncHandler(async (req, res) => {

@@ -125,6 +125,10 @@ export function WhatsAppPage() {
           <ShieldCheck size={18} className="shrink-0 text-cyanx" />
           <p>Auto reply: {String(status.autoReply)}. Para evitar spam, mantenha desligado ate validar o webhook e os comandos. Credenciais permanecem somente no backend.</p>
         </div>
+        <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-slate-400">
+          <p className="font-semibold text-slate-200">Comandos por texto e audio</p>
+          <p className="mt-1">Com o webhook ativo, mensagens como "crie uma tarefa para amanha as 9h" passam pelo orquestrador do JARVIS. Audios enviados pela Evolution API sao transcritos pela OpenAI quando a midia vier no payload como base64 ou URL.</p>
+        </div>
       </aside>
     </section>
   );

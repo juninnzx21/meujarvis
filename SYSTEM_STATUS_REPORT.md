@@ -43,6 +43,7 @@
 | Chat API dedicada | OK, conversa persistida |
 | Proxy temporario apijarvis Fabweb | OK, preflight CORS e login encaminhados para VPS |
 | Configuracao WhatsApp/Evolution pelo painel | OK, CRUD seguro sem expor API key |
+| WhatsApp texto/audio para comandos | Preparado, texto executa via orquestrador e audio transcreve quando Evolution envia midia acessivel |
 
 ## Portas
 

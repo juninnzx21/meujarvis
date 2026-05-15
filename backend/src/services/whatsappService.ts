@@ -2,6 +2,7 @@ import axios from "axios";
 import type { Prisma } from "@prisma/client";
 import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
+import { openAiService } from "./openAiService.js";
 import { writeSystemLog } from "./systemLogService.js";
 
 const keys = {
@@ -31,6 +32,26 @@ function maskSecret(value: string) {
   if (!value) return "";
   if (value.length <= 8) return "********";
   return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+function findFirstString(value: unknown, keysToMatch: RegExp[]): string {
+  if (!value || typeof value !== "object") return "";
+  const stack = [value as Record<string, unknown>];
+  const seen = new Set<unknown>();
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || seen.has(current)) continue;
+    seen.add(current);
+    for (const [key, item] of Object.entries(current)) {
+      if (typeof item === "string" && keysToMatch.some((pattern) => pattern.test(key))) return item;
+      if (item && typeof item === "object") stack.push(item as Record<string, unknown>);
+    }
+  }
+  return "";
+}
+
+function normalizePhone(phone: string) {
+  return phone.replace(/@s\.whatsapp\.net|@c\.us|@g\.us/g, "").replace(/\D/g, "");
 }
 
 export const whatsappService = {
@@ -113,6 +134,50 @@ export const whatsappService = {
   },
   isValidPhone(phone: string) {
     return /^\d{10,15}$/.test(phone);
+  },
+  extractInbound(payload: unknown) {
+    const body = (payload || {}) as Record<string, any>;
+    const phone = String(body?.data?.key?.remoteJid ?? body?.key?.remoteJid ?? body?.phone ?? body?.from ?? "desconhecido");
+    const message = body?.data?.message ?? body?.message ?? {};
+    const text = String(
+      message?.conversation ??
+      message?.extendedTextMessage?.text ??
+      body?.content ??
+      body?.text ??
+      ""
+    ).trim();
+    const audio = message?.audioMessage ?? body?.audioMessage ?? body?.audio ?? null;
+    const mediaUrl = findFirstString(audio || body, [/^(url|mediaUrl|downloadUrl|fileUrl)$/i]);
+    const base64 = findFirstString(audio || body, [/^(base64|media|file|data)$/i]);
+    const mimeType = findFirstString(audio || body, [/mimetype|mimeType/i]) || "audio/ogg";
+    const fromJarvis = Boolean(body?.jarvisAutoReply || body?.data?.key?.fromMe || body?.key?.fromMe);
+    const isGroup = phone.includes("@g.us");
+    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio: Boolean(audio || mediaUrl || base64) };
+  },
+  async transcribeInboundAudio(payload: unknown, userId?: string) {
+    const inbound = this.extractInbound(payload);
+    if (!inbound.hasAudio) return { status: "no_audio", text: "" };
+    let buffer: Buffer | null = null;
+    if (inbound.base64) {
+      const normalizedBase64 = inbound.base64.replace(/^data:[^;]+;base64,/, "");
+      if (/^[A-Za-z0-9+/=\s]+$/.test(normalizedBase64) && normalizedBase64.length > 64) {
+        buffer = Buffer.from(normalizedBase64, "base64");
+      }
+    } else if (inbound.mediaUrl && /^https?:\/\//i.test(inbound.mediaUrl)) {
+      const config = await this.runtimeConfig(userId);
+      const response = await axios.get<ArrayBuffer>(inbound.mediaUrl, {
+        responseType: "arraybuffer",
+        headers: config.apiKey ? { apikey: config.apiKey } : undefined,
+        timeout: 30000
+      });
+      buffer = Buffer.from(response.data);
+    }
+    if (!buffer || buffer.length === 0) return { status: "audio_unavailable", text: "", message: "Audio recebido, mas a midia nao veio disponivel para transcricao." };
+    const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" });
+    if (transcribed.text) {
+      await writeSystemLog({ userId, module: "whatsapp", action: "audio_transcribed", message: "Audio WhatsApp transcrito com sucesso", metadata: { phone: inbound.cleanPhone, bytes: buffer.length } });
+    }
+    return transcribed;
   },
   async testConnection(userId?: string) {
     const config = await this.runtimeConfig(userId);
