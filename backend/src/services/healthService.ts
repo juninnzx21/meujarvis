@@ -30,13 +30,14 @@ export async function getHealth(full = false) {
     database = "error";
   }
 
+  const whatsappStatus = await whatsappService.status();
   const base = {
     app: "ok",
     database,
     openaiConfigured: openAiService.configured,
     geminiConfigured: geminiService.configured,
     n8nConfigured: n8nService.configured,
-    whatsappConfigured: whatsappService.configured,
+    whatsappConfigured: whatsappStatus.configured,
     homeAssistantConfigured: homeAssistantService.configured,
     uptimeSeconds: Math.round(process.uptime()),
     scheduler: schedulerService.status(),
@@ -49,7 +50,7 @@ export async function getHealth(full = false) {
     ...base,
     integrations: {
       n8n: n8nService.status(),
-      whatsapp: whatsappService.status(),
+      whatsapp: whatsappStatus,
       homeAssistant: homeAssistantService.status(),
       openai: openAiService.status()
       ,

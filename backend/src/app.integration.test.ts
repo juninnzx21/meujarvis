@@ -11,7 +11,6 @@ import { n8nService } from "./services/n8nService.js";
 import { openAiService } from "./services/openAiService.js";
 import { schedulerService } from "./services/schedulerService.js";
 import { writeSystemLog } from "./services/systemLogService.js";
-import { whatsappService } from "./services/whatsappService.js";
 
 vi.mock("axios", () => ({
   default: {
@@ -247,8 +246,14 @@ describe("JARVIS Home AI API", () => {
   it("validates WhatsApp phone numbers and sends through a mocked Evolution API", async () => {
     await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "abc", content: "teste", confirmed: true }).expect(400);
 
-    const previous = whatsappService.configured;
-    whatsappService.configured = true;
+    const saved = await request(app)
+      .put("/api/whatsapp/config")
+      .set(auth())
+      .send({ apiUrl: "https://evolution.test", apiKey: "secret-key", instance: "jarvis-test", autoReply: false })
+      .expect(200);
+    expect(saved.body.status).toBe("configured");
+    expect(JSON.stringify(saved.body)).not.toContain("secret-key");
+
     vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { instance: "open" } });
     vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, apikey: "secret-key" } });
 
@@ -257,7 +262,9 @@ describe("JARVIS Home AI API", () => {
 
     const send = await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "5511999999999", content: "teste", confirmed: true }).expect(200);
     expect(send.body.status).toBe("success");
-    whatsappService.configured = previous;
+
+    const cleared = await request(app).delete("/api/whatsapp/config").set(auth()).expect(200);
+    expect(cleared.body.status).toBe("not_configured");
   });
 
   it("groups mocked Home Assistant entities and blocks sensitive actions without confirmation", async () => {

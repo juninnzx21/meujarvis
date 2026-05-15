@@ -72,7 +72,22 @@ Payload base:
 
 ## WhatsApp / Evolution API
 
-Variaveis:
+Opcao 1, configurar pelo painel:
+
+1. Acesse `WhatsApp` no menu lateral.
+2. Informe URL da Evolution API, instancia e API key.
+3. Copie o webhook exibido na tela:
+
+```text
+https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook
+```
+
+4. Cole esse webhook na Evolution API para eventos de mensagem.
+5. Clique em `Salvar configuracao` e depois `Testar conexao`.
+
+A API key fica salva somente no backend/banco e nunca e retornada em claro para o frontend. Para editar a chave, cole uma nova. Para manter a atual, deixe o campo em branco. Para remover tudo, use `Limpar`.
+
+Opcao 2, configurar por `.env`:
 
 ```env
 EVOLUTION_API_URL=
@@ -84,6 +99,9 @@ WHATSAPP_AUTO_REPLY=false
 Endpoints:
 
 - `GET /api/whatsapp/status`
+- `GET /api/whatsapp/config`
+- `PUT /api/whatsapp/config`
+- `DELETE /api/whatsapp/config`
 - `POST /api/whatsapp/test-connection`
 - `POST /api/whatsapp/send`
 - `POST /api/whatsapp/webhook`
@@ -92,6 +110,8 @@ Envios exigem confirmacao. Auto reply fica desligado por padrao para evitar loop
 Numeros devem conter apenas digitos, com DDI, entre 10 e 15 caracteres. Grupos e mensagens geradas pelo proprio JARVIS nao disparam auto reply.
 
 Comandos de IA devem apenas preparar mensagem. O envio final deve acontecer pela tela WhatsApp com confirmacao.
+
+Audio recebido por WhatsApp ainda exige uma fase propria de transcricao. O caminho planejado e: Evolution API baixa midia, JARVIS transcreve, envia o texto para o orquestrador e executa comandos seguros com confirmacao quando necessario.
 
 ## Home Assistant
 

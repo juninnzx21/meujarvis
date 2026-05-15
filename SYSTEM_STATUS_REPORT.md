@@ -42,6 +42,7 @@
 | Login frontend Fabweb | OK |
 | Chat API dedicada | OK, conversa persistida |
 | Proxy temporario apijarvis Fabweb | OK, preflight CORS e login encaminhados para VPS |
+| Configuracao WhatsApp/Evolution pelo painel | OK, CRUD seguro sem expor API key |
 
 ## Portas
 
