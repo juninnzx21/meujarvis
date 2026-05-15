@@ -30,7 +30,7 @@ APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
 - Banco respondeu `database=ok`.
 - Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
 - Fallbacks n8n, WhatsApp e Home Assistant responderam `not_configured`.
-- Controle Financeiro recebeu modulo local para configuracao segura, parser e comandos WhatsApp; requer token real para validacao end-to-end com o sistema externo.
+- Controle Financeiro recebeu modulo publicado para configuracao segura, parser e comandos WhatsApp. `/api/finance/status` e `/api/finance/parse` foram validados em producao; registro end-to-end requer token real do sistema externo.
 - Containers Docker ativos.
 - Caddy ativo.
 - Postgres healthy.
