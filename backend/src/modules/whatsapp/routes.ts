@@ -8,6 +8,7 @@ import { financeIntegrationService } from "../../services/financeIntegrationServ
 import { statementImportService } from "../../services/statementImportService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { redactSensitive } from "../../utils/redact.js";
 
 const router = Router();
 
@@ -53,7 +54,7 @@ router.post("/webhook", asyncHandler(async (req, res) => {
       content: content || (inbound.hasAudio ? "[audio recebido sem transcricao]" : inbound.attachment.hasAttachment ? "[arquivo recebido sem wake phrase]" : ""),
       direction: "inbound",
       status: wakePhraseDetected ? "received" : "ignored_wake_phrase_required",
-      rawPayload: req.body
+      rawPayload: redactSensitive(req.body) as never
     }
   });
 

@@ -1,6 +1,6 @@
 ﻿# SYSTEM_STATUS_REPORT
 
-Data/hora da auditoria: 2026-05-16 15:55:18 -03:00
+Data/hora da auditoria: 2026-05-16 15:59:59 -03:00
 
 Diretorio usado: `E:\jarvis-home-assistant`
 
@@ -15,6 +15,7 @@ Atualizacao operacional desta rodada:
 - WhatsApp nao trata OFX/CSV como audio; anexos geram previa de importacao.
 - Guia `WHATSAPP_PRODUCTION_SETUP.md` criado.
 - Fase Mobile/PWA adicionada com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`, validada por testes, build e checagem local do manifest/service worker.
+- Rodada WhatsApp/Evolution: guia de producao ampliado, payload bruto do webhook redigido antes de persistir, endpoints revisados e producao validada via health dedicado.
 
 ## Ambiente
 
@@ -77,6 +78,15 @@ Varredura de segredos:
 - `Test-NetConnection localhost -Port 5432`: OK.
 - `Test-NetConnection localhost -Port 3001`: indisponivel, backend local nao iniciado.
 - `Test-NetConnection localhost -Port 5173`: indisponivel, frontend local nao iniciado.
+
+### WhatsApp/Evolution
+
+- `GET /api/whatsapp/status`: coberto por testes e retorna `not_configured` com seguranca quando faltam credenciais.
+- `GET /api/whatsapp/config`: protegido por JWT e retorna somente flags/mascara, nunca API key real.
+- `PUT /api/whatsapp/config`: protegido por JWT, valida URL/instancia/API key e salva API key criptografada.
+- `POST /api/whatsapp/test-connection`: protegido por JWT e testa Evolution sem expor credenciais.
+- `POST /api/whatsapp/webhook`: publico para Evolution, exige `ei jarvis`, ignora `fromMe` e grupos, trata OFX/CSV como anexo e gera previa de importacao.
+- Payload bruto recebido no webhook passa por redaction antes de ser persistido em `WhatsAppMessage.rawPayload`.
 
 ### Backend
 

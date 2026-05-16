@@ -14,6 +14,8 @@ OFX/CSV enviados pelo WhatsApp devem criar previa em `/finance/import/:id/review
 
 Fase Mobile/PWA: app instalavel, atalhos, prompt de instalacao e tela `/mobile-assistant` para uso focado no celular.
 
+WhatsApp/Evolution: painel `/whatsapp` permite salvar URL, instancia e API key com seguranca; webhook oficial exige `ei jarvis`; OFX/CSV pelo WhatsApp cria previa de importacao financeira com revisao obrigatoria.
+
 ## URLs
 
 - Frontend producao: `https://jarvis.juninnzxtec.com.br`

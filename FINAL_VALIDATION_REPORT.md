@@ -1,6 +1,6 @@
 ﻿# FINAL_VALIDATION_REPORT
 
-Data/hora: 2026-05-16 15:55:18 -03:00
+Data/hora: 2026-05-16 15:59:59 -03:00
 
 Diretorio: `E:\jarvis-home-assistant`
 
@@ -19,6 +19,8 @@ Webhook WhatsApp/Evolution oficial: `https://apijarvis.juninnzxtec.com.br/api/wh
 Atualizacao desta rodada: diagnosticos OpenAI/Gemini refinados, scheduler com erro redigido, API `apijarvis` oficializada e guia de producao WhatsApp criado.
 
 Fase Mobile/PWA: manifest, service worker seguro, icones, prompt de instalacao, atalhos e tela `/mobile-assistant` adicionados e validados localmente.
+
+Rodada WhatsApp/Evolution: configuracao real preparada, guia de producao ampliado e payload do webhook redigido antes de persistir.
 
 ## Resumo
 
@@ -87,6 +89,9 @@ Seguranca:
 - PWA: manifest com nome, atalhos e icone maskable validado.
 - Service worker: guardas para nao cachear `/api`, `Authorization` e `cookie` validadas.
 - Browser: tela local carregou com JARVIS/Login.
+- WhatsApp/Evolution: endpoints revisados, API key criptografada em `Setting`, frontend mostra apenas mascara/flags e webhook exige `ei jarvis`.
+- Anexos: OFX/CSV tratados como documento/anexo e fluxo de importacao exige revisao antes de gravar transacoes.
+- Producao: health dedicado retornou app/database OK, scheduler running e WhatsApp `not_configured` sem quebrar.
 - PostgreSQL: healthy.
 - API dedicada health: app OK, database OK.
 - Scheduler producao: enabled/running.
