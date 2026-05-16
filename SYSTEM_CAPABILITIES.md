@@ -172,3 +172,14 @@ powershell -ExecutionPolicy Bypass -File .\start-jarvis.ps1
 
 O login demo existe para ambiente local/desenvolvimento quando permitido por configuracao. Em producao, recomenda-se manter `ALLOW_DEMO_LOGIN=false`, criar admin real e rotacionar qualquer senha compartilhada.
 
+# Atualizacao - Central de Integracoes
+
+O JARVIS agora possui:
+
+- `/integrations` para status e testes de todas as integracoes.
+- `/settings/integrations` para salvar URLs e credenciais criptografadas.
+- `/integrations/setup-wizard` para checklist guiado.
+- `/integrations/events` para EventBus.
+- Endpoints unificados em `/api/integrations`.
+
+Ainda exigem acao manual externa: DNS/Caddy do n8n, credenciais reais da Evolution, credenciais do Home Assistant e chaves de IA em ambiente seguro.

@@ -261,6 +261,39 @@ export const whatsappService = {
       return { status: "error", message };
     }
   },
+  async configureWebhook(userId: string, webhookUrl: string) {
+    const config = await this.runtimeConfig(userId);
+    if (!this.isConfigured(config)) {
+      await writeSystemLog({ userId, level: "warning", module: "whatsapp", action: "configure_webhook", message: "Evolution API nao configurada" });
+      return {
+        status: "not_configured",
+        message: "Configure URL, instancia e API key da Evolution antes de configurar o webhook.",
+        webhookUrl
+      };
+    }
+    try {
+      const response = await axios.post(`${config.apiUrl}/webhook/set/${config.instance}`, {
+        webhook: {
+          enabled: true,
+          url: webhookUrl,
+          events: ["MESSAGES_UPSERT", "SEND_MESSAGE"]
+        }
+      }, {
+        headers: { apikey: config.apiKey },
+        timeout: 15000
+      });
+      await writeSystemLog({ userId, module: "whatsapp", action: "configure_webhook", message: "Webhook Evolution configurado", metadata: { status: response.status, webhookUrl } });
+      return { status: "success", webhookUrl, message: "Webhook configurado na Evolution API." };
+    } catch (error) {
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      await writeSystemLog({ userId, level: "warning", module: "whatsapp", action: "configure_webhook_manual", message: "Configuracao automatica do webhook indisponivel", metadata: { statusCode, webhookUrl } });
+      return {
+        status: "manual_action_required",
+        webhookUrl,
+        message: "Nao consegui configurar automaticamente. Cole o webhook oficial no manager da Evolution API e ative eventos de mensagens/documentos."
+      };
+    }
+  },
   async send(phone: string, content: string, userId?: string) {
     if (!this.isValidPhone(phone)) return { status: "invalid_phone", message: "Numero deve conter apenas digitos, com DDI, entre 10 e 15 caracteres." };
     const config = await this.runtimeConfig(userId);

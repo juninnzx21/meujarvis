@@ -884,4 +884,42 @@ describe("JARVIS Home AI API", () => {
     await prisma.document.deleteMany({ where: { id: document.body.document.id } });
     await prisma.memory.deleteMany({ where: { id: memory.body.memory.id } });
   });
+
+  it("exposes a safe integrations control center without returning secrets", async () => {
+    await prisma.setting.deleteMany({ where: { userId, key: { startsWith: "home_assistant" } } });
+    const saved = await request(app)
+      .put("/api/integrations/config/home_assistant")
+      .set(auth())
+      .send({ url: "http://homeassistant.local:8123", token: "super-secret-ha-token" })
+      .expect(200);
+    expect(JSON.stringify(saved.body)).not.toContain("super-secret-ha-token");
+
+    const stored = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "home_assistant_token" } } });
+    expect(String(stored.value)).not.toContain("super-secret-ha-token");
+
+    const status = await request(app).get("/api/integrations/status").set(auth()).expect(200);
+    expect(status.body.providers.api_public.url).toContain("apijarvis");
+    expect(status.body.providers.home_assistant.tokenConfigured).toBe(true);
+    expect(JSON.stringify(status.body)).not.toContain("super-secret-ha-token");
+
+    const test = await request(app).post("/api/integrations/test/n8n").set(auth()).expect(200);
+    expect(["not_configured", "success", "error"]).toContain(test.body.status);
+
+    const wizard = await request(app).get("/api/integrations/setup-wizard").set(auth()).expect(200);
+    expect(wizard.body.steps.map((step: { id: string }) => step.id)).toContain("n8n");
+
+    await prisma.setting.deleteMany({ where: { userId, key: { startsWith: "home_assistant" } } });
+  });
+
+  it("lists local n8n workflows and returns manual webhook guidance safely", async () => {
+    const workflows = await request(app).get("/api/n8n/workflows/local").set(auth()).expect(200);
+    expect(workflows.body.workflows.some((workflow: { name: string }) => workflow.name === "jarvis-system-alert.json")).toBe(true);
+
+    const importOne = await request(app).post("/api/n8n/workflows/import/jarvis-system-alert.json").set(auth()).expect(200);
+    expect(["manual_action_required", "success"]).toContain(importOne.body.status);
+
+    const webhook = await request(app).post("/api/whatsapp/configure-webhook").set(auth()).expect(200);
+    expect(["not_configured", "manual_action_required", "success"]).toContain(webhook.body.status);
+    expect(JSON.stringify(webhook.body)).not.toContain("apikey");
+  });
 });

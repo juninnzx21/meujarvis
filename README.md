@@ -37,6 +37,17 @@ Base full stack para um assistente pessoal inteligente com painel web, chat com 
 
 Guias: `N8N_LOCAL_PRODUCTION.md`, `N8N_WORKFLOWS_GUIDE.md`, `SEMANTIC_MEMORY_GUIDE.md`, `DOCUMENTS_RAG_GUIDE.md`, `PRODUCTION_HARDENING_100000.md` e `CI_CD_GUIDE.md`.
 
+## Central de Integracoes
+
+O painel possui uma central para configurar e validar integrações sem expor segredos:
+
+- `/integrations`: cards de status para OpenAI, Gemini, n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Webhooks, Monitoramento, Backup e API publica.
+- `/settings/integrations`: edicao segura de URLs e credenciais criptografadas.
+- `/integrations/setup-wizard`: checklist guiado para conectar API, n8n, Evolution, WhatsApp, Financeiro e monitoramento.
+- `/integrations/events`: historico do EventBus e reenvio seguro.
+
+Documentacao: `INTEGRATIONS_CONTROL_CENTER.md`.
+
 ## Fase Mobile/PWA
 
 O frontend possui PWA instalavel com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`.

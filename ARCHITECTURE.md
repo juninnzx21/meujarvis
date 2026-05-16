@@ -182,3 +182,9 @@ O extrato bruto nunca deve ser enviado para OpenAI/Gemini sem consentimento expl
 - Seguranca: segredos continuam em `Setting` criptografado, arquivos sensiveis ficam fora do Git, PWA nao cacheia API e WhatsApp continua exigindo `ei jarvis`.
 
 Ressalvas tecnicas da Fase 10: pgvector real, embeddings externos, deploy do subdominio `n8njarvis`, credenciais reais do n8n/Evolution/Home Assistant, E2E Playwright completo e backup offsite automatizado ainda dependem de configuracao operacional segura.
+
+## Central de Integracoes
+
+`IntegrationConfigService` centraliza status, configuracao segura, testes, bootstrap, logs e eventos das integracoes. A rota `/api/integrations` agrega n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Monitoramento, Backup, OpenAI, Gemini e URLs publicas.
+
+Credenciais sensiveis sao persistidas em `Setting` usando AES-256-GCM via `encryptSettingValue` e sao expostas ao frontend apenas como `configured` e mascara. O painel usa `/integrations`, `/settings/integrations`, `/integrations/setup-wizard` e `/integrations/events`.

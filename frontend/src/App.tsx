@@ -6,6 +6,10 @@ import { ChatPage } from "./pages/Chat/ChatPage";
 import { CommandsPage } from "./pages/Commands/CommandsPage";
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { DocumentsPage } from "./pages/Documents/DocumentsPage";
+import { IntegrationEventsPage } from "./pages/Integrations/IntegrationEventsPage";
+import { IntegrationSettingsPage } from "./pages/Integrations/IntegrationSettingsPage";
+import { IntegrationWizardPage } from "./pages/Integrations/IntegrationWizardPage";
+import { IntegrationsPage } from "./pages/Integrations/IntegrationsPage";
 import { FinancePage } from "./pages/Finance/FinancePage";
 import { FinanceAccountsPage } from "./pages/Finance/FinanceAccountsPage";
 import { FinanceCategoriesPage } from "./pages/Finance/FinanceCategoriesPage";
@@ -48,6 +52,10 @@ export default function App() {
         <Route path="routines" element={<RoutinesPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="documents" element={<DocumentsPage />} />
+        <Route path="integrations" element={<IntegrationsPage />} />
+        <Route path="integrations/setup-wizard" element={<IntegrationWizardPage />} />
+        <Route path="integrations/events" element={<IntegrationEventsPage />} />
+        <Route path="settings/integrations" element={<IntegrationSettingsPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="finance/accounts" element={<FinanceAccountsPage />} />
         <Route path="finance/transactions" element={<FinanceTransactionsPage />} />

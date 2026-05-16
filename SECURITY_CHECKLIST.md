@@ -71,6 +71,11 @@
 - [x] PDF de extrato e tratado apenas como conferencia/fallback, nao como fonte principal em massa.
 - [x] Importacao por WhatsApp cria previa e exige revisao antes de gravar.
 - [x] WhatsApp exige wake phrase `ei jarvis` antes de responder, importar arquivo ou executar tarefa.
+- [x] Central de Integracoes nunca retorna segredo real para o frontend.
+- [x] Configuracoes sensiveis de n8n, Evolution, Home Assistant e Financeiro sao criptografadas em `Setting`.
+- [x] `/api/integrations/*` retorna somente status, flags e mascaras.
+- [x] Apenas admin pode alterar configuracoes globais de integracao.
+- [x] Reenvio de eventos sensiveis exige confirmacao/manual review.
 - [ ] Rotacionar DirectAdmin/hospedagem.
 - [ ] Rotacionar senha root da VPS.
 - [ ] Rotacionar todos os segredos compartilhados e gerar `SETTINGS_ENCRYPTION_KEY` dedicado na producao.

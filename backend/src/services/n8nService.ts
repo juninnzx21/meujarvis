@@ -1,4 +1,6 @@
 import axios from "axios";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { Prisma } from "@prisma/client";
 import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
@@ -40,6 +42,17 @@ type N8nRuntimeConfig = {
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+async function listLocalWorkflowFiles() {
+  const dir = join(process.cwd(), "..", "n8n", "workflows");
+  const { readdir } = await import("node:fs/promises");
+  const files = await readdir(dir);
+  return files.filter((file) => file.endsWith(".json")).sort().map((file) => ({
+    name: file,
+    template: file.replace(/^jarvis-/, "").replace(/\.json$/, "").replace(/-/g, "."),
+    path: `n8n/workflows/${file}`
+  }));
 }
 
 export const n8nService = {
@@ -149,5 +162,49 @@ export const n8nService = {
       workflowsPath: "n8n/workflows",
       templates: n8nTemplates
     };
+  },
+  async localWorkflows() {
+    return { workflows: await listLocalWorkflowFiles() };
+  },
+  async importWorkflow(name: string, userId?: string) {
+    const safeName = name.replace(/[^a-z0-9_.-]/gi, "");
+    const workflows = await listLocalWorkflowFiles();
+    const workflow = workflows.find((item) => item.name === safeName);
+    if (!workflow) return { status: "not_found", message: "Workflow local nao encontrado." };
+    const config = await this.runtimeConfig(userId);
+    if (!config.apiKey) {
+      return {
+        status: "manual_action_required",
+        message: "API key do n8n nao configurada. Importe manualmente pelo painel n8n.",
+        workflow
+      };
+    }
+    try {
+      const content = JSON.parse(await readFile(join(process.cwd(), "..", workflow.path), "utf8")) as unknown;
+      const response = await axios.post(`${config.webhookUrl.replace(/\/webhook\/?.*$/i, "")}/api/v1/workflows`, content, {
+        headers: { "X-N8N-API-KEY": config.apiKey },
+        timeout: 20000
+      });
+      await writeSystemLog({ userId, module: "n8n", action: "workflow_import", message: "Workflow n8n importado", metadata: { workflow: workflow.name, status: response.status } });
+      return { status: "success", workflow: workflow.name };
+    } catch {
+      return {
+        status: "manual_action_required",
+        message: "Importacao automatica nao ficou disponivel. Use o arquivo local no painel n8n.",
+        workflow
+      };
+    }
+  },
+  async importAllWorkflows(userId?: string) {
+    const workflows = await listLocalWorkflowFiles();
+    const results = [];
+    for (const workflow of workflows) results.push(await this.importWorkflow(workflow.name, userId));
+    return { status: results.some((item) => item.status === "success") ? "partial" : "manual_action_required", results };
+  },
+  async testWorkflowName(name: string, userId?: string) {
+    const workflows = await listLocalWorkflowFiles();
+    const workflow = workflows.find((item) => item.name === name || item.template === name);
+    if (!workflow) return { status: "not_found", message: "Workflow local nao encontrado." };
+    return this.trigger({ source: "jarvis", type: workflow.template, workflow: workflow.name, safe: true, timestamp: new Date().toISOString() }, userId);
   }
 };

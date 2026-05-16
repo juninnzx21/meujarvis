@@ -5,14 +5,16 @@ import { api, friendlyError } from "../../services/api";
 
 export function N8nPage() {
   const [status, setStatus] = useState<any>({});
+  const [workflows, setWorkflows] = useState<any[]>([]);
   const [config, setConfig] = useState({ webhookUrl: "", apiKey: "", webhookSecret: "", enabled: true });
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function load() {
-    const [statusRes, configRes] = await Promise.all([api.get("/n8n/status"), api.get("/n8n/config")]);
+    const [statusRes, configRes, workflowsRes] = await Promise.all([api.get("/n8n/status"), api.get("/n8n/config"), api.get("/n8n/workflows/local")]);
     setStatus(statusRes.data);
     setConfig({ webhookUrl: configRes.data.webhookUrl || "", apiKey: "", webhookSecret: "", enabled: configRes.data.enabled ?? true });
+    setWorkflows(workflowsRes.data.workflows || []);
   }
 
   useEffect(() => { load().catch(() => undefined); }, []);
@@ -72,6 +74,11 @@ export function N8nPage() {
     setResult(res.data.message || "Workflows padrao preparados para importacao manual.");
   }
 
+  async function importAllWorkflows() {
+    const res = await api.post("/n8n/workflows/import-all");
+    setResult(res.data.message || `Importacao: ${res.data.status}`);
+  }
+
   return (
     <section className="grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
       <form onSubmit={saveConfig} className="glass space-y-5 rounded-2xl p-5">
@@ -124,6 +131,7 @@ export function N8nPage() {
           </button>
           <button type="button" onClick={clearConfig} className="btn btn-ghost"><Trash2 size={18} /> Limpar</button>
           <button type="button" onClick={bootstrapWorkflows} className="btn btn-ghost"><Boxes size={18} /> Workflows padrao</button>
+          <button type="button" onClick={importAllWorkflows} className="btn btn-ghost"><Workflow size={18} /> Importar todos</button>
         </div>
         {result && <p className="rounded-xl bg-white/5 p-3 text-slate-300">{result}</p>}
       </form>
@@ -143,6 +151,16 @@ export function N8nPage() {
             {(status.templates || []).slice(0, 8).map((template: string) => (
               <button key={template} type="button" onClick={() => testTemplate(template)} className="rounded-lg border border-white/10 px-2 py-1 text-xs text-slate-300 hover:border-cyan-300/60">
                 {template}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl bg-white/5 p-3 text-sm text-slate-400">
+          <div className="mb-2 flex items-center gap-2 font-semibold text-slate-200"><Workflow size={18} /> Workflows locais</div>
+          <div className="max-h-44 space-y-2 overflow-auto">
+            {workflows.map((workflow) => (
+              <button key={workflow.name} type="button" onClick={() => testTemplate(workflow.template)} className="block w-full truncate rounded-lg border border-white/10 px-2 py-1 text-left text-xs text-slate-300 hover:border-cyan-300/60">
+                {workflow.name}
               </button>
             ))}
           </div>

@@ -138,3 +138,18 @@ Fase 10 implementa a fundacao 100000/10, mas pgvector real, RAG com embeddings e
 
 Com essas melhorias, o JARVIS passa de assistente pessoal funcional para uma base mais confiavel para uso diario real. Para uso comercial, ainda precisa hardening operacional, privacidade, E2E, monitoramento, backups externos e governanca de usuarios.
 
+# Atualizacao - Central de Integracoes
+
+Prioridade imediata:
+
+1. Deploy do commit da Central na VPS.
+2. Configurar DNS/Caddy do `n8njarvis.juninnzxtec.com.br`.
+3. Preencher credenciais reais pelo painel `/settings/integrations`.
+4. Testar Evolution API via `/integrations/setup-wizard`.
+5. Validar WhatsApp real com `ei jarvis status do sistema`.
+
+Prioridade seguinte:
+
+- Automatizar importacao real dos workflows via API do n8n quando a API key estiver disponivel.
+- Adicionar Playwright para o wizard completo.
+- Monitoramento externo com alertas via n8n.

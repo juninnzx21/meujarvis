@@ -6,6 +6,7 @@ import { openAiService } from "./openAiService.js";
 import { schedulerService } from "./schedulerService.js";
 import { geminiService } from "./geminiService.js";
 import { whatsappService } from "./whatsappService.js";
+import { publicIntegrationUrls } from "./integrationConfigService.js";
 
 export async function getHealth(full = false) {
   let database = "ok";
@@ -30,7 +31,13 @@ export async function getHealth(full = false) {
     database = "error";
   }
 
-  const whatsappStatus = await whatsappService.status();
+  const [whatsappStatus, homeAssistantStatus, pendingImports, pendingReviewRows, lastBackup] = await Promise.all([
+    whatsappService.status(),
+    homeAssistantService.status(),
+    prisma.statementImport.count({ where: { status: { in: ["uploaded", "parsed", "review_required"] } } }),
+    prisma.statementImportRow.count({ where: { status: "pending" } }),
+    prisma.systemLog.findFirst({ where: { module: "backup" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
+  ]);
   const base = {
     app: "ok",
     database,
@@ -38,7 +45,7 @@ export async function getHealth(full = false) {
     geminiConfigured: geminiService.configured,
     n8nConfigured: n8nService.configured,
     whatsappConfigured: whatsappStatus.configured,
-    homeAssistantConfigured: homeAssistantService.configured,
+    homeAssistantConfigured: homeAssistantStatus.configured,
     uptimeSeconds: Math.round(process.uptime()),
     scheduler: schedulerService.status(),
     timestamp: new Date().toISOString(),
@@ -49,9 +56,14 @@ export async function getHealth(full = false) {
   return {
     ...base,
     integrations: {
-      n8n: n8nService.status(),
-      whatsapp: whatsappStatus,
-      homeAssistant: homeAssistantService.status(),
+      apiPublic: { url: publicIntegrationUrls.apiPublicUrl, status: "configured" },
+      n8n: { ...n8nService.status(), urlMasked: publicIntegrationUrls.n8nPublicUrl, reachable: undefined, lastTestAt: undefined },
+      whatsapp: { ...whatsappStatus, webhookUrl: publicIntegrationUrls.whatsappWebhookUrl, wakePhraseRequired: true, autoReply: whatsappStatus.autoReply, lastTestAt: undefined },
+      evolution: { configured: whatsappStatus.configured, reachable: undefined, instanceStatus: whatsappStatus.status },
+      homeAssistant: homeAssistantStatus,
+      finance: { pendingImports, pendingReviewRows, requireImportReview: true },
+      backup: { lastBackupAt: lastBackup?.createdAt ?? null },
+      monitoring: { publicHealthUrl: publicIntegrationUrls.publicHealthUrl },
       openai: openAiService.status()
       ,
       gemini: geminiService.status()

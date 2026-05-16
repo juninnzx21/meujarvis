@@ -250,3 +250,25 @@ Ressalvas:
 - E2E Playwright completo ficou planejado.
 - Rotacao de credenciais compartilhadas anteriormente continua recomendada.
 
+## Central de Integracoes - 2026-05-16
+
+Status: **APROVADO COM RESSALVAS**.
+
+Implementado:
+
+- Backend `IntegrationConfigService`.
+- Rotas `/api/integrations/*`.
+- Tela `/integrations`.
+- Tela `/settings/integrations`.
+- Wizard `/integrations/setup-wizard`.
+- Eventos `/integrations/events`.
+- Listagem/importacao manual de workflows n8n locais.
+- `POST /api/whatsapp/configure-webhook` com retorno `success`, `manual_action_required` ou `not_configured`.
+- Home Assistant configuravel por `Setting` criptografado, com fallback para `.env`.
+
+Ressalvas:
+
+- n8n producao ainda depende de DNS/Caddy/HTTPS e `.env` real.
+- Evolution pode exigir configuracao manual do webhook no manager.
+- OpenAI/Gemini seguem via ambiente/secret manager para evitar expor chaves no painel.
+

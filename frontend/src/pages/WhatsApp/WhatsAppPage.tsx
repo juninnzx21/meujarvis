@@ -50,6 +50,11 @@ export function WhatsAppPage() {
     await load();
   }
 
+  async function configureWebhook() {
+    const res = await api.post("/whatsapp/configure-webhook", { webhookUrl });
+    setMessage(res.data.message || res.data.status);
+  }
+
   async function send(event: FormEvent) {
     event.preventDefault();
     const cleanPhone = phone.replace(/\D/g, "");
@@ -97,6 +102,7 @@ export function WhatsAppPage() {
         <div className="flex flex-wrap gap-3">
           <button className="btn btn-primary"><Save size={18} /> Salvar configuracao</button>
           <button type="button" onClick={testConnection} className="btn btn-ghost"><FlaskConical size={18} /> Testar conexao</button>
+          <button type="button" onClick={configureWebhook} className="btn btn-ghost"><ShieldCheck size={18} /> Configurar webhook</button>
           <button type="button" onClick={clearConfig} className="btn btn-ghost"><Trash2 size={18} /> Limpar</button>
         </div>
         {message && <p className="rounded-xl bg-white/5 p-3 text-slate-300">{message}</p>}

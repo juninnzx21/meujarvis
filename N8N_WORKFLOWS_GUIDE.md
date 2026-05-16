@@ -56,3 +56,15 @@ No JARVIS:
 4. Use os botoes de template.
 
 Se o n8n estiver ausente, o JARVIS retorna `not_configured` sem quebrar.
+# Central de Integracoes
+
+Os workflows podem ser vistos no painel `/n8n` e na Central `/integrations`.
+
+Endpoints relacionados:
+
+- `GET /api/n8n/workflows/local`
+- `POST /api/n8n/workflows/import/:name`
+- `POST /api/n8n/workflows/import-all`
+- `POST /api/n8n/workflows/test/:name`
+
+Quando a API key do n8n nao estiver configurada, o JARVIS retorna `manual_action_required` e orienta importacao manual pelo editor do n8n.

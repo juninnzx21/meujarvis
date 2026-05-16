@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Activity, Banknote, Bell, Bot, Brain, FileText, Gauge, Home, Landmark, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
+import { Activity, Banknote, Bell, Bot, Brain, Cable, FileText, Gauge, Home, Landmark, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 import { useAuth } from "../contexts/AuthContext";
@@ -14,6 +14,7 @@ const items = [
   { to: "/routines", label: "Rotinas", icon: Activity },
   { to: "/reports", label: "Relatorios", icon: ScrollText },
   { to: "/documents", label: "Documentos", icon: FileText },
+  { to: "/integrations", label: "Integracoes", icon: Cable },
   { to: "/finance", label: "Financeiro", icon: WalletCards },
   { to: "/finance/accounts", label: "Contas", icon: Landmark },
   { to: "/finance/transactions", label: "Lancamentos", icon: Banknote },

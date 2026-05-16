@@ -62,13 +62,14 @@ Nunca publique a porta `5678` diretamente.
 
 ## Conectar JARVIS ao n8n
 
-No painel JARVIS em `/n8n`:
+No painel JARVIS em `/integrations`, `/settings/integrations` ou `/n8n`:
 
 1. Cole a Production URL do webhook n8n.
 2. Cole API key/token se o workflow exigir.
 3. Configure webhook secret opcional.
 4. Clique em testar conexao.
 5. Teste templates seguros.
+6. Liste workflows locais e importe manualmente se a API do n8n nao estiver habilitada.
 
 Segredos ficam criptografados em `Setting` e o frontend exibe apenas flags/mascaras.
 

@@ -155,3 +155,20 @@ docker compose exec backend npm run test
 ```
 
 Depois importar manualmente os JSON de `n8n/workflows/` e configurar credenciais no proprio n8n, nunca no Git.
+
+## Deploy da Central de Integracoes
+
+Apos deploy, validar:
+
+```bash
+curl -fsS https://apijarvis.juninnzxtec.com.br/api/health/full
+```
+
+No painel:
+
+- Abrir `/integrations`.
+- Abrir `/settings/integrations`.
+- Confirmar API publica `https://apijarvis.juninnzxtec.com.br/api`.
+- Confirmar webhook `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
+- Confirmar n8n publico `https://n8njarvis.juninnzxtec.com.br`.
+- Testar providers sem expor credenciais.

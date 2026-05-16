@@ -28,6 +28,10 @@ router.delete("/config", authMiddleware, asyncHandler(async (req, res) => {
   res.json(await whatsappService.clearConfig(req.user!.id));
 }));
 router.post("/test-connection", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.testConnection(req.user!.id))));
+router.post("/configure-webhook", authMiddleware, asyncHandler(async (req, res) => {
+  const webhookUrl = typeof req.body?.webhookUrl === "string" ? req.body.webhookUrl : "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook";
+  res.json(await whatsappService.configureWebhook(req.user!.id, webhookUrl));
+}));
 router.post("/send", authMiddleware, validate(z.object({ phone: z.string().regex(/^\d{10,15}$/, "Numero deve conter apenas digitos, com DDI."), content: z.string().min(1), confirmed: z.boolean().optional() })), asyncHandler(async (req, res) => {
   if (!req.body.confirmed) return res.status(409).json({ message: "Envio de WhatsApp exige confirmacao." });
   res.json(await whatsappService.send(req.body.phone, req.body.content, req.user!.id));

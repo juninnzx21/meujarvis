@@ -14,6 +14,9 @@ import { FinanceImportPage } from "./Finance/FinanceImportPage";
 import { FinanceReportsPage } from "./Finance/FinanceReportsPage";
 import { FinanceTransactionsPage } from "./Finance/FinanceTransactionsPage";
 import { MobileAssistantPage } from "./MobileAssistant/MobileAssistantPage";
+import { IntegrationsPage } from "./Integrations/IntegrationsPage";
+import { IntegrationSettingsPage } from "./Integrations/IntegrationSettingsPage";
+import { IntegrationWizardPage } from "./Integrations/IntegrationWizardPage";
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { name: "Junior Rodrigues" }, logout: vi.fn() })
@@ -33,13 +36,17 @@ vi.mock("../services/api", () => ({
       if (url.startsWith("/notifications")) return Promise.resolve({ data: { unreadCount: 1, notifications: [{ id: "n1", title: "Aviso", message: "Mensagem", type: "warning", createdAt: new Date().toISOString() }] } });
       if (url === "/documents") return Promise.resolve({ data: { documents: [{ id: "d1", title: "Documento teste", fileType: "md" }] } });
       if (url.startsWith("/documents/search")) return Promise.resolve({ data: { chunks: [{ id: "ch1", content: "Trecho redigido do JARVIS" }] } });
+      if (url.startsWith("/integrations/setup-wizard")) return Promise.resolve({ data: { steps: [{ id: "api", title: "API publica", status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, { id: "n8n", title: "n8n", status: "not_configured", url: "https://n8njarvis.juninnzxtec.com.br" }] } });
+      if (url.startsWith("/integrations")) return Promise.resolve({ data: { urls: { frontendPublicUrl: "https://jarvis.juninnzxtec.com.br", apiPublicUrl: "https://apijarvis.juninnzxtec.com.br/api", whatsappWebhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", n8nPublicUrl: "https://n8njarvis.juninnzxtec.com.br" }, providers: { api_public: { configured: true, status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, openai: { configured: true, status: "configured" }, gemini: { configured: true, status: "configured" }, n8n: { configured: false, status: "not_configured", apiKeyConfigured: false, webhookSecretConfigured: false }, whatsapp: { configured: false, status: "not_configured", webhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", apiKeyConfigured: false, autoReply: false }, evolution: { configured: false, status: "not_configured" }, home_assistant: { configured: false, status: "not_configured", tokenConfigured: false }, finance: { configured: false, status: "not_configured", tokenConfigured: false, defaultAccountName: "PJ DO INTER" }, monitoring: { configured: true, status: "configured" }, backup: { configured: true, status: "configured" } } } });
       return Promise.resolve({ data: { recommendations: ["ok"], open: [], overdue: [], logs: [] } });
     }),
     post: vi.fn((url: string) => {
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
       if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
+      if (url.startsWith("/integrations/test")) return Promise.resolve({ data: { status: "not_configured", message: "not_configured" } });
       return Promise.resolve({ data: { ok: true } });
     }),
+    put: vi.fn(() => Promise.resolve({ data: { ok: true } })),
     patch: vi.fn(() => Promise.resolve({ data: { ok: true } }))
   },
   friendlyError: () => "erro"
@@ -71,6 +78,22 @@ describe("Phase 5 and 6 pages", () => {
     render(<DocumentsPage />);
     expect(await screen.findByText("Documentos")).toBeInTheDocument();
     expect(await screen.findByText(/Documento teste/)).toBeInTheDocument();
+  });
+
+  it("renders integrations control center and setup pages", async () => {
+    render(<MemoryRouter><IntegrationsPage /></MemoryRouter>);
+    expect(await screen.findByText("Central de Integracoes")).toBeInTheDocument();
+    expect(await screen.findByText("WhatsApp/Evolution")).toBeInTheDocument();
+    cleanup();
+
+    render(<MemoryRouter><IntegrationSettingsPage /></MemoryRouter>);
+    expect(await screen.findByText("Configuracoes de Integracoes")).toBeInTheDocument();
+    expect(await screen.findByText("Evolution API / WhatsApp")).toBeInTheDocument();
+    cleanup();
+
+    render(<MemoryRouter><IntegrationWizardPage /></MemoryRouter>);
+    expect(await screen.findByText("Setup Wizard")).toBeInTheDocument();
+    expect(await screen.findByText("API publica")).toBeInTheDocument();
   });
 
   it("renders native finance overview", async () => {

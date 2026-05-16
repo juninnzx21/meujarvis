@@ -92,6 +92,16 @@ Obrigatorio:
 
 Nao salve a senha em arquivo. Use esse comando apenas em sessao segura e depois limpe o historico se necessario.
 
+## Central de Integracoes em producao
+
+Depois do deploy do backend/frontend, acesse:
+
+- `https://jarvis.juninnzxtec.com.br/integrations`
+- `https://jarvis.juninnzxtec.com.br/settings/integrations`
+- `https://jarvis.juninnzxtec.com.br/integrations/setup-wizard`
+
+Use a central para salvar credenciais criptografadas de n8n, Evolution, Home Assistant e Financeiro. OpenAI/Gemini devem continuar em `.env`/secret manager do backend. O frontend nunca deve receber valor real de segredo.
+
 ## Publicacao do frontend na Fabweb
 
 ```powershell

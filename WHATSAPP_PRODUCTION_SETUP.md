@@ -71,6 +71,13 @@ Nao use `https://jarvis.juninnzxtec.com.br/api/...` no webhook. A API oficial em
 - `PUT /api/whatsapp/config`: salva URL, instancia, auto reply e API key criptografada.
 - `POST /api/whatsapp/test-connection`: testa a Evolution sem expor credenciais.
 - `POST /api/whatsapp/webhook`: recebe eventos da Evolution. So processa comandos com `ei jarvis`.
+- `POST /api/whatsapp/configure-webhook`: tenta configurar o webhook na Evolution; se a API nao suportar, retorna `manual_action_required` com instrucao.
+
+Tambem e possivel configurar pela Central:
+
+- `/integrations`
+- `/settings/integrations`
+- `/integrations/setup-wizard`
 
 ## Testes seguros
 

@@ -191,3 +191,25 @@ Pendencias reais:
 
 Conclusao: a Fase 10 elevou o JARVIS para uma plataforma pessoal de automacao e conhecimento com n8n local funcional, mas a parte comercial/producao plena ainda depende de acoes manuais seguras.
 
+## Central de Configuracoes e Integracoes
+
+Status: **APROVADO COM RESSALVAS**.
+
+Criado:
+
+- `INTEGRATIONS_CONTROL_CENTER.md`.
+- `IntegrationConfigService`.
+- `/api/integrations/status`, `/config`, `/test/:provider`, `/bootstrap/:provider`, `/logs`, `/setup-wizard` e `/events`.
+- `/integrations`, `/settings/integrations`, `/integrations/setup-wizard` e `/integrations/events`.
+- Endpoints n8n para workflows locais.
+- Endpoint WhatsApp para tentar configurar webhook.
+
+Validado por testes:
+
+- Configuracao segura nao retorna segredo.
+- Segredo salvo em `Setting` nao fica plaintext.
+- Wizard responde etapas.
+- Workflows n8n locais sao listados.
+- Configure webhook retorna status seguro.
+- Frontend renderiza central, settings e wizard.
+

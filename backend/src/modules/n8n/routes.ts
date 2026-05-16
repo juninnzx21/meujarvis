@@ -23,5 +23,9 @@ router.post("/trigger", asyncHandler(async (req, res) => res.json(await n8nServi
 router.post("/test", asyncHandler(async (req, res) => res.json(await n8nService.test(req.user!.id))));
 router.post("/templates/:template/test", asyncHandler(async (req, res) => res.json(await n8nService.testTemplate(String(req.params.template), req.user!.id))));
 router.post("/workflows/bootstrap", asyncHandler(async (_req, res) => res.json(n8nService.bootstrapWorkflows())));
+router.get("/workflows/local", asyncHandler(async (_req, res) => res.json(await n8nService.localWorkflows())));
+router.post("/workflows/import-all", asyncHandler(async (req, res) => res.json(await n8nService.importAllWorkflows(req.user!.id))));
+router.post("/workflows/import/:name", asyncHandler(async (req, res) => res.json(await n8nService.importWorkflow(String(req.params.name), req.user!.id))));
+router.post("/workflows/test/:name", asyncHandler(async (req, res) => res.json(await n8nService.testWorkflowName(String(req.params.name), req.user!.id))));
 
 export default router;
