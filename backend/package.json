@@ -10,9 +10,10 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
+    "seed:personal": "tsx prisma/seed-personal-profile.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "typecheck:seed": "tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --esModuleInterop prisma/seed.ts",
+    "typecheck:seed": "tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --esModuleInterop prisma/seed.ts prisma/seed-personal-profile.ts",
     "validate": "npm run prisma:generate && npm run typecheck && npm run typecheck:seed && npm run test && npm run build"
   },
   "dependencies": {

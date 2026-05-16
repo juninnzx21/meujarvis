@@ -156,6 +156,17 @@ O Controle Financeiro externo e configurado pelo painel `/finance`, nao por vari
 - Home Assistant ganhou teste de conexao, agrupamento de entidades e bloqueio reforcado para lock, alarm, cover, garagem e portao.
 - Logs de integracoes passam por redaction centralizada antes de persistir metadata.
 
+## Base de conhecimento pessoal
+
+O JARVIS possui seed opcional para importar memorias estruturadas sobre o usuario, projetos, stack, preferencias, padroes de deploy e roadmap, sem salvar segredos.
+
+```powershell
+cd E:\jarvis-home-assistant\backend
+npm run seed:personal
+```
+
+Guia completo: [PERSONAL_PROFILE_MEMORY.md](./PERSONAL_PROFILE_MEMORY.md).
+
 ## Fase 6
 
 - Scheduler automatico seguro dentro do backend.

@@ -1,87 +1,110 @@
-# SYSTEM STATUS REPORT
+# SYSTEM STATUS REPORT - JARVIS Home AI
 
-## Data/hora
+Data/hora da auditoria: 2026-05-16 05:40 BRT  
+Diretorio usado: `E:\jarvis-home-assistant`  
+Repositorio: `https://github.com/juninnzx21/meujarvis.git`  
+Branch: `main`  
+Commit: `771d3eb fix: recover finance whatsapp account fallback`
 
-2026-05-14 15:50:00 -03:00
+## Resultado final
 
-## Diretorio
+**APROVADO COM RESSALVAS**
 
-`E:\jarvis-home-assistant`
+Atualizacao posterior: foi adicionada a Base de Conhecimento Pessoal do JARVIS com seed seguro e idempotente em `backend/prisma/personal-profile/` e script `npm run seed:personal`.
+
+O sistema local valida, testes passam, banco local esta healthy, producao dedicada responde health OK e documentacao foi atualizada. As ressalvas sao de roteamento, integracoes externas e hardening.
+
+## Ambiente
+
+- Docker: `29.4.3`
+- Docker Compose: `v5.1.3`
+- Node: `v24.15.0`
+- npm: `11.12.1`
 
 ## Git
 
 - Branch: `main`
-- Remoto: `https://github.com/juninnzx21/meujarvis.git`
-- Repositorio publico informado pelo usuario.
-- Status local revisado antes do commit de hardening.
+- Remoto: `origin https://github.com/juninnzx21/meujarvis.git`
+- Alteracoes locais antes dos relatorios: nenhuma relevante.
+- `.env`, backups, node_modules e dist estao ignorados.
 
-## Producao
+## Comandos executados
 
-- Painel: `https://jarvis.juninnzxtec.com.br`
-- API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
-- Frontend: Fabweb/DirectAdmin em `domains/jarvis.juninnzxtec.com.br/public_html`.
-- API/backend/banco: VPS Ubuntu 24.04, Docker Compose e Caddy.
-
-## Validacao
-
-| Item | Resultado |
+| Comando | Resultado |
 | --- | --- |
-| Frontend Fabweb HTTPS | OK, `HTTP 200`, entregando `JARVIS Home AI` |
-| React Router na Fabweb | OK, `.htaccess` validado em `/login` |
-| API health | OK |
-| API full health | OK |
-| Banco | OK |
-| Scheduler | OK, ativo e sem erro |
-| n8n fallback | OK, `not_configured` |
-| WhatsApp fallback | OK, `not_configured` |
-| Home Assistant fallback | OK, `not_configured` |
-| Docker Compose | OK |
-| Postgres container | OK, healthy |
-| Caddy | OK, active |
-| Webmail | OK em verificacao anterior |
-| Login frontend Fabweb | OK |
-| Chat API dedicada | OK, conversa persistida |
-| Proxy temporario apijarvis Fabweb | OK, preflight CORS e login encaminhados para VPS |
-| Configuracao WhatsApp/Evolution pelo painel | OK, CRUD seguro sem expor API key |
-| WhatsApp texto/audio para comandos | Preparado, texto executa via orquestrador e audio transcreve quando Evolution envia midia acessivel |
-| Controle Financeiro | OK em producao, `/finance` publicado, backend `/api/finance/*` validado, token mascarado, parser de entrada/saida funcionando |
+| `git status --short` | Sem alteracoes antes dos relatorios |
+| `git remote -v` | Remoto GitHub correto |
+| `git log --oneline -n 10` | Historico recente OK |
+| `git check-ignore .env backend/.env frontend/.env backups/ node_modules dist` | Ignorados |
+| Varredura redigida de segredos | Sem segredo real versionado encontrado |
+| `docker --version` | OK |
+| `docker compose version` | OK |
+| `node --version` | OK |
+| `npm --version` | OK |
+| `docker compose ps` | Postgres local healthy; backend/frontend locais nao ativos |
+| `Test-NetConnection localhost -Port 5432` | OK |
+| `Test-NetConnection localhost -Port 3001` | Fechado |
+| `Test-NetConnection localhost -Port 5173` | Fechado |
+| Backend `npm install` | OK |
+| Backend `npm audit --omit=dev` | 0 vulnerabilidades |
+| Backend `npx prisma generate` | OK |
+| Backend `npx prisma validate` | OK |
+| Backend `npx prisma migrate status` | Banco em dia |
+| Backend `npm run test` | 25 testes OK |
+| Backend `npm run validate` | OK |
+| Frontend `npm install` | OK |
+| Frontend `npm audit --omit=dev` | 0 vulnerabilidades |
+| Frontend `npm run test` | 8 testes OK |
+| Frontend `npm run validate` | OK |
+| `.\status-jarvis.ps1` | Executou; backend/frontend locais offline |
+| `.\validate-jarvis.ps1` | OK |
+| `.\backup-jarvis.ps1` | Backup criado em `backups/` |
+| `restore-jarvis.ps1` | Nao executado por seguranca |
+| `https://jarvis.juninnzxtec.com.br` | HTTP 200 frontend |
+| `https://jarvis.juninnzxtec.com.br/api/health` | Retorna frontend, nao API |
+| `https://apijarvis.juninnzxtec.com.br/api/health` | HTTP 200 via curl |
+| `https://apijarvis.juninnzxtec.com.br/api/health/full` | HTTP 200 via curl |
 
-## Portas
+## Status por modulo
 
-Publicas:
+| Modulo | Status | Observacao |
+| --- | --- | --- |
+| Auth | OK | JWT, bcrypt, auth/me |
+| Dashboard | OK | Frontend publicado |
+| Chat | OK | IA com fallback |
+| OpenAI | Parcial | Configurada, mas historico de quota/fallback |
+| Gemini | OK | Configurado como fallback externo |
+| Voz | Parcial | Navegador/Web Speech e transcricao dependem suporte/credenciais |
+| Memorias | OK | CRUD e comando natural |
+| Tarefas | OK | CRUD, status, vencidas e lembretes |
+| Automacoes | OK | Run manual, logs e bloqueios |
+| Comandos | OK | Central e execucao segura |
+| Rotinas | OK | Manual/agendada |
+| Scheduler | OK com ressalva | Running; houve tick_error recente em logs |
+| Notificacoes | OK | CRUD/read e filtros |
+| Relatorios | OK | Endpoints e tela |
+| Logs | OK | Filtros e redaction |
+| Settings | OK | Por usuario |
+| n8n | Parcial | Painel pronto; webhook precisa ser configurado |
+| WhatsApp/Evolution | Parcial/OK por usuario | Webhook e painel existem; health global mostra env ausente |
+| Home Assistant | Preparado | Sem credenciais, fallback seguro |
+| Controle Financeiro | Parcial | Funciona, mas conta PJ DO INTER ausente no externo |
+| Backup | OK | Script validado |
+| Deploy | Parcial | API dedicada OK; dominio principal `/api` nao roteado |
 
-- `22/tcp`
-- `80/tcp`
-- `443/tcp`
+## Pendencias reais
 
-JARVIS internas:
+- Rotacionar credenciais compartilhadas anteriormente.
+- Corrigir ou assumir oficialmente que a API publica e somente `apijarvis`.
+- Criar/selecionar conta `PJ DO INTER` no controle financeiro externo.
+- Criptografar tokens salvos em `Setting`.
+- Remover/desativar usuario demo em producao.
+- Implementar monitoramento externo.
+- Testar restore em ambiente separado.
+- Adicionar testes e2e com navegador real.
+- Investigar logs recentes de `scheduler tick_error`.
+- Recriar container local se quiser garantir bind `127.0.0.1` no Postgres local.
 
-- Backend: `127.0.0.1:13001`
-- PostgreSQL: `127.0.0.1:15432`
+## Conclusao
 
-Observacao: UFW tambem mostra `5678` e `8081` abertos. Revisar antes de remover porque podem pertencer a outros servicos.
-
-## Hardening aplicado
-
-- `restart: unless-stopped` no Docker Compose.
-- Documentacao de hardening criada.
-- Checklist de rotacao criado.
-- Backup/restore documentado.
-- SSH seguro documentado, mas nao aplicado automaticamente para nao arriscar lockout.
-
-## Pendencias
-
-- Rotacionar segredos compartilhados.
-- Criar usuario `deploy` com chave SSH.
-- Desabilitar login root por senha apos validar chave.
-- Revisar portas UFW extras.
-- Aguardar cache DNS residual do `apijarvis` em resolvedores locais, se aparecer.
-- DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
-- Remover proxy temporario de `apijarvis` na Fabweb quando nao houver mais cache DNS antigo.
-- Banco MySQL/MariaDB da Fabweb recebido nao foi aplicado ao JARVIS porque a aplicacao usa PostgreSQL. Ver `DATABASE_MIGRATION_PLAN.md`.
-- Controle Financeiro depende de token valido do sistema `controlefinanceiro.juninnzxtec.com.br` configurado em `/finance` para registro end-to-end real.
-- OCR de comprovantes em imagem/PDF ainda nao foi implementado; por enquanto use texto/audio com tipo e valor.
-
-## Resultado
-
-APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
+Sistema aprovado para uso pessoal assistido e evolucao continua. Para producao comercial, ainda exige hardening, controle de credenciais, monitoramento, CI/CD, e2e e melhorias de isolamento/seguranca.

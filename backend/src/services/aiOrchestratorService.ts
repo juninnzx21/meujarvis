@@ -20,6 +20,27 @@ function extractAfter(text: string, patterns: RegExp[]) {
   return text.trim();
 }
 
+function isLocalFallbackReply(reply: string) {
+  return /modo seguro local|modo local|OpenAI nao respondeu|Gemini nao respondeu/i.test(reply);
+}
+
+function buildMemoryFallbackReply(content: string, memories: Awaited<ReturnType<typeof findRelevantMemories>>) {
+  if (!memories.length) return "";
+  const lower = content.toLowerCase();
+  const selected = memories.slice(0, 6);
+  const lines = selected.map((memory) => `- ${memory.title}: ${memory.content}`).join("\n");
+  if (/projetos?/.test(lower)) {
+    return `Com base nas suas memorias, estes sao os principais projetos/contextos que eu tenho registrados:\n${lines}`;
+  }
+  if (/deploy|producao|produção/.test(lower)) {
+    return `Seu padrao de deploy registrado nas memorias e:\n${lines}`;
+  }
+  if (/prioridades?|roadmap|pendencias|pendências/.test(lower)) {
+    return `Suas prioridades registradas para o JARVIS e evolucao tecnica sao:\n${lines}`;
+  }
+  return `Estou em fallback local, mas encontrei memorias relevantes para responder:\n${lines}`;
+}
+
 export const aiOrchestratorService = {
   async process(userId: string, content: string) {
     const intent = detectIntent(content);
@@ -110,7 +131,8 @@ export const aiOrchestratorService = {
       { role: "system", content: `Memorias relevantes: ${memories.map((m) => `${m.title}: ${m.content}`).join(" | ") || "nenhuma"}` },
       { role: "user", content }
     ]);
+    const safeResponse = isLocalFallbackReply(response) ? buildMemoryFallbackReply(content, memories) || response : response;
     await writeSystemLog({ userId, module: "chat", action: "reply", message: "Resposta do JARVIS gerada" });
-    return { reply: response, intent: "chat.normal" };
+    return { reply: safeResponse, intent: "chat.normal" };
   }
 };

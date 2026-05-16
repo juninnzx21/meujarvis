@@ -1,5 +1,8 @@
 # Security checklist
 
+- [x] Memorias pessoais nao devem salvar senhas reais, tokens reais, API keys reais, chaves privadas, credenciais, dados bancarios ou dumps.
+- [x] A base pessoal deve usar apenas fatos duradouros, preferencias, contexto tecnico e roadmap seguros.
+- [x] Segredos reais devem ficar em vault/gerenciador de senhas, nunca em `Memory`.
 - [x] Senhas sao armazenadas com bcrypt.
 - [x] JWT protege rotas privadas.
 - [x] Zod valida entradas principais.

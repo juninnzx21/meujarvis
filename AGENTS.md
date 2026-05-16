@@ -13,3 +13,5 @@
 - Nunca mostre valores de `.env`; relate apenas se uma variavel esta configurada ou ausente.
 - Ao testar integracoes reais, use endpoints de teste seguros e confirme que logs redigiram request/response.
 - Scheduler deve permanecer seguro: sem shell, sem WhatsApp automatico, sem envio em massa e sem Home Assistant sensivel sem confirmacao.
+- A base pessoal em `backend/prisma/personal-profile/profile-data.ts` nunca deve conter senhas, tokens, API keys, chaves privadas, credenciais, dados bancarios ou dumps.
+- Para atualizar memorias pessoais, rode `npm run seed:personal` no backend e valide que nao houve duplicacao.

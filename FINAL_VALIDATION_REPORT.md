@@ -1,55 +1,78 @@
-# FINAL VALIDATION REPORT
+# FINAL VALIDATION REPORT - JARVIS Home AI
+
+Data/hora: 2026-05-16 05:40 BRT  
+Diretorio: `E:\jarvis-home-assistant`  
+Branch: `main`  
+Commit: `771d3eb fix: recover finance whatsapp account fallback`
 
 ## Status final
 
-APROVADO COM PENDENCIAS OPERACIONAIS DE HARDENING.
+**APROVADO COM RESSALVAS**
 
-## Diretorio usado
+Atualizacao posterior: Base de Conhecimento Pessoal adicionada para importar memorias estruturadas, seguras e consultaveis sobre o usuario, projetos, preferencias, stack, infraestrutura e roadmap.
 
-`E:\jarvis-home-assistant`
+## Evidencias principais
 
-## Data/hora
+- Backend local validado com testes e build.
+- Frontend local validado com testes e build.
+- Prisma schema valido e migrations em dia.
+- npm audit backend/frontend com 0 vulnerabilidades.
+- Docker local disponivel.
+- PostgreSQL local healthy.
+- Backup local criado com sucesso.
+- Producao frontend responde HTTP 200.
+- API dedicada responde health/full HTTP 200 via `curl`.
+- Scheduler em producao esta enabled/running.
+- OpenAI e Gemini aparecem configurados no health; Gemini esta como fallback externo.
+- Logs, relatorios, notificacoes, rotinas, tarefas, memorias, automacoes e integracoes possuem testes automatizados.
 
-2026-05-14 15:50:00 -03:00
+## Comandos que passaram
 
-## Producao validada
+- `npm install` backend/frontend
+- `npm audit --omit=dev` backend/frontend
+- `npx prisma generate`
+- `npx prisma validate`
+- `npx prisma migrate status`
+- `npm run test` backend/frontend
+- `npm run validate` backend/frontend
+- `.\validate-jarvis.ps1`
+- `.\backup-jarvis.ps1`
+- `curl https://apijarvis.juninnzxtec.com.br/api/health`
+- `curl https://apijarvis.juninnzxtec.com.br/api/health/full`
 
-- `https://jarvis.juninnzxtec.com.br`
-- `https://jarvis.juninnzxtec.com.br/login`
-- `https://apijarvis.juninnzxtec.com.br/api/health`
-- `https://apijarvis.juninnzxtec.com.br/api/health/full`
+## Comandos ou validacoes com ressalva
 
-## Resultado tecnico
+- `Test-NetConnection localhost -Port 3001`: fechado; backend local nao estava rodando.
+- `Test-NetConnection localhost -Port 5173`: fechado; frontend local nao estava rodando.
+- `Invoke-WebRequest https://apijarvis.../api/health`: uma tentativa deu timeout, mas `curl` validou HTTP 200.
+- `https://jarvis.juninnzxtec.com.br/api/health`: retorna HTML do frontend; nao esta roteado para a API.
+- `.\status-jarvis.ps1`: executou, mas indicou backend/frontend locais indisponiveis.
 
-- Frontend Fabweb respondeu `HTTP 200`.
-- Frontend publicado contem `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api`.
-- Login real funcionou no frontend publicado.
-- Chat funcionou via API dedicada e persistiu conversa.
-- Preflight CORS e login tambem funcionaram quando `apijarvis` resolve temporariamente para a Fabweb, usando proxy PHP seguro para a VPS.
-- Backend respondeu `app=ok`.
-- Banco respondeu `database=ok`.
-- Scheduler respondeu `enabled=true`, `running=true`, `lastError=null`.
-- Fallbacks n8n, WhatsApp e Home Assistant responderam `not_configured`.
-- Controle Financeiro recebeu modulo publicado para configuracao segura, parser e comandos WhatsApp. `/api/finance/status` e `/api/finance/parse` foram validados em producao; registro end-to-end requer token real do sistema externo.
-- Containers Docker ativos.
-- Caddy ativo.
-- Postgres healthy.
-- Portas JARVIS internas presas em `127.0.0.1`.
+## Erros encontrados
 
-## Segurança
+- API principal informada pelo dominio `jarvis.../api` nao funciona como API.
+- Health global mostra n8n/WhatsApp/Home Assistant como `not_configured`, pois le env global; configuracoes por usuario nao aparecem ali.
+- Logs de producao mostram erros recentes do scheduler, embora o scheduler esteja ativo agora.
+- Conta financeira `PJ DO INTER` nao foi encontrada no sistema financeiro externo.
+- Container local do Postgres apareceu publicado em `0.0.0.0:5432`, apesar do compose atual apontar `127.0.0.1`.
 
-- `.env`, backups, dumps, `node_modules` e `dist` nao aparecem no Git.
-- Varredura local nao encontrou chaves reais fora de `.env`.
-- Logs recentes do backend foram revisados por padroes sensiveis.
-- Documentacao de rotacao e hardening criada.
+## Correcoes feitas nesta auditoria
 
-## Pendencias manuais
+Nenhuma correcao grande foi aplicada durante esta auditoria. Foram criados/atualizados apenas relatorios, conforme solicitado.
 
-- Rotacionar senhas/chaves compartilhadas.
-- Criar usuario `deploy` com chave SSH.
-- Desabilitar login root por senha apos validar chave.
-- Revisar regras UFW extras `5678` e `8081` antes de remover.
-- Aguardar/validar cache DNS residual em resolvedores locais.
-- Resultado DNS esperado: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.
-- Proxy temporario na Fabweb pode ser removido apos propagacao completa de `apijarvis`.
-- Configurar token do Controle Financeiro em `/finance` e testar conexao antes de usar comandos financeiros por WhatsApp.
+## Pendencias reais
+
+1. Rotacionar segredos.
+2. Corrigir roteamento `/api` no dominio principal ou padronizar `apijarvis` como unica API publica.
+3. Criar conta `PJ DO INTER` no sistema financeiro externo ou mapear conta correta.
+4. Criptografar tokens em banco.
+5. Remover demo admin de producao.
+6. Implementar monitoramento externo.
+7. Testar restore em ambiente separado.
+8. Criar e2e Playwright.
+9. Investigar tick_error do scheduler.
+10. Harden SSH/firewall e usuario deploy.
+
+## Proximo passo recomendado
+
+Fase 7: hardening real de producao com rotacao de segredos, correcao de roteamento da API, criptografia de tokens, remocao do demo admin, monitoramento externo e backup offsite.

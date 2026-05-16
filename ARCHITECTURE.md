@@ -99,6 +99,10 @@ Scripts PowerShell na raiz controlam ciclo local:
 
 `GET /api/health/full` retorna uptime, status do banco, status OpenAI/Gemini/n8n/WhatsApp/Home Assistant, contagem de logs e ultimas falhas. A tela `/status` consome esses dados sem expor segredos.
 
+## Base de conhecimento pessoal
+
+A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.ts` e e importada por `backend/prisma/seed-personal-profile.ts`. O importador grava memorias em `Memory` de forma idempotente usando `userId + title + type`, bloqueia padroes sensiveis e registra `SystemLog` sem imprimir segredos. O backend nao importa esses arquivos em runtime de producao; nesta fase o uso oficial e via script `npm run seed:personal`.
+
 ## Fase 5
 
 - `commands`: central declarativa de comandos com safety e execucao auditada.

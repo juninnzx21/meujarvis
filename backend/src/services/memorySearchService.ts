@@ -1,6 +1,6 @@
 import { prisma } from "../prisma/client.js";
 
-const stopWords = new Set(["para", "com", "que", "uma", "por", "dos", "das", "meu", "minha", "status", "sistema"]);
+const stopWords = new Set(["para", "com", "que", "uma", "por", "dos", "das", "meu", "meus", "minha", "status", "sistema", "jarvis", "sabe", "sobre"]);
 
 export function extractSearchTerms(text: string) {
   return text
