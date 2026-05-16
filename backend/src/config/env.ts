@@ -26,7 +26,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: optionalTrimmedString,
   OPENAI_MODEL: trimmedString.default("gpt-4o-mini"),
   GEMINI_API_KEY: optionalTrimmedString,
-  GEMINI_MODEL: trimmedString.default("gemini-1.5-flash"),
+  GEMINI_MODEL: trimmedString.default("gemini-2.5-flash"),
   N8N_WEBHOOK_URL: optionalTrimmedString,
   N8N_API_KEY: optionalTrimmedString,
   EVOLUTION_API_URL: optionalTrimmedString,

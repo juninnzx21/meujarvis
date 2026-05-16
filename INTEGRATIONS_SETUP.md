@@ -28,7 +28,7 @@ Variaveis:
 
 ```env
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 O Gemini e usado somente no backend como segundo provedor de IA. A chave nunca e enviada ao frontend. Se OpenAI estiver sem chave, sem quota ou com erro de rede/API, o JARVIS tenta Gemini. Se Gemini tambem falhar, retorna fallback local seguro.
