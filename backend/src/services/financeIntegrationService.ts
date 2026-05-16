@@ -5,12 +5,16 @@ import { writeSystemLog } from "./systemLogService.js";
 
 const keys = {
   apiUrl: "finance_api_url",
-  token: "finance_api_token"
+  token: "finance_api_token",
+  defaultAccountName: "finance_default_account_name",
+  defaultAccountId: "finance_default_account_id"
 };
 
 type FinanceConfig = {
   apiUrl: string;
   token: string;
+  defaultAccountName: string;
+  defaultAccountId: string;
 };
 
 export type ParsedFinancialTransaction = {
@@ -35,6 +39,15 @@ function maskSecret(value: string) {
 
 function normalizeApiUrl(value: string) {
   return value.trim().replace(/\/+$/, "");
+}
+
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function parseAmount(text: string) {
@@ -67,18 +80,32 @@ function cleanDescription(text: string) {
     .replace(/\b\d{2}[\/.-]\d{2}(?:[\/.-]\d{2,4})?\b/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 180) || "Lançamento via JARVIS";
+    .slice(0, 180) || "Lancamento via JARVIS";
 }
 
 function looksFinancial(text: string) {
   return /(pix|comprovante|nota fiscal|nf-e|nfe|boleto|entrada|saida|saída|recebi|paguei|valor|despesa|receita|extrato|resumo financeiro|saldo do mês|saldo do mes)/i.test(text);
 }
 
+function extractItems(payload: unknown): Array<Record<string, unknown>> {
+  const root = payload as any;
+  const candidates = [root?.data, root?.accounts, root?.data?.data, root];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate as Array<Record<string, unknown>>;
+  }
+  return [];
+}
+
 export const financeIntegrationService = {
   async runtimeConfig(userId: string): Promise<FinanceConfig> {
     const rows = await prisma.setting.findMany({ where: { userId, key: { in: Object.values(keys) } } });
     const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-    return { apiUrl: normalizeApiUrl(asString(settings[keys.apiUrl])), token: asString(settings[keys.token]) };
+    return {
+      apiUrl: normalizeApiUrl(asString(settings[keys.apiUrl])),
+      token: asString(settings[keys.token]),
+      defaultAccountName: asString(settings[keys.defaultAccountName]) || "PJ DO INTER",
+      defaultAccountId: asString(settings[keys.defaultAccountId])
+    };
   },
   isConfigured(config: FinanceConfig) {
     return Boolean(config.apiUrl && config.token);
@@ -91,15 +118,21 @@ export const financeIntegrationService = {
       apiUrl: config.apiUrl,
       apiUrlConfigured: Boolean(config.apiUrl),
       tokenConfigured: Boolean(config.token),
-      tokenMasked: maskSecret(config.token)
+      tokenMasked: maskSecret(config.token),
+      defaultAccountName: config.defaultAccountName,
+      defaultAccountIdConfigured: Boolean(config.defaultAccountId)
     };
   },
-  async saveConfig(userId: string, input: { apiUrl: string; token?: string }) {
+  async saveConfig(userId: string, input: { apiUrl: string; token?: string; defaultAccountName?: string; defaultAccountId?: string }) {
     const current = await this.runtimeConfig(userId);
     const token = input.token?.trim() ? input.token.trim() : current.token;
+    const defaultAccountName = input.defaultAccountName?.trim() || current.defaultAccountName || "PJ DO INTER";
+    const defaultAccountId = input.defaultAccountId?.trim() || current.defaultAccountId;
     const entries: Array<[string, Prisma.InputJsonValue]> = [
       [keys.apiUrl, normalizeApiUrl(input.apiUrl)],
-      [keys.token, token]
+      [keys.token, token],
+      [keys.defaultAccountName, defaultAccountName],
+      [keys.defaultAccountId, defaultAccountId]
     ];
     await Promise.all(entries.map(([key, value]) => prisma.setting.upsert({
       where: { userId_key: { userId, key } },
@@ -110,19 +143,19 @@ export const financeIntegrationService = {
       userId,
       module: "finance",
       action: "config_save",
-      message: "Configuração do controle financeiro atualizada",
-      metadata: { apiUrlConfigured: Boolean(input.apiUrl), tokenConfigured: Boolean(token) }
+      message: "Configuracao do controle financeiro atualizada",
+      metadata: { apiUrlConfigured: Boolean(input.apiUrl), tokenConfigured: Boolean(token), defaultAccountName }
     });
     return this.status(userId);
   },
   async clearConfig(userId: string) {
     await prisma.setting.deleteMany({ where: { userId, key: { in: Object.values(keys) } } });
-    await writeSystemLog({ userId, module: "finance", action: "config_clear", message: "Configuração do controle financeiro removida" });
+    await writeSystemLog({ userId, module: "finance", action: "config_clear", message: "Configuracao do controle financeiro removida" });
     return this.status(userId);
   },
   async request(userId: string, method: "get" | "post", path: string, data?: unknown) {
     const config = await this.runtimeConfig(userId);
-    if (!this.isConfigured(config)) return { status: "not_configured", message: "Controle financeiro não configurado." };
+    if (!this.isConfigured(config)) return { status: "not_configured", message: "Controle financeiro nao configurado." };
     const response = await axios.request({
       method,
       url: `${config.apiUrl}${path}`,
@@ -137,9 +170,55 @@ export const financeIntegrationService = {
       return await this.request(userId, "get", "/api/v1/me");
     } catch (error) {
       const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
-      const message = statusCode === 401 || statusCode === 403 ? "Token do controle financeiro recusado." : "Não foi possível conectar ao controle financeiro.";
+      const message = statusCode === 401 || statusCode === 403 ? "Token do controle financeiro recusado." : "Nao foi possivel conectar ao controle financeiro.";
       await writeSystemLog({ userId, level: "warning", module: "finance", action: "test_connection_failed", message, metadata: { statusCode } });
       return { status: "error", message };
+    }
+  },
+  async listAccounts(userId: string) {
+    return this.request(userId, "get", "/api/v1/accounts");
+  },
+  async resolveDefaultAccountId(userId: string, input?: Record<string, unknown>) {
+    if (typeof input?.financial_account_id === "string" && input.financial_account_id.trim()) return input.financial_account_id.trim();
+    const config = await this.runtimeConfig(userId);
+    if (config.defaultAccountId) return config.defaultAccountId;
+    if (!config.defaultAccountName || !this.isConfigured(config)) return undefined;
+    try {
+      const accounts = await this.listAccounts(userId);
+      if (accounts.status !== "success") return undefined;
+      const target = normalizeSearch(config.defaultAccountName);
+      const found = extractItems(accounts.data).find((account) => {
+        const name = normalizeSearch(String(account.name ?? account.title ?? account.description ?? ""));
+        return name === target || name.includes(target) || target.includes(name);
+      });
+      if (!found?.id) {
+        await writeSystemLog({
+          userId,
+          level: "warning",
+          module: "finance",
+          action: "default_account_not_found",
+          message: "Conta padrao financeira nao encontrada",
+          metadata: { defaultAccountName: config.defaultAccountName }
+        });
+        return undefined;
+      }
+      const accountId = String(found.id);
+      await prisma.setting.upsert({
+        where: { userId_key: { userId, key: keys.defaultAccountId } },
+        update: { value: accountId },
+        create: { userId, key: keys.defaultAccountId, value: accountId }
+      });
+      return accountId;
+    } catch (error) {
+      await writeSystemLog({
+        userId,
+        level: "warning",
+        module: "finance",
+        action: "default_account_lookup_failed",
+        message: "Nao foi possivel resolver a conta padrao financeira",
+        metadata: { defaultAccountName: config.defaultAccountName }
+      });
+      return undefined;
     }
   },
   async monthlySummary(userId: string) {
@@ -156,10 +235,11 @@ export const financeIntegrationService = {
       amount,
       transaction_date: parseDate(text),
       payment_method: /pix/i.test(text) ? "pix" : undefined,
-      notes: `Lançado pelo JARVIS via WhatsApp. Texto original: ${text}`.slice(0, 1000)
+      notes: `Lancado pelo JARVIS via WhatsApp. Texto original: ${text}`.slice(0, 1000)
     };
   },
   async createTransaction(userId: string, input: Record<string, unknown>) {
+    const accountId = await this.resolveDefaultAccountId(userId, input);
     const payload = {
       type: input.type,
       status: input.status || (input.type === "income" ? "received" : "paid"),
@@ -167,6 +247,7 @@ export const financeIntegrationService = {
       amount: input.amount,
       transaction_date: input.transaction_date || new Date().toISOString().slice(0, 10),
       payment_method: input.payment_method,
+      financial_account_id: accountId,
       notes: input.notes
     };
     const result = await this.request(userId, "post", "/api/v1/transactions", payload);
@@ -175,8 +256,8 @@ export const financeIntegrationService = {
         userId,
         module: "finance",
         action: "transaction_create",
-        message: "Transação enviada ao controle financeiro",
-        metadata: { type: String(payload.type), amount: Number(payload.amount) }
+        message: "Transacao enviada ao controle financeiro",
+        metadata: { type: String(payload.type), amount: Number(payload.amount), defaultAccountApplied: Boolean(accountId) }
       });
     }
     return result;
@@ -184,15 +265,16 @@ export const financeIntegrationService = {
   async handleWhatsAppText(userId: string, text: string) {
     if (/resumo|extrato|saldo do mes|saldo do mês|financeiro do mes|financeiro do mês/i.test(text)) {
       const summary = await this.monthlySummary(userId);
-      if (summary.status !== "success") return "Controle financeiro ainda não está configurado ou não respondeu.";
+      if (summary.status !== "success") return "Controle financeiro ainda nao esta configurado ou nao respondeu.";
       const data = (summary.data as any)?.data ?? summary.data;
-      return `Resumo financeiro do mês: entradas R$ ${data.income ?? 0}, saídas R$ ${data.expense ?? 0}, despesas pagas R$ ${data.paid_expense ?? 0}, pendentes R$ ${data.pending_expense ?? 0}.`;
+      return `Resumo financeiro do mes: entradas R$ ${data.income ?? 0}, saidas R$ ${data.expense ?? 0}, despesas pagas R$ ${data.paid_expense ?? 0}, pendentes R$ ${data.pending_expense ?? 0}.`;
     }
     if (!looksFinancial(text)) return null;
     const parsed = this.parseFinancialText(text);
-    if (!parsed) return "Entendi que isso parece financeiro, mas preciso que você informe se é entrada ou saída e o valor. Exemplo: \"entrada pix recebido R$ 120,00 cliente João\".";
+    if (!parsed) return "Entendi que isso parece financeiro, mas preciso que voce informe se e entrada ou saida e o valor. Exemplo: \"entrada pix recebido R$ 120,00 cliente Joao\".";
     const result = await this.createTransaction(userId, parsed);
-    if (result.status !== "success") return "Entendi o lançamento financeiro, mas o controle financeiro não está configurado ou recusou a operação.";
-    return `${parsed.type === "income" ? "Entrada" : "Saída"} registrada no controle financeiro: ${parsed.description}, R$ ${parsed.amount.toFixed(2)}.`;
+    if (result.status !== "success") return "Entendi o lancamento financeiro, mas o controle financeiro nao esta configurado ou recusou a operacao.";
+    const config = await this.runtimeConfig(userId);
+    return `${parsed.type === "income" ? "Entrada" : "Saida"} registrada no controle financeiro: ${parsed.description}, R$ ${parsed.amount.toFixed(2)}. Conta: ${config.defaultAccountName}.`;
   }
 };

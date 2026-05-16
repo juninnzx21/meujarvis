@@ -10,7 +10,9 @@ router.use(authMiddleware);
 
 const configSchema = z.object({
   apiUrl: z.string().url("Informe a URL do Controle Financeiro.").transform((value) => value.replace(/\/+$/, "")),
-  token: z.string().optional().refine((value) => !value || !/^https?:\/\//i.test(value), "Token nao pode ser uma URL.")
+  token: z.string().optional().refine((value) => !value || !/^https?:\/\//i.test(value), "Token nao pode ser uma URL."),
+  defaultAccountName: z.string().min(1).max(120).optional(),
+  defaultAccountId: z.string().max(120).optional()
 });
 
 const transactionSchema = z.object({
@@ -18,6 +20,7 @@ const transactionSchema = z.object({
   status: z.string().max(40).optional(),
   description: z.string().min(2).max(255),
   amount: z.coerce.number().positive(),
+  financial_account_id: z.string().optional(),
   transaction_date: z.string().optional(),
   payment_method: z.string().optional(),
   notes: z.string().max(1000).optional()
@@ -30,6 +33,7 @@ router.put("/config", validate(configSchema), asyncHandler(async (req, res) => {
 }));
 router.delete("/config", asyncHandler(async (req, res) => res.json(await financeIntegrationService.clearConfig(req.user!.id))));
 router.post("/test-connection", asyncHandler(async (req, res) => res.json(await financeIntegrationService.testConnection(req.user!.id))));
+router.get("/accounts", asyncHandler(async (req, res) => res.json(await financeIntegrationService.listAccounts(req.user!.id))));
 router.get("/summary/month", asyncHandler(async (req, res) => res.json(await financeIntegrationService.monthlySummary(req.user!.id))));
 router.post("/transactions", validate(transactionSchema), asyncHandler(async (req, res) => {
   res.json(await financeIntegrationService.createTransaction(req.user!.id, req.body));

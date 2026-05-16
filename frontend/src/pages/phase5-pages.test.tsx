@@ -56,7 +56,7 @@ describe("Phase 5 and 6 pages", () => {
   it("renders finance integration page and parser", async () => {
     render(<FinancePage />);
     expect(await screen.findByText("Controle Financeiro")).toBeInTheDocument();
-    expect(screen.getByText("Configuração segura")).toBeInTheDocument();
+    expect(screen.getByText("Configuracao segura")).toBeInTheDocument();
     expect(screen.getByText("Analisar texto, comprovante ou extrato")).toBeInTheDocument();
   });
 

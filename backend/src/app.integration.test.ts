@@ -214,7 +214,9 @@ describe("JARVIS Home AI API", () => {
     expect(parsed.body.parsed.type).toBe("income");
     expect(parsed.body.parsed.amount).toBe(120);
 
-    vi.mocked(axios.request).mockResolvedValueOnce({ status: 201, data: { data: { id: "t1" } } });
+    vi.mocked(axios.request)
+      .mockResolvedValueOnce({ status: 200, data: { data: [{ id: "acc-inter", name: "PJ DO INTER" }] } })
+      .mockResolvedValueOnce({ status: 201, data: { data: { id: "t1" } } });
     const created = await request(app)
       .post("/api/finance/transactions")
       .set(auth())
