@@ -151,7 +151,7 @@ O Controle Financeiro externo e configurado pelo painel `/finance`, nao por vari
 - WhatsApp reforcado para preparar mensagens sem envio direto por IA.
 - n8n tem templates de eventos documentados em `INTEGRATIONS_SETUP.md`.
 - Guias: [COMMANDS_GUIDE.md](./COMMANDS_GUIDE.md) e [ROUTINES_GUIDE.md](./ROUTINES_GUIDE.md).
-- n8n ganhou `POST /api/n8n/test` e tela dedicada.
+- n8n ganhou tela dedicada com configuracao de webhook pelo painel, `POST /api/n8n/test` e logs redigidos.
 - WhatsApp ganhou teste de conexao, validacao de numero e confirmacao visual para envio teste.
 - Home Assistant ganhou teste de conexao, agrupamento de entidades e bloqueio reforcado para lock, alarm, cover, garagem e portao.
 - Logs de integracoes passam por redaction centralizada antes de persistir metadata.

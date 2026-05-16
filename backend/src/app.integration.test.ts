@@ -7,7 +7,6 @@ import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
-import { n8nService } from "./services/n8nService.js";
 import { openAiService } from "./services/openAiService.js";
 import { schedulerService } from "./services/schedulerService.js";
 import { writeSystemLog } from "./services/systemLogService.js";
@@ -53,7 +52,7 @@ describe("JARVIS Home AI API", () => {
     }
     await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
-    await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token"] } } });
+    await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token", "n8n_webhook_url", "n8n_api_key"] } } });
     if (schedulerTaskIds.length > 0) {
       await prisma.task.deleteMany({ where: { id: { in: schedulerTaskIds } } });
     }
@@ -270,9 +269,15 @@ describe("JARVIS Home AI API", () => {
     openAiService.setClientForTests(null);
   });
 
-  it("tests configured n8n webhook with redacted logs through a mocked HTTP call", async () => {
-    const previous = n8nService.configured;
-    n8nService.configured = true;
+  it("configures and tests n8n webhook with redacted logs through a mocked HTTP call", async () => {
+    const saved = await request(app)
+      .put("/api/n8n/config")
+      .set(auth())
+      .send({ webhookUrl: "https://n8n.test/webhook/jarvis", apiKey: "secret-n8n-token" })
+      .expect(200);
+    expect(saved.body.status).toBe("configured");
+    expect(JSON.stringify(saved.body)).not.toContain("secret-n8n-token");
+
     vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, token: "secret-token" } });
 
     const res = await request(app).post("/api/n8n/test").set(auth()).send({ ignored: true }).expect(200);
@@ -280,7 +285,9 @@ describe("JARVIS Home AI API", () => {
 
     const logs = await request(app).get("/api/logs?module=n8n").set(auth()).expect(200);
     expect(JSON.stringify(logs.body)).not.toContain("secret-token");
-    n8nService.configured = previous;
+
+    const cleared = await request(app).delete("/api/n8n/config").set(auth()).expect(200);
+    expect(cleared.body.status).toBe("not_configured");
   });
 
   it("validates WhatsApp phone numbers and sends through a mocked Evolution API", async () => {

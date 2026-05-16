@@ -35,6 +35,18 @@ O Gemini e usado somente no backend como segundo provedor de IA. A chave nunca e
 
 ## n8n
 
+Opcao 1, configurar pelo painel:
+
+1. Acesse `n8n` no menu lateral do JARVIS.
+2. No n8n, crie um workflow com um node `Webhook`.
+3. Copie a `Production URL` do webhook e cole no campo `URL do webhook n8n`.
+4. Se o webhook exigir autenticacao, cole o token no campo `API key ou token opcional`; se nao exigir, deixe em branco.
+5. Clique em `Salvar configuracao`.
+6. Clique em `Testar webhook n8n`.
+7. Verifique no n8n se chegou um payload com `source: jarvis` e `type: safe_test`.
+
+Opcao 2, configurar por variaveis de ambiente:
+
 Variaveis:
 
 ```env
@@ -45,10 +57,13 @@ N8N_API_KEY=
 Endpoints:
 
 - `GET /api/n8n/status`
+- `GET /api/n8n/config`
+- `PUT /api/n8n/config`
+- `DELETE /api/n8n/config`
 - `POST /api/n8n/trigger`
 - `POST /api/n8n/test`
 
-Sem webhook, retorna `not_configured`.
+Sem webhook no painel ou no `.env`, retorna `not_configured`.
 O teste envia payload seguro `{ source: "jarvis", type: "safe_test" }` e registra `SystemLog` com request/response redigidos.
 
 Templates de evento recomendados:
