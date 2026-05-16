@@ -12,6 +12,7 @@ import { FinanceCategoriesPage } from "./Finance/FinanceCategoriesPage";
 import { FinanceImportPage } from "./Finance/FinanceImportPage";
 import { FinanceReportsPage } from "./Finance/FinanceReportsPage";
 import { FinanceTransactionsPage } from "./Finance/FinanceTransactionsPage";
+import { MobileAssistantPage } from "./MobileAssistant/MobileAssistantPage";
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { name: "Junior Rodrigues" }, logout: vi.fn() })
@@ -33,6 +34,7 @@ vi.mock("../services/api", () => ({
     }),
     post: vi.fn((url: string) => {
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
+      if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
       return Promise.resolve({ data: { ok: true } });
     }),
     patch: vi.fn(() => Promise.resolve({ data: { ok: true } }))
@@ -111,4 +113,13 @@ describe("Phase 5 and 6 pages", () => {
     expect((await screen.findAllByText("Notificacoes")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("1")).length).toBeGreaterThanOrEqual(1);
   });
+
+  it("renders mobile assistant and sends quick command", async () => {
+    render(<MemoryRouter><MobileAssistantPage /></MemoryRouter>);
+    expect(await screen.findByText("JARVIS Mobile")).toBeInTheDocument();
+    expect(screen.getByText(/O microfone so e ativado/)).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Status do sistema"));
+    expect(await screen.findByText("Status operacional.")).toBeInTheDocument();
+  });
+
 });

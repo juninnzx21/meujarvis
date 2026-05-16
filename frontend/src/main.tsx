@@ -3,7 +3,10 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import App from "./App";
+import { registerServiceWorker } from "./pwa/registerServiceWorker";
 import "./styles/index.css";
+
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

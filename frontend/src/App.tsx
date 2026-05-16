@@ -15,6 +15,7 @@ import { FinanceTransactionsPage } from "./pages/Finance/FinanceTransactionsPage
 import { LoginPage } from "./pages/Login/LoginPage";
 import { LogsPage } from "./pages/Logs/LogsPage";
 import { MemoryPage } from "./pages/Memory/MemoryPage";
+import { MobileAssistantPage } from "./pages/MobileAssistant/MobileAssistantPage";
 import { N8nPage } from "./pages/N8n/N8nPage";
 import { NotificationsPage } from "./pages/Notifications/NotificationsPage";
 import { ReportsPage } from "./pages/Reports/ReportsPage";
@@ -39,6 +40,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<Private><AppLayout /></Private>}>
         <Route index element={<DashboardPage />} />
+        <Route path="mobile-assistant" element={<MobileAssistantPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="voice" element={<VoicePage />} />
         <Route path="commands" element={<CommandsPage />} />

@@ -25,6 +25,30 @@ Base full stack para um assistente pessoal inteligente com painel web, chat com 
 - Infra: Docker Compose com PostgreSQL, backend e frontend.
 - Testes: Vitest, Supertest e Testing Library.
 
+## Fase Mobile/PWA
+
+O frontend possui PWA instalavel com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`.
+
+Atalhos PWA:
+
+- Falar com JARVIS: `/voice`
+- Abrir Chat: `/chat`
+- Nova tarefa: `/tasks`
+- Financeiro: `/finance`
+- Status: `/status`
+
+Seguranca mobile:
+
+- O service worker nao cacheia `/api/*`, Authorization, cookies ou dados autenticados.
+- O microfone so e ativado quando o usuario toca no botao.
+- Nao existe escuta continua oculta.
+- WhatsApp continua exigindo `ei jarvis`.
+
+Guias:
+
+- `MOBILE_PWA_GUIDE.md`
+- `ANDROID_ASSISTANT_PLAN.md`
+
 ## Login demo
 
 - Email: `admin@jarvis.local`

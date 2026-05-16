@@ -1,6 +1,6 @@
 ﻿# SYSTEM_STATUS_REPORT
 
-Data/hora da auditoria: 2026-05-16 15:28:26 -03:00
+Data/hora da auditoria: 2026-05-16 15:55:18 -03:00
 
 Diretorio usado: `E:\jarvis-home-assistant`
 
@@ -14,6 +14,7 @@ Atualizacao operacional desta rodada:
 - Scheduler passa a registrar erro de `tick_error` com detalhe redigido.
 - WhatsApp nao trata OFX/CSV como audio; anexos geram previa de importacao.
 - Guia `WHATSAPP_PRODUCTION_SETUP.md` criado.
+- Fase Mobile/PWA adicionada com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`, validada por testes, build e checagem local do manifest/service worker.
 
 ## Ambiente
 
@@ -31,9 +32,9 @@ Atualizacao operacional desta rodada:
 
 - Repositorio: `https://github.com/juninnzx21/meujarvis.git`.
 - Branch: `main`.
-- Commit atual: `b229550 fix: handle whatsapp statement attachments safely`.
-- Status inicial: limpo.
-- Status apos auditoria: relatorios atualizados localmente.
+- Commit base: `356104c fix: stabilize production api and integration diagnostics`.
+- Status inicial: alteracoes locais da Fase Mobile/PWA.
+- Status apos auditoria: implementacao mobile/PWA pronta para commit.
 
 ## Seguranca
 
@@ -140,7 +141,8 @@ API dedicada:
 - Logs: funcional nos testes.
 - Settings: funcional; exige cuidado permanente com redaction.
 - n8n: preparado; producao sem credenciais.
-- WhatsApp/Evolution: preparado; producao sem credenciais; wake phrase implementada no codigo/testes.
+- WhatsApp/Evolution: preparado; producao sem credenciais; wake phrase implementada no codigo/testes; OFX/CSV via WhatsApp gera previa e nao importacao direta.
+- Mobile/PWA: implementado no frontend; sem escuta continua; service worker nao cacheia API.
 - Home Assistant: preparado; producao sem credenciais.
 - Financeiro: funcional nos testes, incluindo contas, categorias, transacoes, assistente e importacao.
 - Importacao bancaria: OFX/CSV e revisao obrigatoria implementadas/testadas.

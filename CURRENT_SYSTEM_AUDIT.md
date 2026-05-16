@@ -206,6 +206,7 @@ Correcoes locais desta rodada:
 - Scheduler grava `tick_error` com detalhe redigido.
 - WhatsApp mantem OFX/CSV como anexo/documento e nao como audio.
 - `WHATSAPP_PRODUCTION_SETUP.md` criado com webhook oficial e testes seguros.
+- Fase Mobile/PWA adicionada com manifest, service worker seguro, icones, prompt de instalacao, atalhos e tela `/mobile-assistant`.
 
 ## Modulos backend
 

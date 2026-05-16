@@ -1,0 +1,69 @@
+{
+  "name": "JARVIS Home AI",
+  "short_name": "JARVIS",
+  "description": "Seu assistente inteligente para casa, rotina e automacoes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Falar com JARVIS",
+      "short_name": "Voz",
+      "description": "Abrir o modo de voz do JARVIS.",
+      "url": "/voice",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Abrir Chat",
+      "short_name": "Chat",
+      "description": "Conversar com o JARVIS.",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Nova tarefa",
+      "short_name": "Tarefa",
+      "description": "Abrir tarefas.",
+      "url": "/tasks",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Financeiro",
+      "short_name": "Financeiro",
+      "description": "Abrir painel financeiro.",
+      "url": "/finance",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Status",
+      "short_name": "Status",
+      "description": "Ver status do sistema.",
+      "url": "/status",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    }
+  ]
+}

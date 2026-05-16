@@ -1,6 +1,6 @@
 ﻿# FINAL_VALIDATION_REPORT
 
-Data/hora: 2026-05-16 15:28:26 -03:00
+Data/hora: 2026-05-16 15:55:18 -03:00
 
 Diretorio: `E:\jarvis-home-assistant`
 
@@ -8,7 +8,7 @@ Repositorio: `https://github.com/juninnzx21/meujarvis.git`
 
 Branch: `main`
 
-Commit: `b229550 fix: handle whatsapp statement attachments safely`
+Commit base: `356104c fix: stabilize production api and integration diagnostics`
 
 Resultado final: **APROVADO COM RESSALVAS**
 
@@ -17,6 +17,8 @@ API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.
 Webhook WhatsApp/Evolution oficial: `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
 
 Atualizacao desta rodada: diagnosticos OpenAI/Gemini refinados, scheduler com erro redigido, API `apijarvis` oficializada e guia de producao WhatsApp criado.
+
+Fase Mobile/PWA: manifest, service worker seguro, icones, prompt de instalacao, atalhos e tela `/mobile-assistant` adicionados e validados localmente.
 
 ## Resumo
 
@@ -35,6 +37,7 @@ Backend:
 - `npx prisma migrate status`
 - `npm run test`
 - `npm run validate`
+- `npm run build`
 
 Frontend:
 
@@ -56,6 +59,12 @@ Producao:
 - GET `https://apijarvis.juninnzxtec.com.br/api/health`
 - GET `https://apijarvis.juninnzxtec.com.br/api/health/full`
 
+PWA/local:
+
+- GET `http://127.0.0.1:5174/manifest.webmanifest`
+- GET `http://127.0.0.1:5174/sw.js`
+- Browser local em `http://127.0.0.1:5174/`
+
 Seguranca:
 
 - `.env`, `backend/.env`, backups, node_modules, dist e imports estao ignorados.
@@ -72,9 +81,12 @@ Seguranca:
 ## Evidencias principais
 
 - Backend: 34 testes aprovados.
-- Frontend: 9 testes aprovados.
+- Frontend: 10 testes aprovados.
 - Backend validate: typecheck, seed typecheck, testes e build aprovados.
 - Frontend validate: typecheck, testes e build aprovados.
+- PWA: manifest com nome, atalhos e icone maskable validado.
+- Service worker: guardas para nao cachear `/api`, `Authorization` e `cookie` validadas.
+- Browser: tela local carregou com JARVIS/Login.
 - PostgreSQL: healthy.
 - API dedicada health: app OK, database OK.
 - Scheduler producao: enabled/running.

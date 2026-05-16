@@ -12,6 +12,8 @@ WhatsApp/Evolution deve usar `https://apijarvis.juninnzxtec.com.br/api/whatsapp/
 
 OFX/CSV enviados pelo WhatsApp devem criar previa em `/finance/import/:id/review`; importacao direta sem revisao permanece bloqueada.
 
+Fase Mobile/PWA: app instalavel, atalhos, prompt de instalacao e tela `/mobile-assistant` para uso focado no celular.
+
 ## URLs
 
 - Frontend producao: `https://jarvis.juninnzxtec.com.br`
@@ -24,6 +26,8 @@ Observacao: `https://jarvis.juninnzxtec.com.br/api/*` retornou HTML do frontend 
 ## O que o sistema possui hoje
 
 - Autenticacao com JWT, bcrypt e usuario admin/demo em ambiente local.
+- PWA instalavel com manifest, service worker seguro, icones e atalhos.
+- Tela `/mobile-assistant` para uso no celular com voz, texto rapido e atalhos.
 - Dashboard premium dark.
 - Chat com historico, memoria, tarefas, intencoes e fallback seguro.
 - Voz via navegador e estrutura de voice no backend.

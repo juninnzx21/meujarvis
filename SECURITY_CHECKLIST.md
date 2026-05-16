@@ -1,5 +1,13 @@
 # Security checklist
 
+- [x] PWA nao cacheia `/api/*`.
+- [x] PWA nao cacheia requisicoes com Authorization ou cookie.
+- [x] Service worker cacheia apenas assets estaticos e fallback offline.
+- [x] Tokens continuam no fluxo existente do app e nao sao gravados pelo service worker.
+- [x] Microfone mobile so e ativado por toque/clique explicito.
+- [x] Nao ha escuta continua oculta.
+- [x] WhatsApp mobile continua exigindo `ei jarvis`.
+
 - [ ] Rotacionar segredos compartilhados fora do repositorio.
 - [x] `.env`, backups, node_modules, dist e imports ignorados no Git.
 - [x] API key da Evolution salva em `Setting` com criptografia.

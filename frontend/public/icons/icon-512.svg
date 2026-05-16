@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="JARVIS">
+  <rect width="512" height="512" rx="112" fill="#020617"/>
+  <circle cx="256" cy="256" r="184" fill="#06283a" stroke="#22d3ee" stroke-width="16"/>
+  <path d="M168 232h176a45 45 0 0 1 45 45v48a45 45 0 0 1-45 45H168a45 45 0 0 1-45-45v-48a45 45 0 0 1 45-45Z" fill="#0f172a" stroke="#38bdf8" stroke-width="14"/>
+  <path d="M256 145v83M208 145h96" stroke="#a78bfa" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="205" cy="299" r="22" fill="#22d3ee"/>
+  <circle cx="307" cy="299" r="22" fill="#22d3ee"/>
+  <path d="M224 347h64" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round"/>
+</svg>

@@ -4,6 +4,19 @@
 
 O sistema e dividido em frontend React/Vite e backend Express/TypeScript. O backend expoe API REST em `/api`, usa Prisma para persistencia em PostgreSQL e centraliza integracoes em servicos isolados.
 
+## Mobile/PWA
+
+O frontend tambem opera como PWA instalavel:
+
+- `public/manifest.webmanifest`: nome, tema, orientacao portrait, icones e shortcuts.
+- `public/sw.js`: service worker manual para cache seguro de assets estaticos.
+- `public/offline.html`: fallback offline simples.
+- `src/pwa/registerServiceWorker.ts`: registro progressivo do service worker fora do modo dev.
+- `src/components/PwaInstallPrompt.tsx`: prompt de instalacao quando o navegador permite.
+- `src/pages/MobileAssistant/MobileAssistantPage.tsx`: experiencia mobile focada em voz, texto rapido e atalhos.
+
+O service worker nao cacheia `/api/*`, requisicoes com Authorization, cookies ou metodos diferentes de GET. O microfone e acionado somente por interacao explicita do usuario.
+
 ## Backend
 
 - `src/app.ts`: Express, middlewares globais, rotas e erro global.

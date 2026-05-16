@@ -18,6 +18,8 @@
 - No modulo financeiro, nunca importe extrato sem revisao/aprovacao.
 - Nao envie extratos financeiros para IA externa sem consentimento explicito.
 - Mantenha `backend/storage/imports/`, backups e dumps fora do Git.
+- Em Mobile/PWA, nunca cacheie `/api/*`, Authorization, cookies, tokens ou respostas autenticadas.
+- Microfone deve ser acionado apenas por interacao explicita; nao implemente escuta continua oculta.
 - Logs financeiros devem conter apenas metadados resumidos e redigidos.
 - No WhatsApp, o JARVIS so deve responder ou executar acoes quando a entrada contiver `ei jarvis`.
 - Segredos salvos em `Setting` devem usar `encryptSettingValue`/`decryptSettingValue`; nunca retornar valor real em rotas.

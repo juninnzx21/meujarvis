@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Activity, Banknote, Bell, Bot, Brain, FileText, Gauge, Home, Landmark, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 
 const items = [
   { to: "/", label: "Dashboard", icon: Gauge },
+  { to: "/mobile-assistant", label: "Assistente Mobile", icon: Smartphone },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/voice", label: "Voz", icon: Mic },
   { to: "/commands", label: "Comandos", icon: PlaySquare },
@@ -29,6 +31,14 @@ const items = [
   { to: "/status", label: "Status", icon: Activity }
 ];
 
+const mobileItems = [
+  { to: "/", label: "Inicio", icon: Gauge },
+  { to: "/chat", label: "Chat", icon: MessageSquare },
+  { to: "/voice", label: "Voz", icon: Mic },
+  { to: "/finance", label: "Financeiro", icon: WalletCards },
+  { to: "/notifications", label: "Avisos", icon: Bell }
+];
+
 export function AppLayout() {
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -39,7 +49,7 @@ export function AppLayout() {
       .catch(() => setUnreadCount(0));
   }, []);
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="min-h-screen pb-20 lg:flex lg:pb-0">
       <aside className={`${open ? "block" : "hidden"} fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto border-r border-white/10 bg-slate-950/95 p-5 lg:static lg:block`}>
         <div className="mb-8 flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400/15 text-cyanx"><Bot /></div>
@@ -58,12 +68,12 @@ export function AppLayout() {
         </nav>
       </aside>
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 px-4 py-4 backdrop-blur lg:px-8">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
           <div className="flex items-center justify-between">
             <button className="btn btn-ghost lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={18} /></button>
-            <div>
-              <p className="text-sm text-slate-400">Seu assistente inteligente para casa, rotina e automacoes.</p>
-              <strong className="text-white">{user?.name}</strong>
+            <div className="min-w-0">
+              <p className="hidden text-sm text-slate-400 sm:block">Seu assistente inteligente para casa, rotina e automacoes.</p>
+              <strong className="block truncate text-white">{user?.name}</strong>
             </div>
             <div className="flex items-center gap-3">
               <span className="hidden items-center gap-2 rounded-full bg-cyan-400/10 px-3 py-1 text-sm text-cyan-100 sm:flex"><Activity size={14} /> online</span>
@@ -76,6 +86,18 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-slate-950/95 px-2 py-2 backdrop-blur lg:hidden">
+        <div className="grid grid-cols-5 gap-1">
+          {mobileItems.map(({ to, label, icon: Icon }) => (
+            <NavLink key={to} to={to} className={({ isActive }) => `flex min-h-14 flex-col items-center justify-center rounded-xl px-1 text-[11px] font-semibold ${isActive ? "bg-cyan-400/15 text-cyan-100" : "text-slate-400"}`}>
+              <Icon size={19} />
+              <span className="mt-1 max-w-full truncate">{label}</span>
+              {to === "/notifications" && unreadCount > 0 && <span className="absolute mt-[-2rem] ml-8 rounded-full bg-cyan-400 px-1.5 text-[10px] font-black text-slate-950">{unreadCount}</span>}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+      <PwaInstallPrompt />
     </div>
   );
 }
