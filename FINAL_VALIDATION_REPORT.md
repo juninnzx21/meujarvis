@@ -1,6 +1,6 @@
 ﻿# FINAL_VALIDATION_REPORT
 
-Data/hora: 2026-05-16 15:59:59 -03:00
+Data/hora: 2026-05-16 16:18:14 -03:00
 
 Diretorio: `E:\jarvis-home-assistant`
 
@@ -8,7 +8,7 @@ Repositorio: `https://github.com/juninnzx21/meujarvis.git`
 
 Branch: `main`
 
-Commit base: `356104c fix: stabilize production api and integration diagnostics`
+Commit atual validado: `73f8ac6 docs: finalize whatsapp evolution production setup`
 
 Resultado final: **APROVADO COM RESSALVAS**
 
@@ -21,6 +21,8 @@ Atualizacao desta rodada: diagnosticos OpenAI/Gemini refinados, scheduler com er
 Fase Mobile/PWA: manifest, service worker seguro, icones, prompt de instalacao, atalhos e tela `/mobile-assistant` adicionados e validados localmente.
 
 Rodada WhatsApp/Evolution: configuracao real preparada, guia de producao ampliado e payload do webhook redigido antes de persistir.
+
+Auditoria final: Docker Desktop foi iniciado, PostgreSQL local subiu em `127.0.0.1:5432`, a primeira tentativa de backend falhou por banco indisponivel, a validacao foi reexecutada apos subir o banco e passou.
 
 ## Resumo
 
@@ -47,11 +49,13 @@ Frontend:
 - `npm audit --omit=dev`
 - `npm run test`
 - `npm run validate`
+- `npm run build`
 
 Raiz/scripts:
 
 - `docker compose ps`
 - `Test-NetConnection localhost -Port 5432`
+- `.\status-jarvis.ps1`
 - `.\validate-jarvis.ps1`
 - `.\backup-jarvis.ps1`
 
@@ -74,7 +78,8 @@ Seguranca:
 
 ## Comandos com ressalvas
 
-- `.\status-jarvis.ps1`: executou, mas backend/frontend locais nao estavam ativos.
+- Primeira tentativa de `npm run test`/`npm run validate` no backend: falhou porque Docker/PostgreSQL estavam parados. Corrigido com abertura do Docker Desktop e `docker compose up -d postgres`; reexecutado com sucesso.
+- `.\status-jarvis.ps1`: executou, mas backend/frontend locais nao estavam ativos nas portas 3001/5173.
 - `Test-NetConnection localhost -Port 3001`: falhou porque backend local nao estava iniciado.
 - `Test-NetConnection localhost -Port 5173`: falhou porque frontend local nao estava iniciado.
 - GET `https://jarvis.juninnzxtec.com.br/api/health`: HTTP 200, mas retornou HTML do frontend.
@@ -92,7 +97,7 @@ Seguranca:
 - WhatsApp/Evolution: endpoints revisados, API key criptografada em `Setting`, frontend mostra apenas mascara/flags e webhook exige `ei jarvis`.
 - Anexos: OFX/CSV tratados como documento/anexo e fluxo de importacao exige revisao antes de gravar transacoes.
 - Producao: health dedicado retornou app/database OK, scheduler running e WhatsApp `not_configured` sem quebrar.
-- PostgreSQL: healthy.
+- PostgreSQL: healthy em `127.0.0.1:5432`.
 - API dedicada health: app OK, database OK.
 - Scheduler producao: enabled/running.
 - n8n/WhatsApp/Home Assistant: `not_configured`, sem quebrar.
@@ -127,13 +132,13 @@ Seguranca:
 1. Corrigir ou oficializar roteamento de API no dominio principal.
 2. Monitorar OpenAI e Gemini para queda de quota/chave/modelo.
 3. Configurar Evolution API real em producao.
-4. Configurar Evolution API real em producao.
-5. Configurar n8n real em producao.
-6. Configurar Home Assistant real em producao.
-7. Rotacionar todos os segredos compartilhados anteriormente.
-8. Validar deploy do commit atual na VPS.
-9. Criar testes E2E com navegador real.
-10. Implementar monitoramento externo e backup offsite.
+4. Configurar n8n real em producao.
+5. Configurar Home Assistant real em producao.
+6. Rotacionar todos os segredos compartilhados anteriormente.
+7. Validar deploy do commit atual na VPS/Fabweb.
+8. Criar testes E2E com navegador real.
+9. Implementar monitoramento externo e backup offsite.
+10. Revisar/automatizar start do Docker Desktop no ambiente local.
 
 ## Proximo passo recomendado
 
@@ -147,5 +152,5 @@ Seguranca:
 
 **APROVADO COM RESSALVAS**
 
-O sistema esta em bom estado tecnico para evolucao e uso pessoal controlado. Para uso diario real sem supervisao, ainda depende de ajuste de IA externa, configuracao das integracoes e confirmacao do roteamento/API. Para producao comercial, precisa hardening operacional, monitoramento, E2E, backup offsite, politicas de privacidade e governanca de usuarios.
+O sistema esta em bom estado tecnico para evolucao e uso pessoal controlado. Para uso diario real sem supervisao, ainda depende de credenciais/configuracao das integracoes e confirmacao de deploy do commit atual. Para producao comercial, precisa hardening operacional, monitoramento, E2E, backup offsite, politicas de privacidade e governanca de usuarios.
 

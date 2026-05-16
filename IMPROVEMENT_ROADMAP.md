@@ -8,6 +8,8 @@ Decisao atual: oficializar `https://apijarvis.juninnzxtec.com.br/api` como API p
 
 Diagnosticos de IA foram refinados para separar chave ausente, chave invalida, quota, modelo inexistente, erro de rede e erro generico. Pendencias de OpenAI/Gemini em producao continuam dependentes de ajuste externo quando o health indicar quota/chave/modelo.
 
+Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA e API dedicada foram validados. O Docker Desktop estava inicialmente parado, mas foi iniciado com seguranca; o PostgreSQL foi recriado sem apagar volume e ficou healthy em `127.0.0.1:5432`.
+
 ## Prioridade critica
 
 1. Rotacionar todos os segredos ja compartilhados fora do repositorio.
@@ -30,9 +32,10 @@ Diagnosticos de IA foram refinados para separar chave ausente, chave invalida, q
    - Necessario para receber mensagens, audios e extratos via WhatsApp.
    - Manter `WHATSAPP_AUTO_REPLY=false` por padrao e frase obrigatoria `ei jarvis`.
 
-5. Revisar exposicao do PostgreSQL.
+5. Preservar bind seguro do PostgreSQL.
    - Impacto: alto.
-   - Ambiente local mostrou `0.0.0.0:5432`.
+   - Auditoria final mostrou PostgreSQL healthy em `127.0.0.1:5432`.
+   - Manter esse padrao e evitar publicar banco em `0.0.0.0`.
    - Em VPS/producao, manter banco apenas em rede Docker/local, nunca publico.
 
 ## Prioridade importante

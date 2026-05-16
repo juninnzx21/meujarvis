@@ -16,6 +16,8 @@ Fase Mobile/PWA: app instalavel, atalhos, prompt de instalacao e tela `/mobile-a
 
 WhatsApp/Evolution: painel `/whatsapp` permite salvar URL, instancia e API key com seguranca; webhook oficial exige `ei jarvis`; OFX/CSV pelo WhatsApp cria previa de importacao financeira com revisao obrigatoria.
 
+Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA e API dedicada foram validados. Producao API OK; integracoes externas n8n/WhatsApp/Home Assistant seguem dependentes de credenciais reais.
+
 ## URLs
 
 - Frontend producao: `https://jarvis.juninnzxtec.com.br`

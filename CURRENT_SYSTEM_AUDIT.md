@@ -1,6 +1,6 @@
 ﻿# Auditoria Atual do JARVIS Home AI
 
-Data/hora: 2026-05-16 15:28:26 -03:00
+Data/hora: 2026-05-16 16:18:14 -03:00
 
 Diretorio auditado: `E:\jarvis-home-assistant`
 
@@ -8,7 +8,7 @@ Repositorio: `https://github.com/juninnzx21/meujarvis.git`
 
 Branch: `main`
 
-Commit atual: `b229550 fix: handle whatsapp statement attachments safely`
+Commit atual: `73f8ac6 docs: finalize whatsapp evolution production setup`
 
 Status final: **APROVADO COM RESSALVAS**
 
@@ -19,6 +19,9 @@ Atualizacao operacional desta rodada:
 - Diagnosticos de OpenAI/Gemini refinados.
 - Scheduler com erro redigido.
 - OFX/CSV via WhatsApp mantidos como anexo/documento, nao audio.
+- Auditoria final completa executada: backend/frontend validaram, Prisma/migrations OK, scripts operacionais OK, backup OK, PWA verificado e API dedicada de producao respondeu health/full.
+- Docker Desktop inicialmente estava parado; foi iniciado com seguranca e `docker compose up -d postgres` recriou apenas o container PostgreSQL sem apagar volume. A porta local passou a ficar presa em `127.0.0.1:5432`.
+- Producao frontend respondeu HTTP 200, mas o deploy do commit atual no frontend nao foi comprovado nesta auditoria. API dedicada `apijarvis` esta funcional.
 
 ## Resumo executivo
 
@@ -34,7 +37,8 @@ As ressalvas principais sao:
 - Gemini esta configurado em producao e o health atual indica `configured`.
 - n8n, WhatsApp/Evolution e Home Assistant aparecem como `not_configured` na producao.
 - Backend e frontend locais nao estavam rodando nas portas 3001/5173 no momento da auditoria, embora os testes/builds tenham passado.
-- Postgres local aparece publicado em `0.0.0.0:5432`, o que deve ser revisado para ambiente exposto.
+- Postgres local foi recriado durante a auditoria e passou a aparecer em `127.0.0.1:5432`.
+- O deploy do commit atual na VPS/Fabweb ainda precisa ser confirmado manualmente com `git log` e rebuild/deploy.
 
 ## Git e estrutura
 
@@ -372,7 +376,7 @@ Nao faz ou faz parcialmente:
 2. API no dominio principal retorna frontend em `/api/*`; usar oficialmente `apijarvis` ou corrigir Caddy.
 3. OpenAI/Gemini em producao estao configurados e no health atual retornam `configured`; manter monitoramento para quota/chave/modelo.
 4. Integracoes reais n8n/WhatsApp/Home Assistant ainda nao estao configuradas na producao.
-5. Postgres local aparece publicado em `0.0.0.0:5432`; revisar binding antes de expor maquina/rede.
+5. Postgres local foi validado em `127.0.0.1:5432`; manter esse bind e nao publicar banco em `0.0.0.0`.
 6. Sem E2E real de navegador cobrindo producao.
 7. Hardening final SSH/firewall/offsite backup ainda depende de acao operacional.
 8. Transcricao de audio WhatsApp gerou warnings recentes.

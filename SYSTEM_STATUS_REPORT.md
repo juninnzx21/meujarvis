@@ -1,6 +1,6 @@
 ﻿# SYSTEM_STATUS_REPORT
 
-Data/hora da auditoria: 2026-05-16 15:59:59 -03:00
+Data/hora da auditoria: 2026-05-16 16:18:14 -03:00
 
 Diretorio usado: `E:\jarvis-home-assistant`
 
@@ -16,6 +16,7 @@ Atualizacao operacional desta rodada:
 - Guia `WHATSAPP_PRODUCTION_SETUP.md` criado.
 - Fase Mobile/PWA adicionada com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`, validada por testes, build e checagem local do manifest/service worker.
 - Rodada WhatsApp/Evolution: guia de producao ampliado, payload bruto do webhook redigido antes de persistir, endpoints revisados e producao validada via health dedicado.
+- Auditoria final completa: Docker Desktop foi iniciado, PostgreSQL subiu em `127.0.0.1:5432`, backend/frontend passaram em testes/validate/build, scripts status/validate/backup passaram e producao API dedicada respondeu health/full.
 
 ## Ambiente
 
@@ -25,7 +26,7 @@ Atualizacao operacional desta rodada:
 - Node: `v24.15.0`.
 - npm: `11.12.1`.
 - PostgreSQL local: container `jarvis-postgres` healthy.
-- Porta 5432: OK.
+- Porta 5432: OK em `127.0.0.1`.
 - Porta 3001: nao havia backend local ativo.
 - Porta 5173: nao havia frontend local ativo.
 
@@ -33,9 +34,9 @@ Atualizacao operacional desta rodada:
 
 - Repositorio: `https://github.com/juninnzx21/meujarvis.git`.
 - Branch: `main`.
-- Commit base: `356104c fix: stabilize production api and integration diagnostics`.
-- Status inicial: alteracoes locais da Fase Mobile/PWA.
-- Status apos auditoria: implementacao mobile/PWA pronta para commit.
+- Commit atual validado: `73f8ac6 docs: finalize whatsapp evolution production setup`.
+- Status inicial: limpo.
+- Status apos auditoria: relatorios atualizados localmente.
 
 ## Seguranca
 
@@ -74,7 +75,7 @@ Varredura de segredos:
 - `docker compose version`: OK.
 - `node --version`: OK.
 - `npm --version`: OK.
-- `docker compose ps`: OK, Postgres healthy.
+- `docker compose ps`: OK, Postgres healthy em `127.0.0.1:5432`.
 - `Test-NetConnection localhost -Port 5432`: OK.
 - `Test-NetConnection localhost -Port 3001`: indisponivel, backend local nao iniciado.
 - `Test-NetConnection localhost -Port 5173`: indisponivel, frontend local nao iniciado.
@@ -102,7 +103,7 @@ Varredura de segredos:
 
 - `npm install`: OK.
 - `npm audit --omit=dev`: OK, 0 vulnerabilidades.
-- `npm run test`: OK, 9 testes aprovados.
+- `npm run test`: OK, 10 testes aprovados.
 - `npm run validate`: OK, typecheck, testes e build aprovados.
 
 ### Scripts
@@ -156,12 +157,12 @@ API dedicada:
 - Home Assistant: preparado; producao sem credenciais.
 - Financeiro: funcional nos testes, incluindo contas, categorias, transacoes, assistente e importacao.
 - Importacao bancaria: OFX/CSV e revisao obrigatoria implementadas/testadas.
-- Scripts: validate/backup/status funcionam, com ressalva de apps locais nao iniciados no status.
+- Scripts: validate/backup/status funcionam. `status-jarvis.ps1` mostra backend/frontend locais indisponiveis quando os servidores dev nao estao iniciados, o que nao bloqueia build/testes.
 
 ## O que esta funcionando
 
 - Validacao local backend/frontend.
-- Banco local healthy.
+- Banco local healthy em `127.0.0.1:5432`.
 - Prisma generate/validate/migrate status.
 - Testes automatizados.
 - Build backend/frontend.
@@ -185,7 +186,7 @@ API dedicada:
 - Login real em producao, para evitar alteracao/criacao de dados.
 - Fluxos destrutivos ou restore.
 - E2E real no navegador.
-- Deploy do commit mais recente na VPS, alem do que a producao expÃµe no health/frontend.
+- Deploy do commit mais recente na VPS/Fabweb, alem do que a producao expoe no health/frontend.
 
 ## Pendencias reais
 
