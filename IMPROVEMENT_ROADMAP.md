@@ -10,6 +10,8 @@ Diagnosticos de IA foram refinados para separar chave ausente, chave invalida, q
 
 Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA e API dedicada foram validados. O Docker Desktop estava inicialmente parado, mas foi iniciado com seguranca; o PostgreSQL foi recriado sem apagar volume e ficou healthy em `127.0.0.1:5432`.
 
+Operacao 2026-05-16 16:29: proximo deploy documentado em `DEPLOY_NEXT_STEPS.md`; prioridade imediata e aplicar `git pull origin main` na VPS, rebuildar backend, publicar `frontend/dist` na Fabweb com `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api` e configurar Evolution API no painel.
+
 ## Prioridade critica
 
 1. Rotacionar todos os segredos ja compartilhados fora do repositorio.

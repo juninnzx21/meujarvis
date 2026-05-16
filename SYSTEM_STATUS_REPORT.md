@@ -1,6 +1,6 @@
 ﻿# SYSTEM_STATUS_REPORT
 
-Data/hora da auditoria: 2026-05-16 16:18:14 -03:00
+Data/hora da auditoria: 2026-05-16 16:29:54 -03:00
 
 Diretorio usado: `E:\jarvis-home-assistant`
 
@@ -17,6 +17,7 @@ Atualizacao operacional desta rodada:
 - Fase Mobile/PWA adicionada com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`, validada por testes, build e checagem local do manifest/service worker.
 - Rodada WhatsApp/Evolution: guia de producao ampliado, payload bruto do webhook redigido antes de persistir, endpoints revisados e producao validada via health dedicado.
 - Auditoria final completa: Docker Desktop foi iniciado, PostgreSQL subiu em `127.0.0.1:5432`, backend/frontend passaram em testes/validate/build, scripts status/validate/backup passaram e producao API dedicada respondeu health/full.
+- Proximo passo operacional: estado local confirmado, backend/frontend revalidados, scripts reexecutados, producao validada pela API oficial, guia `DEPLOY_NEXT_STEPS.md` criado e configuracao Evolution/WhatsApp mantida como pendencia de credenciais reais.
 
 ## Ambiente
 
@@ -34,7 +35,7 @@ Atualizacao operacional desta rodada:
 
 - Repositorio: `https://github.com/juninnzx21/meujarvis.git`.
 - Branch: `main`.
-- Commit atual validado: `73f8ac6 docs: finalize whatsapp evolution production setup`.
+- Commit atual validado: `b09a7d6 test: run full jarvis system validation`.
 - Status inicial: limpo.
 - Status apos auditoria: relatorios atualizados localmente.
 

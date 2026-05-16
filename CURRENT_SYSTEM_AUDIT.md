@@ -1,6 +1,6 @@
 ﻿# Auditoria Atual do JARVIS Home AI
 
-Data/hora: 2026-05-16 16:18:14 -03:00
+Data/hora: 2026-05-16 16:29:54 -03:00
 
 Diretorio auditado: `E:\jarvis-home-assistant`
 
@@ -8,7 +8,7 @@ Repositorio: `https://github.com/juninnzx21/meujarvis.git`
 
 Branch: `main`
 
-Commit atual: `73f8ac6 docs: finalize whatsapp evolution production setup`
+Commit atual: `b09a7d6 test: run full jarvis system validation`
 
 Status final: **APROVADO COM RESSALVAS**
 
@@ -22,6 +22,7 @@ Atualizacao operacional desta rodada:
 - Auditoria final completa executada: backend/frontend validaram, Prisma/migrations OK, scripts operacionais OK, backup OK, PWA verificado e API dedicada de producao respondeu health/full.
 - Docker Desktop inicialmente estava parado; foi iniciado com seguranca e `docker compose up -d postgres` recriou apenas o container PostgreSQL sem apagar volume. A porta local passou a ficar presa em `127.0.0.1:5432`.
 - Producao frontend respondeu HTTP 200, mas o deploy do commit atual no frontend nao foi comprovado nesta auditoria. API dedicada `apijarvis` esta funcional.
+- Proximo passo operacional executado: backend/frontend revalidados, scripts reexecutados, producao `apijarvis` revalidada, `DEPLOY_NEXT_STEPS.md` criado e Evolution/WhatsApp documentado para configuracao real sem expor credenciais.
 
 ## Resumo executivo
 

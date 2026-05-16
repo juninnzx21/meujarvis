@@ -4,6 +4,8 @@ Data: 2026-05-16
 
 Status: preparado para configuracao real e validacao segura.
 
+Atualizacao 2026-05-16 16:29: validacao local e producao pela API oficial foram reexecutadas. A producao segue pronta para configuracao real, mas o status pode aparecer `not_configured` ate URL, instancia e API key da Evolution serem salvas no painel.
+
 ## API oficial
 
 Frontend: `https://jarvis.juninnzxtec.com.br`

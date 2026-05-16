@@ -18,6 +18,8 @@ WhatsApp/Evolution: painel `/whatsapp` permite salvar URL, instancia e API key c
 
 Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA e API dedicada foram validados. Producao API OK; integracoes externas n8n/WhatsApp/Home Assistant seguem dependentes de credenciais reais.
 
+Operacao 2026-05-16 16:29: deploy proximo documentado em `DEPLOY_NEXT_STEPS.md`; Evolution API/WhatsApp esta pronto para receber URL, instancia e API key no painel, mas a producao segue `not_configured` ate credenciais reais serem salvas.
+
 ## URLs
 
 - Frontend producao: `https://jarvis.juninnzxtec.com.br`
