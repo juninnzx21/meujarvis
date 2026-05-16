@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Daily Summary",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/daily-summary", "responseMode": "responseNode" }, "id": "webhook-daily", "name": "Receber jarvis.daily.summary", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { title: 'Resumo diario JARVIS', summary: $json.summary || $json.message || 'Resumo recebido', safePayload: $json } }];" }, "id": "format-daily", "name": "Formatar resumo", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, summaryPrepared: true } }}" }, "id": "response-daily", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber jarvis.daily.summary": { "main": [[{ "node": "Formatar resumo", "type": "main", "index": 0 }]] }, "Formatar resumo": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

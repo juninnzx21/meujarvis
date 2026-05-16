@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../prisma/client.js";
+import { embeddingService } from "../../services/embeddingService.js";
 import { writeSystemLog } from "../../services/systemLogService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -26,8 +27,16 @@ router.get("/", asyncHandler(async (req, res) => {
   res.json({ memories });
 }));
 
+router.get("/search", asyncHandler(async (req, res) => {
+  const q = String(req.query.q ?? "").trim();
+  if (!q) return res.json({ memories: [] });
+  const memories = await embeddingService.searchMemories(req.user!.id, q);
+  res.json({ memories, provider: embeddingService.provider, semantic: true });
+}));
+
 router.post("/", validate(schema), asyncHandler(async (req, res) => {
   const memory = await prisma.memory.create({ data: { ...req.body, userId: req.user!.id } });
+  await embeddingService.ensureMemoryEmbedding(memory.id);
   await writeSystemLog({ userId: req.user!.id, module: "memory", action: "create", message: "Memoria criada" });
   res.status(201).json({ memory });
 }));

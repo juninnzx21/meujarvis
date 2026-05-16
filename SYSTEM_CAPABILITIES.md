@@ -20,6 +20,8 @@ Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA
 
 Operacao 2026-05-16 16:29: deploy proximo documentado em `DEPLOY_NEXT_STEPS.md`; Evolution API/WhatsApp esta pronto para receber URL, instancia e API key no painel, mas a producao segue `not_configured` ate credenciais reais serem salvas.
 
+Fase 10: n8n proprio em Docker Compose, scripts n8n, workflows importaveis, EventBus/IntegrationEvent, documentos/RAG preparado, memoria semantica local mockada, CI inicial e hardening 100000 documentado.
+
 ## URLs
 
 - Frontend producao: `https://jarvis.juninnzxtec.com.br`

@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - WhatsApp Command",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/whatsapp-command", "responseMode": "responseNode" }, "id": "webhook-whatsapp", "name": "Receber whatsapp.command.received", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'whatsapp.command.received', commandType: $json.commandType || 'unknown', redacted: true } }];" }, "id": "format-whatsapp", "name": "Log redigido", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, logged: true } }}" }, "id": "response-whatsapp", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber whatsapp.command.received": { "main": [[{ "node": "Log redigido", "type": "main", "index": 0 }]] }, "Log redigido": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

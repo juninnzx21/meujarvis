@@ -38,4 +38,26 @@ Playwright com ambiente isolado e usuario de teste.
 - Nao usar dados bancarios reais.
 - Nao enviar WhatsApp real em teste automatizado.
 - Nao chamar Home Assistant sensivel.
+
+## Status Fase 10
+
+Status atual: planejado e documentado. A Fase 10 adicionou CI basico no GitHub Actions, mas os testes Playwright completos ainda nao foram ativados para evitar aumentar o risco operacional no mesmo pacote de mudancas.
+
+Fluxos prioritarios para a proxima fase:
+
+- login;
+- dashboard/status;
+- chat com fallback;
+- tarefas;
+- notificacoes;
+- comandos;
+- rotinas;
+- financeiro;
+- upload mockado OFX/CSV com revisao obrigatoria;
+- WhatsApp mockado com `ei jarvis`;
+- documentos/RAG;
+- n8n configurado com mock;
+- mobile viewport e PWA basico.
+
+Critério de aceite futuro: `npm run e2e` deve rodar contra ambiente local isolado, com dados fake, sem credenciais reais, sem chamadas destrutivas e sem extratos reais.
 - Nao rodar restore.

@@ -21,7 +21,9 @@ const quickActions = [
   { label: "Resumo do dia", text: "gerar resumo do dia" },
   { label: "Tarefas de hoje", text: "quais tarefas tenho hoje?" },
   { label: "Financeiro do mes", text: "resumo financeiro do mes" },
-  { label: "Importar extrato", text: "quero importar um extrato do Inter" }
+  { label: "Importar extrato", text: "quero importar um extrato do Inter" },
+  { label: "Testar n8n", text: "testar n8n" },
+  { label: "Casa inteligente", text: "status da casa" }
 ];
 
 export function MobileAssistantPage() {
@@ -121,6 +123,8 @@ export function MobileAssistantPage() {
           </button>
         ))}
         <Link to="/finance/import" className="min-h-20 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm font-bold text-slate-100 transition hover:bg-white/10"><FileText className="mb-1 text-cyanx" size={18} /> Importar extrato</Link>
+        <Link to="/documents" className="min-h-20 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm font-bold text-slate-100 transition hover:bg-white/10"><FileText className="mb-1 text-cyanx" size={18} /> Documentos</Link>
+        <Link to="/n8n" className="min-h-20 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm font-bold text-slate-100 transition hover:bg-white/10"><FileText className="mb-1 text-cyanx" size={18} /> n8n</Link>
         <a href={whatsappLink} className="min-h-20 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm font-bold text-slate-100 transition hover:bg-white/10"><MessageSquare className="mb-1 text-cyanx" size={18} /> Abrir WhatsApp</a>
       </div>
 

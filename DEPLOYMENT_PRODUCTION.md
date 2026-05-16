@@ -79,6 +79,17 @@ cd /opt/jarvis-home-assistant/backend
 npm run create:admin
 ```
 
+## n8n em producao
+
+Planejado para `https://n8njarvis.juninnzxtec.com.br` com Caddy apontando para `127.0.0.1:15678`.
+
+Obrigatorio:
+
+- Basic Auth ativo.
+- `N8N_ENCRYPTION_KEY` forte.
+- `WEBHOOK_URL` e `N8N_EDITOR_BASE_URL` com HTTPS.
+- Porta 15678 nao publica diretamente.
+
 Nao salve a senha em arquivo. Use esse comando apenas em sessao segura e depois limpe o historico se necessario.
 
 ## Publicacao do frontend na Fabweb

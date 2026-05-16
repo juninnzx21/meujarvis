@@ -849,4 +849,39 @@ describe("JARVIS Home AI API", () => {
     expect(transcribeSpy).not.toHaveBeenCalled();
     transcribeSpy.mockRestore();
   });
+
+  it("supports n8n templates, event bus persistence, semantic memory search and safe documents", async () => {
+    const template = await request(app).post("/api/n8n/templates/system.alert/test").set(auth()).expect(200);
+    expect(["not_configured", "success"]).toContain(template.body.status);
+
+    const bootstrap = await request(app).post("/api/n8n/workflows/bootstrap").set(auth()).expect(200);
+    expect(bootstrap.body.templates).toContain("system.alert");
+
+    const memory = await request(app)
+      .post("/api/memories")
+      .set(auth())
+      .send({ type: "fact", title: "Preferencia de automacao", content: "Junior gosta de automacoes com n8n e rotinas seguras.", tags: ["n8n", "rotinas"], importance: 4 })
+      .expect(201);
+    const search = await request(app).get("/api/memories/search?q=automacoes").set(auth()).expect(200);
+    expect(search.body.semantic).toBe(true);
+    expect(search.body.memories.length).toBeGreaterThan(0);
+
+    const document = await request(app)
+      .post("/api/documents/upload")
+      .set(auth())
+      .send({ title: "Nota de teste", fileName: "nota-teste.md", fileType: "md", content: "Documento de teste do JARVIS sem segredos.", source: "manual" })
+      .expect(201);
+    const docs = await request(app).get("/api/documents").set(auth()).expect(200);
+    expect(docs.body.documents.some((item: { id: string }) => item.id === document.body.document.id)).toBe(true);
+    const chunks = await request(app).get(`/api/documents/${document.body.document.id}/chunks`).set(auth()).expect(200);
+    expect(chunks.body.chunks[0].content).toContain("Documento de teste");
+    const docSearch = await request(app).get("/api/documents/search?q=JARVIS").set(auth()).expect(200);
+    expect(docSearch.body.chunks.length).toBeGreaterThan(0);
+
+    const event = await prisma.integrationEvent.findFirst({ where: { userId, type: "system.alert" }, orderBy: { createdAt: "desc" } });
+    expect(event?.payloadRedacted).toBeTruthy();
+
+    await prisma.document.deleteMany({ where: { id: document.body.document.id } });
+    await prisma.memory.deleteMany({ where: { id: memory.body.memory.id } });
+  });
 });

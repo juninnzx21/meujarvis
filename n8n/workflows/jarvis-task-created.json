@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Task Created",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/task-created", "responseMode": "responseNode" }, "id": "webhook-task-created", "name": "Receber task.created", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'task.created', title: $json.title || 'Nova tarefa', status: 'received' } }];" }, "id": "format-task-created", "name": "Formatar tarefa", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, event: $json.event } }}" }, "id": "response-task-created", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber task.created": { "main": [[{ "node": "Formatar tarefa", "type": "main", "index": 0 }]] }, "Formatar tarefa": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

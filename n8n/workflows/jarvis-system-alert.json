@@ -1,0 +1,32 @@
+{
+  "name": "JARVIS - System Alert",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "jarvis/system-alert", "responseMode": "responseNode" },
+      "id": "webhook-system-alert",
+      "name": "Receber system.alert",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": { "jsCode": "return [{ json: { event: $json.type || 'system.alert', title: 'Alerta JARVIS', message: $json.message || 'Evento recebido', payload: $json } }];" },
+      "id": "format-system-alert",
+      "name": "Formatar alerta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, handled: $json.event } }}" },
+      "id": "response-system-alert",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [480, 0]
+    }
+  ],
+  "connections": { "Receber system.alert": { "main": [[{ "node": "Formatar alerta", "type": "main", "index": 0 }]] }, "Formatar alerta": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

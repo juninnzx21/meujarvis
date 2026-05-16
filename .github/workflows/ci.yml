@@ -1,0 +1,64 @@
+name: JARVIS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: jarvis_db
+          POSTGRES_USER: jarvis
+          POSTGRES_PASSWORD: jarvis_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jarvis -d jarvis_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://jarvis:jarvis_password@localhost:5432/jarvis_db?schema=public
+      JWT_SECRET: ci_only_change_me
+      CORS_ORIGIN: http://localhost:5173
+      SETTINGS_ENCRYPTION_KEY: ci_only_32_chars_minimum_value
+      ALLOW_DEMO_LOGIN: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend install
+        working-directory: backend
+        run: npm ci
+      - name: Backend validate
+        working-directory: backend
+        run: |
+          npx prisma generate
+          npx prisma validate
+          npx prisma migrate deploy
+          npm run test
+          npm run build
+      - name: Frontend install
+        working-directory: frontend
+        run: npm ci
+      - name: Frontend validate
+        working-directory: frontend
+        run: |
+          npm run test
+          npm run build
+      - name: Secret pattern smoke check
+        shell: bash
+        run: |
+          ! git grep -nE "sk-proj-|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}" -- \
+            ':!*.md' ':!*.example' ':!package-lock.json'

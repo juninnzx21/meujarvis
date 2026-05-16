@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Backup Completed",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/backup-completed", "responseMode": "responseNode" }, "id": "webhook-backup", "name": "Receber backup.completed", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'backup.completed', message: 'Backup concluido', metadata: $json } }];" }, "id": "format-backup", "name": "Formatar backup", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, backup: 'acknowledged' } }}" }, "id": "response-backup", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber backup.completed": { "main": [[{ "node": "Formatar backup", "type": "main", "index": 0 }]] }, "Formatar backup": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

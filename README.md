@@ -16,14 +16,26 @@ Webhook WhatsApp/Evolution: `https://apijarvis.juninnzxtec.com.br/api/whatsapp/w
 
 No WhatsApp, o JARVIS so deve responder/executar quando a mensagem tiver `ei jarvis`. Arquivos OFX/CSV enviados pelo WhatsApp geram previa de importacao financeira e nunca sao importados diretamente.
 
-Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs e integracoes preparadas com OpenAI, n8n, Evolution API/WhatsApp, Home Assistant e Controle Financeiro.
+Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs, n8n proprio, EventBus, documentos/RAG preparado e integracoes preparadas com OpenAI, Gemini, Evolution API/WhatsApp, Home Assistant e Controle Financeiro.
 
 ## Stack
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React, Axios e React Router.
 - Backend: Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, JWT, bcrypt, Zod, OpenAI SDK, Axios, Helmet, CORS, rate limit e logs estruturados.
-- Infra: Docker Compose com PostgreSQL, backend e frontend.
+- Infra: Docker Compose com PostgreSQL, backend, frontend, n8n e PostgreSQL dedicado do n8n.
 - Testes: Vitest, Supertest e Testing Library.
+
+## Fase 10 - JARVIS 100000/10
+
+- n8n proprio em Docker (`n8n` e `n8n-postgres`) com portas presas em `127.0.0.1`.
+- Scripts `start-n8n.ps1`, `stop-n8n.ps1`, `status-n8n.ps1` e `backup-n8n.ps1`.
+- Workflows importaveis em `n8n/workflows/`, sem credenciais reais.
+- EventBus interno com `IntegrationEvent` e payload redigido.
+- Memoria semantica preparada com fallback local seguro.
+- Modulo de documentos/RAG preparado em `/documents` e `/api/documents`.
+- CI inicial em GitHub Actions, sem deploy automatico.
+
+Guias: `N8N_LOCAL_PRODUCTION.md`, `N8N_WORKFLOWS_GUIDE.md`, `SEMANTIC_MEMORY_GUIDE.md`, `DOCUMENTS_RAG_GUIDE.md`, `PRODUCTION_HARDENING_100000.md` e `CI_CD_GUIDE.md`.
 
 ## Fase Mobile/PWA
 
@@ -124,6 +136,7 @@ cd E:\jarvis-home-assistant
 copy .env.example .env
 copy backend\.env.example backend\.env
 docker compose up -d postgres
+docker compose up -d n8n-postgres n8n
 
 cd E:\jarvis-home-assistant\backend
 npm install

@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Statement Import",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/statement-import", "responseMode": "responseNode" }, "id": "webhook-statement", "name": "Receber statement.import.created", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'finance.statement.import.created', message: 'Importacao aguardando revisao', importId: $json.importId, reviewUrl: $json.reviewUrl } }];" }, "id": "format-statement", "name": "Formatar importacao", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, reviewRequired: true } }}" }, "id": "response-statement", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber statement.import.created": { "main": [[{ "node": "Formatar importacao", "type": "main", "index": 0 }]] }, "Formatar importacao": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

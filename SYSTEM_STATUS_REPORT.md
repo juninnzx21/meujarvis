@@ -18,6 +18,7 @@ Atualizacao operacional desta rodada:
 - Rodada WhatsApp/Evolution: guia de producao ampliado, payload bruto do webhook redigido antes de persistir, endpoints revisados e producao validada via health dedicado.
 - Auditoria final completa: Docker Desktop foi iniciado, PostgreSQL subiu em `127.0.0.1:5432`, backend/frontend passaram em testes/validate/build, scripts status/validate/backup passaram e producao API dedicada respondeu health/full.
 - Proximo passo operacional: estado local confirmado, backend/frontend revalidados, scripts reexecutados, producao validada pela API oficial, guia `DEPLOY_NEXT_STEPS.md` criado e configuracao Evolution/WhatsApp mantida como pendencia de credenciais reais.
+- Fase 10: n8n proprio, scripts n8n, workflows, EventBus, IntegrationEvent, memoria semantica local, documentos/RAG preparado, CI inicial e documentacao 100000 adicionados.
 
 ## Ambiente
 
@@ -207,4 +208,45 @@ API dedicada:
 **APROVADO COM RESSALVAS**
 
 O sistema esta funcional e validado localmente, com producao respondendo pela API dedicada. As ressalvas sao reais e devem ser tratadas antes de considerar o ambiente pronto para uso diario sem supervisao ou producao comercial.
+
+## Fase 10 - Validacao 2026-05-16
+
+Resultado: **APROVADO COM RESSALVAS**.
+
+Comandos executados e aprovados:
+
+- `docker compose config --quiet`
+- `docker compose ps`
+- `npm audit --omit=dev` no backend e frontend: 0 vulnerabilidades.
+- `npx prisma generate`
+- `npx prisma validate`
+- `npx prisma migrate status`
+- `npm run test`, `npm run validate` e `npm run build` no backend.
+- `npm run test`, `npm run validate` e `npm run build` no frontend.
+- `.\status-jarvis.ps1`
+- `.\validate-jarvis.ps1`
+- `.\backup-jarvis.ps1`
+- `.\start-n8n.ps1`
+- `.\status-n8n.ps1`
+- `.\backup-n8n.ps1`
+
+Evidencias:
+
+- Backend: 35 testes aprovados.
+- Frontend: 11 testes aprovados.
+- PostgreSQL local: healthy em `127.0.0.1:5432`.
+- n8n local: container `jarvis-n8n` ativo em `127.0.0.1:15678` e HTTP 200.
+- n8n Postgres: `jarvis-n8n-postgres` healthy em `127.0.0.1:15433`.
+- Producao frontend: `https://jarvis.juninnzxtec.com.br` HTTP 200.
+- API oficial: `https://apijarvis.juninnzxtec.com.br/api/health` HTTP 200 JSON.
+- Health full: scheduler running; n8n/WhatsApp/Home Assistant retornam `not_configured` sem quebrar.
+- Git ignore: `.env`, backups, imports, documentos de upload, `node_modules`, `dist` e dados n8n locais estao ignorados.
+
+Ressalvas:
+
+- n8n producao ainda nao foi exposto por subdominio/HTTPS.
+- Workflows n8n foram criados como templates importaveis, sem credenciais reais.
+- RAG/documentos e memoria semantica usam indexacao local segura; pgvector/IA externa nao foram ativados por padrao.
+- E2E Playwright completo ficou planejado.
+- Rotacao de credenciais compartilhadas anteriormente continua recomendada.
 

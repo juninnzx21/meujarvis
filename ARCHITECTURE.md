@@ -169,3 +169,16 @@ O fluxo financeiro usa parsers locais dedicados para OFX e CSV do Banco Inter PJ
 9. A tela `/finance/import/:id/review` exibe resumo e exige aprovacao antes de criar `FinancialTransaction`.
 
 O extrato bruto nunca deve ser enviado para OpenAI/Gemini sem consentimento explicito.
+
+## Fase 10 - Plataforma 100000
+
+- `n8n` local/producao: `docker-compose.yml` inclui `n8n`, `n8n-postgres` e volumes persistentes, com portas presas em `127.0.0.1` e variaveis obrigatorias em `.env.example`.
+- Workflows n8n: a pasta `n8n/workflows/` contem templates importaveis para alertas, tarefas, backups, financeiro, WhatsApp, health monitor e Evolution API, sem credenciais reais.
+- EventBus interno: `EventBusService` registra eventos em `IntegrationEvent`, cria `SystemLog`, pode criar `Notification` e tenta disparar n8n sem quebrar o JARVIS quando a integracao esta indisponivel.
+- Memoria semantica preparada: `MemoryEmbedding` e `embeddingService` usam embedding local deterministico por padrao e mantem fallback textual.
+- RAG/documentos: modulo `/api/documents` aceita upload seguro, cria `Document`/`DocumentChunk`, busca em conteudo redigido e mantem arquivos em `backend/storage/documents`, ignorado pelo Git.
+- Frontend: novas telas/atalhos para `Documentos`, melhorias em `/n8n` e `/mobile-assistant`.
+- Monitoramento: `/api/health/public` permanece como endpoint publico minimo; `jarvis-health-monitor.json` prepara monitoramento via n8n.
+- Seguranca: segredos continuam em `Setting` criptografado, arquivos sensiveis ficam fora do Git, PWA nao cacheia API e WhatsApp continua exigindo `ei jarvis`.
+
+Ressalvas tecnicas da Fase 10: pgvector real, embeddings externos, deploy do subdominio `n8njarvis`, credenciais reais do n8n/Evolution/Home Assistant, E2E Playwright completo e backup offsite automatizado ainda dependem de configuracao operacional segura.

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppLayout } from "../layouts/AppLayout";
 import { CommandsPage } from "./Commands/CommandsPage";
 import { FinancePage } from "./Finance/FinancePage";
+import { DocumentsPage } from "./Documents/DocumentsPage";
 import { NotificationsPage } from "./Notifications/NotificationsPage";
 import { ReportsPage } from "./Reports/ReportsPage";
 import { RoutinesPage } from "./Routines/RoutinesPage";
@@ -30,6 +31,8 @@ vi.mock("../services/api", () => ({
       if (url === "/finance/reports/categories") return Promise.resolve({ data: { categories: [{ category: "Servicos prestados", type: "income", total: "500" }] } });
       if (url === "/finance/reports/cashflow") return Promise.resolve({ data: { cashflow: [{ date: "2026-05-16", income: "500", expense: "120", net: "380" }] } });
       if (url.startsWith("/notifications")) return Promise.resolve({ data: { unreadCount: 1, notifications: [{ id: "n1", title: "Aviso", message: "Mensagem", type: "warning", createdAt: new Date().toISOString() }] } });
+      if (url === "/documents") return Promise.resolve({ data: { documents: [{ id: "d1", title: "Documento teste", fileType: "md" }] } });
+      if (url.startsWith("/documents/search")) return Promise.resolve({ data: { chunks: [{ id: "ch1", content: "Trecho redigido do JARVIS" }] } });
       return Promise.resolve({ data: { recommendations: ["ok"], open: [], overdue: [], logs: [] } });
     }),
     post: vi.fn((url: string) => {
@@ -62,6 +65,12 @@ describe("Phase 5 and 6 pages", () => {
     render(<ReportsPage />);
     expect(await screen.findByText("Relatorios")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Resumo do dia")).toBeInTheDocument());
+  });
+
+  it("renders documents module", async () => {
+    render(<DocumentsPage />);
+    expect(await screen.findByText("Documentos")).toBeInTheDocument();
+    expect(await screen.findByText(/Documento teste/)).toBeInTheDocument();
   });
 
   it("renders native finance overview", async () => {

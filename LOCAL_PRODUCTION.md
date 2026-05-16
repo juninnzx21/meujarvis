@@ -45,3 +45,13 @@ SCHEDULER_INTERVAL_SECONDS=60
 ```
 
 Ele executa rotinas agendadas seguras, lembretes e alertas de tarefas vencidas. Consulte `SCHEDULER_GUIDE.md`.
+
+## n8n local
+
+```powershell
+Set-Location E:\jarvis-home-assistant
+.\start-n8n.ps1
+.\status-n8n.ps1
+```
+
+O n8n local usa `127.0.0.1:15678` por padrao e deve ter Basic Auth/Encryption Key configurados em `.env`.

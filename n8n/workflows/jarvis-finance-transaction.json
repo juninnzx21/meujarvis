@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Finance Transaction",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/finance-transaction", "responseMode": "responseNode" }, "id": "webhook-finance", "name": "Receber finance.transaction.created", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'finance.transaction.created', amount: $json.amount, direction: $json.direction, category: $json.category || 'revisar' } }];" }, "id": "format-finance", "name": "Formatar financeiro", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, financeEvent: true } }}" }, "id": "response-finance", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber finance.transaction.created": { "main": [[{ "node": "Formatar financeiro", "type": "main", "index": 0 }]] }, "Formatar financeiro": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

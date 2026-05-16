@@ -13,6 +13,7 @@ const items = [
   { to: "/commands", label: "Comandos", icon: PlaySquare },
   { to: "/routines", label: "Rotinas", icon: Activity },
   { to: "/reports", label: "Relatorios", icon: ScrollText },
+  { to: "/documents", label: "Documentos", icon: FileText },
   { to: "/finance", label: "Financeiro", icon: WalletCards },
   { to: "/finance/accounts", label: "Contas", icon: Landmark },
   { to: "/finance/transactions", label: "Lancamentos", icon: Banknote },

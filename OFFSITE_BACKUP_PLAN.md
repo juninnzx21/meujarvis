@@ -19,6 +19,10 @@ Backups locais sao ignorados no Git e nunca devem ser enviados para IA ou reposi
 - Outro VPS com `scp`/`rsync` por chave SSH.
 - Cofre de backup gerenciado.
 
+## n8n
+
+Use `backup-n8n.ps1` para gerar backup local do banco do n8n em `backups/`. Para offsite, criptografe antes de enviar e nunca suba backups para o Git.
+
 ## Procedimento recomendado
 
 1. Gerar backup local.

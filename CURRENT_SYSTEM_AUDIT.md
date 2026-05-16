@@ -23,6 +23,7 @@ Atualizacao operacional desta rodada:
 - Docker Desktop inicialmente estava parado; foi iniciado com seguranca e `docker compose up -d postgres` recriou apenas o container PostgreSQL sem apagar volume. A porta local passou a ficar presa em `127.0.0.1:5432`.
 - Producao frontend respondeu HTTP 200, mas o deploy do commit atual no frontend nao foi comprovado nesta auditoria. API dedicada `apijarvis` esta funcional.
 - Proximo passo operacional executado: backend/frontend revalidados, scripts reexecutados, producao `apijarvis` revalidada, `DEPLOY_NEXT_STEPS.md` criado e Evolution/WhatsApp documentado para configuracao real sem expor credenciais.
+- Fase 10 em andamento: n8n proprio em Docker Compose, workflows padrao, EventBus/IntegrationEvent, memoria semantica local, documentos/RAG preparado, CI inicial e hardening 100000 adicionados.
 
 ## Resumo executivo
 
@@ -389,4 +390,36 @@ Nao faz ou faz parcialmente:
 **APROVADO COM RESSALVAS**
 
 O codigo local valida, testes passam, Postgres esta healthy, a API dedicada de producao responde health com app/database OK e nao foi identificado segredo real versionado. As ressalvas sao operacionais e de integracoes externas, principalmente roteamento da API principal, IA externa degradada e credenciais reais ausentes.
+
+## Atualizacao Fase 10 - 2026-05-16
+
+Status: **APROVADO COM RESSALVAS**.
+
+Implementado nesta rodada:
+
+- n8n proprio em Docker com Postgres separado e portas locais presas em `127.0.0.1`.
+- Scripts `start-n8n.ps1`, `stop-n8n.ps1`, `status-n8n.ps1` e `backup-n8n.ps1`.
+- Workflows JSON importaveis em `n8n/workflows/`.
+- EventBus interno com `IntegrationEvent`, `SystemLog`, redaction e disparo opcional para n8n.
+- Memoria semantica preparada com embedding local deterministico e busca `/api/memories/search`.
+- Modulo de documentos/RAG seguro com `/api/documents`, chunks, busca e storage ignorado.
+- Tela `Documentos`, melhorias em `/n8n` e atalhos mobile.
+- CI basico GitHub Actions e documentacao operacional final.
+
+Validado:
+
+- Backend testes/validate/build passaram.
+- Frontend testes/validate/build passaram.
+- Scripts `status`, `validate`, `backup` passaram.
+- n8n local respondeu HTTP 200 em `127.0.0.1:15678`.
+- Backup local do banco principal e backup do n8n foram criados em `backups/`, pasta ignorada.
+- Producao: frontend respondeu 200; API oficial `apijarvis` respondeu health e health/full em JSON.
+
+Ressalvas:
+
+- n8n em producao ainda precisa DNS/Caddy, HTTPS e credenciais reais.
+- Evolution, n8n e Home Assistant seguem dependentes de configuracao externa.
+- pgvector real, embeddings externos e RAG avancado ficam preparados, nao ativados por padrao.
+- Playwright E2E completo segue como proxima fase.
+- Segredos locais existem em `.env` ignorado; se ja foram compartilhados fora do ambiente seguro, precisam rotacao.
 

@@ -8,12 +8,33 @@ import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encrypti
 
 const keys = {
   webhookUrl: "n8n_webhook_url",
-  apiKey: "n8n_api_key"
+  apiKey: "n8n_api_key",
+  enabled: "n8n_enabled",
+  webhookSecret: "n8n_webhook_secret"
 };
+
+export const n8nTemplates = [
+  "task.created",
+  "task.completed",
+  "task.overdue",
+  "routine.run",
+  "backup.completed",
+  "system.alert",
+  "finance.transaction.created",
+  "finance.statement.import.created",
+  "whatsapp.command.received",
+  "whatsapp.statement.received",
+  "jarvis.daily.summary",
+  "jarvis.weekly.report",
+  "integration.failed",
+  "scheduler.tick_error"
+] as const;
 
 type N8nRuntimeConfig = {
   webhookUrl: string;
   apiKey: string;
+  webhookSecret: string;
+  enabled: boolean;
   source: "settings" | "env";
 };
 
@@ -31,12 +52,14 @@ export const n8nService = {
       const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
       const webhookUrl = asString(decryptSettingValue(keys.webhookUrl, settings[keys.webhookUrl]));
       const apiKey = asString(decryptSettingValue(keys.apiKey, settings[keys.apiKey]));
-      if (webhookUrl || apiKey) return { webhookUrl, apiKey, source: "settings" };
+      const webhookSecret = asString(decryptSettingValue(keys.webhookSecret, settings[keys.webhookSecret]));
+      const enabled = settings[keys.enabled] === undefined ? true : Boolean(settings[keys.enabled]);
+      if (webhookUrl || apiKey || webhookSecret) return { webhookUrl, apiKey, webhookSecret, enabled, source: "settings" };
     }
-    return { webhookUrl: env.N8N_WEBHOOK_URL, apiKey: env.N8N_API_KEY, source: "env" };
+    return { webhookUrl: env.N8N_WEBHOOK_URL, apiKey: env.N8N_API_KEY, webhookSecret: "", enabled: true, source: "env" };
   },
   isConfigured(config: N8nRuntimeConfig) {
-    return Boolean(config.webhookUrl);
+    return Boolean(config.enabled && config.webhookUrl);
   },
   status() {
     return { configured: this.configured, status: this.configured ? "configured" : "not_configured", webhookConfigured: Boolean(env.N8N_WEBHOOK_URL) };
@@ -48,21 +71,27 @@ export const n8nService = {
       configured,
       status: configured ? "configured" : "not_configured",
       source: config.source,
+      enabled: config.enabled,
       webhookConfigured: Boolean(config.webhookUrl),
       webhookUrl: config.webhookUrl || "",
       apiKeyConfigured: Boolean(config.apiKey),
-      apiKeyMasked: maskSecret(config.apiKey)
+      apiKeyMasked: maskSecret(config.apiKey),
+      webhookSecretConfigured: Boolean(config.webhookSecret),
+      templates: n8nTemplates
     };
   },
   async getConfig(userId: string) {
     return this.userStatus(userId);
   },
-  async saveConfig(userId: string, input: { webhookUrl: string; apiKey?: string }) {
+  async saveConfig(userId: string, input: { webhookUrl: string; apiKey?: string; webhookSecret?: string; enabled?: boolean }) {
     const current = await this.runtimeConfig(userId);
     const apiKey = input.apiKey?.trim() ? input.apiKey.trim() : current.apiKey;
+    const webhookSecret = input.webhookSecret?.trim() ? input.webhookSecret.trim() : current.webhookSecret;
     const entries: Array<[string, Prisma.InputJsonValue]> = [
       [keys.webhookUrl, input.webhookUrl.trim()],
-      [keys.apiKey, encryptSettingValue(keys.apiKey, apiKey) as Prisma.InputJsonValue]
+      [keys.apiKey, encryptSettingValue(keys.apiKey, apiKey) as Prisma.InputJsonValue],
+      [keys.webhookSecret, encryptSettingValue(keys.webhookSecret, webhookSecret) as Prisma.InputJsonValue],
+      [keys.enabled, input.enabled ?? true]
     ];
     await Promise.all(entries.map(([key, value]) => prisma.setting.upsert({
       where: { userId_key: { userId, key } },
@@ -74,7 +103,7 @@ export const n8nService = {
       module: "n8n",
       action: "config_save",
       message: "Configuracao n8n atualizada",
-      metadata: { webhookConfigured: Boolean(input.webhookUrl), apiKeyConfigured: Boolean(apiKey) }
+      metadata: { webhookConfigured: Boolean(input.webhookUrl), apiKeyConfigured: Boolean(apiKey), webhookSecretConfigured: Boolean(webhookSecret), enabled: input.enabled ?? true }
     });
     return this.userStatus(userId);
   },
@@ -91,7 +120,10 @@ export const n8nService = {
     }
     try {
       const response = await axios.post(config.webhookUrl, payload, {
-        headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : undefined,
+        headers: {
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+          ...(config.webhookSecret ? { "X-Jarvis-Webhook-Secret": config.webhookSecret } : {})
+        },
         timeout: 15000
       });
       await writeSystemLog({ userId, module: "n8n", action: "trigger", message: "Webhook n8n acionado", metadata: { request: redactSensitive(payload), response: { status: response.status, data: redactSensitive(response.data) } } as never });
@@ -103,5 +135,19 @@ export const n8nService = {
   },
   async test(userId?: string) {
     return this.trigger({ source: "jarvis", type: "safe_test", timestamp: new Date().toISOString() }, userId);
+  },
+  async testTemplate(template: string, userId?: string) {
+    if (!n8nTemplates.includes(template as (typeof n8nTemplates)[number])) {
+      return { status: "invalid_template", message: "Template n8n desconhecido." };
+    }
+    return this.trigger({ source: "jarvis", type: template, safe: true, timestamp: new Date().toISOString(), payload: { dryRun: true } }, userId);
+  },
+  bootstrapWorkflows() {
+    return {
+      status: "manual_import_required",
+      message: "Workflows padrao estao em n8n/workflows. Importe no n8n e configure credenciais reais no proprio n8n.",
+      workflowsPath: "n8n/workflows",
+      templates: n8nTemplates
+    };
   }
 };

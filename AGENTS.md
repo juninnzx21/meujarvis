@@ -25,3 +25,7 @@
 - Segredos salvos em `Setting` devem usar `encryptSettingValue`/`decryptSettingValue`; nunca retornar valor real em rotas.
 - Em producao, `ALLOW_DEMO_LOGIN=false` deve bloquear `admin@jarvis.local`.
 - A API publica oficial e `https://apijarvis.juninnzxtec.com.br/api`; nao trate `/api` no dominio `jarvis` como contrato publico.
+- n8n proprio roda via Docker Compose em `n8n`/`n8n-postgres`; nunca versionar credenciais ou exports com credenciais reais.
+- Workflows versionados em `n8n/workflows/` devem conter apenas exemplos seguros sem credenciais.
+- EventBus deve redigir payloads antes de salvar `IntegrationEvent` ou enviar para n8n.
+- Documentos/RAG ficam em `backend/storage/documents/`, ignorado no Git; nao enviar documentos sensiveis para IA externa sem consentimento explicito.

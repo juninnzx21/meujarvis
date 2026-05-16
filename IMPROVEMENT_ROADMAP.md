@@ -12,6 +12,8 @@ Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA
 
 Operacao 2026-05-16 16:29: proximo deploy documentado em `DEPLOY_NEXT_STEPS.md`; prioridade imediata e aplicar `git pull origin main` na VPS, rebuildar backend, publicar `frontend/dist` na Fabweb com `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api` e configurar Evolution API no painel.
 
+Fase 10 implementa a fundacao 100000/10, mas pgvector real, RAG com embeddings externos, deploy de n8n em subdominio, E2E Playwright completo e credenciais reais seguem como evolucoes com ressalva operacional.
+
 ## Prioridade critica
 
 1. Rotacionar todos os segredos ja compartilhados fora do repositorio.

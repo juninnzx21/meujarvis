@@ -162,6 +162,33 @@ enum AssistantDraftActionStatus {
   canceled
 }
 
+enum IntegrationEventStatus {
+  pending
+  sent
+  failed
+  ignored
+}
+
+enum IntegrationEventTarget {
+  n8n
+  internal
+  whatsapp
+  other
+}
+
+enum DocumentSource {
+  upload
+  whatsapp
+  manual
+}
+
+enum DocumentStatus {
+  uploaded
+  parsed
+  indexed
+  failed
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String
@@ -182,6 +209,8 @@ model User {
   statementImports      StatementImport[]
   financialRules        FinancialRule[]
   assistantDraftActions AssistantDraftAction[]
+  integrationEvents     IntegrationEvent[]
+  documents             Document[]
   systemLogs            SystemLog[]
   settings              Setting[]
   whatsappMessages      WhatsAppMessage[]
@@ -208,16 +237,28 @@ model Message {
 }
 
 model Memory {
-  id         String     @id @default(cuid())
+  id         String           @id @default(cuid())
   userId     String
-  type       MemoryType @default(note)
+  type       MemoryType       @default(note)
   title      String
   content    String
   tags       String[]
-  importance Int        @default(3)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  importance Int              @default(3)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  embedding  MemoryEmbedding?
+}
+
+model MemoryEmbedding {
+  id        String   @id @default(cuid())
+  memoryId  String   @unique
+  provider  String
+  model     String
+  vector    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 }
 
 model Task {
@@ -482,4 +523,53 @@ model AssistantDraftAction {
   user      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status, type])
+}
+
+model IntegrationEvent {
+  id              String                 @id @default(cuid())
+  userId          String?
+  type            String
+  status          IntegrationEventStatus @default(pending)
+  payloadRedacted Json
+  target          IntegrationEventTarget @default(internal)
+  attempts        Int                    @default(0)
+  lastError       String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  user            User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type, status])
+  @@index([userId, createdAt])
+}
+
+model Document {
+  id        String          @id @default(cuid())
+  userId    String
+  title     String
+  fileName  String
+  fileType  String
+  source    DocumentSource  @default(upload)
+  status    DocumentStatus  @default(uploaded)
+  summary   String?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks    DocumentChunk[]
+
+  @@index([userId, status])
+}
+
+model DocumentChunk {
+  id              String   @id @default(cuid())
+  documentId      String
+  chunkIndex      Int
+  content         String
+  contentRedacted String
+  embedding       Json?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  document        Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, chunkIndex])
 }

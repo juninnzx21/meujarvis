@@ -32,6 +32,10 @@ backups/*.sql
 *.backup
 backend/storage/imports/
 backend/storage/imports/*
+backend/storage/documents/
+backend/storage/documents/*
+n8n/data/
+n8n/.n8n/
 
 /logs/
 *.log

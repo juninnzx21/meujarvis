@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Task Overdue",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/task-overdue", "responseMode": "responseNode" }, "id": "webhook-task-overdue", "name": "Receber task.overdue", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'task.overdue', severity: 'warning', title: $json.title || 'Tarefa vencida' } }];" }, "id": "format-task-overdue", "name": "Formatar atraso", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, warning: true } }}" }, "id": "response-task-overdue", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber task.overdue": { "main": [[{ "node": "Formatar atraso", "type": "main", "index": 0 }]] }, "Formatar atraso": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

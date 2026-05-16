@@ -1,0 +1,11 @@
+{
+  "name": "JARVIS - Evolution Test",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "jarvis/evolution-test", "responseMode": "responseNode" }, "id": "webhook-evolution-test", "name": "Receber teste Evolution", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0] },
+    { "parameters": { "jsCode": "return [{ json: { event: 'evolution.test', message: 'Configure credenciais reais no n8n antes de enviar WhatsApp.', safe: true } }];" }, "id": "format-evolution-test", "name": "Preparar teste seguro", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, credentialRequired: true } }}" }, "id": "response-evolution-test", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [480, 0] }
+  ],
+  "connections": { "Receber teste Evolution": { "main": [[{ "node": "Preparar teste seguro", "type": "main", "index": 0 }]] }, "Preparar teste seguro": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

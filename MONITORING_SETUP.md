@@ -46,3 +46,7 @@ echo | openssl s_client -servername apijarvis.juninnzxtec.com.br -connect apijar
 ## Observacao
 
 `https://jarvis.juninnzxtec.com.br/api/*` nao e a API oficial. O frontend estatico da Fabweb consome `https://apijarvis.juninnzxtec.com.br/api`.
+
+## n8n monitor
+
+Importe `n8n/workflows/jarvis-health-monitor.json` no n8n para checar `https://apijarvis.juninnzxtec.com.br/api/health/full` periodicamente. Configure alertas somente com credenciais reais dentro do n8n, nunca nos JSON versionados.

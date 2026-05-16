@@ -26,6 +26,8 @@ Auditoria final: Docker Desktop foi iniciado, PostgreSQL local subiu em `127.0.0
 
 Proximo passo operacional: backend/frontend foram revalidados, scripts operacionais foram reexecutados, producao foi validada via `apijarvis`, `DEPLOY_NEXT_STEPS.md` foi criado e Evolution/WhatsApp permanece pronto para configuracao real no painel.
 
+Fase 10: adicionada fundacao JARVIS 100000/10 com n8n proprio em Docker, workflows importaveis, EventBus/IntegrationEvent, memoria semantica local segura, modulo de documentos/RAG preparado, CI inicial e documentacao operacional.
+
 ## Resumo
 
 A auditoria confirmou que o projeto local esta consistente: dependencias instalam, auditoria npm nao encontrou vulnerabilidades, Prisma valida, migrations estao em sincronia, testes backend/frontend passam e builds passam.
@@ -155,4 +157,37 @@ Seguranca:
 **APROVADO COM RESSALVAS**
 
 O sistema esta em bom estado tecnico para evolucao e uso pessoal controlado. Para uso diario real sem supervisao, ainda depende de credenciais/configuracao das integracoes e confirmacao de deploy do commit atual. Para producao comercial, precisa hardening operacional, monitoramento, E2E, backup offsite, politicas de privacidade e governanca de usuarios.
+
+## Fase 10 - JARVIS 100000/10
+
+Status final: **APROVADO COM RESSALVAS**.
+
+Implementado:
+
+- n8n proprio em Docker com banco separado, porta local, scripts operacionais e guia de producao.
+- 10 workflows n8n JSON sem credenciais reais.
+- EventBus interno com persistencia de eventos, logs redigidos e disparo opcional para n8n.
+- Estrutura de memoria semantica local e busca semantica/textual.
+- Modulo Documentos/RAG com upload seguro, chunks e busca.
+- Melhorias nas telas de n8n, documentos e assistente mobile.
+- CI basico, guias de hardening, monitoramento, offsite backup e documentacao final.
+
+Comandos aprovados:
+
+- Backend: `npm audit --omit=dev`, `prisma generate`, `prisma validate`, `prisma migrate status`, `npm run test`, `npm run validate`, `npm run build`.
+- Frontend: `npm audit --omit=dev`, `npm run test`, `npm run validate`, `npm run build`.
+- Scripts: `status-jarvis`, `validate-jarvis`, `backup-jarvis`, `start-n8n`, `status-n8n`, `backup-n8n`.
+- Producao: frontend 200, API oficial health 200 JSON, health full 200 JSON.
+
+Pendencias reais:
+
+1. Configurar `N8N_ENCRYPTION_KEY`, Basic Auth forte, DNS/Caddy e HTTPS do n8n em producao.
+2. Importar workflows no n8n e configurar credenciais dentro do painel n8n.
+3. Configurar Evolution API, n8n e Home Assistant reais.
+4. Ativar monitoramento externo.
+5. Implementar Playwright E2E completo.
+6. Avaliar pgvector real e embeddings externos com consentimento.
+7. Rotacionar segredos que ja foram compartilhados anteriormente.
+
+Conclusao: a Fase 10 elevou o JARVIS para uma plataforma pessoal de automacao e conhecimento com n8n local funcional, mas a parte comercial/producao plena ainda depende de acoes manuais seguras.
 

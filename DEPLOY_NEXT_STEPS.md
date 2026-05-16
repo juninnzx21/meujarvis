@@ -119,3 +119,39 @@ OFX e o formato recomendado para extratos. CSV e fallback confiavel. PDF deve se
 - Validar mensagem real no WhatsApp com `ei jarvis`.
 - Enviar OFX/CSV real e confirmar criacao de previa de importacao.
 - Manter n8n e Home Assistant como `not_configured` ate credenciais reais serem configuradas.
+
+## Deploy Fase 10 - n8n e plataforma
+
+Na VPS, apos puxar o commit da Fase 10:
+
+```bash
+cd /opt/jarvis-home-assistant
+git pull origin main
+docker compose config --quiet
+docker compose up -d --build backend n8n-postgres n8n
+docker compose ps
+docker compose logs --tail=100 backend
+docker compose logs --tail=100 n8n
+curl -fsS https://apijarvis.juninnzxtec.com.br/api/health
+curl -fsS https://apijarvis.juninnzxtec.com.br/api/health/full
+```
+
+Antes de expor n8n publicamente, preencher no `.env` da VPS sem imprimir valores:
+
+- `N8N_ENCRYPTION_KEY`
+- `N8N_BASIC_AUTH_USER`
+- `N8N_BASIC_AUTH_PASSWORD`
+- `N8N_EDITOR_BASE_URL`
+- `WEBHOOK_URL`
+- `N8N_DB_PASSWORD`
+
+Se o subdominio `n8njarvis.juninnzxtec.com.br` ainda nao estiver no Caddy/DNS, manter o n8n apenas em `127.0.0.1:15678` e acessar por tunel SSH ou configurar o proxy depois. Nao publicar n8n sem HTTPS e autenticacao.
+
+Validacao adicional:
+
+```bash
+curl -I http://127.0.0.1:15678
+docker compose exec backend npm run test
+```
+
+Depois importar manualmente os JSON de `n8n/workflows/` e configurar credenciais no proprio n8n, nunca no Git.

@@ -61,6 +61,10 @@
 - [x] `/api/settings` nao retorna segredo bruto.
 - [x] Login demo e bloqueavel por `ALLOW_DEMO_LOGIN=false`.
 - [x] Endpoint publico minimo `/api/health/public` criado para monitoramento.
+- [x] n8n proprio fica preso em `127.0.0.1` localmente e exige Basic Auth/Encryption Key via `.env`.
+- [x] Workflows n8n versionados nao contem credenciais reais.
+- [x] `backend/storage/documents/` fica ignorado no Git.
+- [x] EventBus salva payload redigido em `IntegrationEvent`.
 - [x] `apijarvis.juninnzxtec.com.br/api` oficializado como API publica.
 - [x] OFX/CSV bancario e parseado localmente.
 - [x] Arquivos recebidos via WhatsApp ficam em `backend/storage/imports/whatsapp`.
