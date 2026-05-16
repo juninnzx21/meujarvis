@@ -141,3 +141,18 @@ A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.t
 - `create:admin`: script operacional para criar/atualizar admin real sem registrar senha.
 - `GET /api/health/public`: endpoint minimo para monitor externo sem detalhes sensiveis.
 - API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.
+## Importacao bancaria por WhatsApp
+
+O fluxo financeiro usa parsers locais dedicados para OFX e CSV do Banco Inter PJ:
+
+1. Evolution API envia o webhook para `POST /api/whatsapp/webhook`.
+2. O backend detecta anexos `.ofx`, `.csv` ou `.txt`.
+3. A midia e baixada em memoria e salva em `backend/storage/imports/whatsapp`, pasta ignorada pelo Git.
+4. `statementImportService` chama `parseStatementContent`.
+5. OFX e priorizado por conter `FITID`, `DTPOSTED`, `TRNAMT`, `TRNTYPE`, `MEMO`, conta e saldo.
+6. CSV do Inter e lido a partir do cabecalho `Data Lancamento;Historico;Descricao;Valor;Saldo`.
+7. O sistema cria `StatementImport` e `StatementImportRow`.
+8. Duplicatas usam `FITID` ou hash deterministico.
+9. A tela `/finance/import/:id/review` exibe resumo e exige aprovacao antes de criar `FinancialTransaction`.
+
+O extrato bruto nunca deve ser enviado para OpenAI/Gemini sem consentimento explicito.

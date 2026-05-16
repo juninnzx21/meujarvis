@@ -154,3 +154,77 @@ Ressalvas: hardening SSH/firewall, rotacao de segredos, configuracao de `SETTING
 - `.\status-jarvis.ps1`: PostgreSQL healthy; backend/frontend locais estavam parados antes do teste temporario.
 - `.\validate-jarvis.ps1`: passou.
 - `GET http://localhost:3001/api/health/public` com backend temporario: `app=ok`, `database=ok`, `scheduler=ok`.
+## Validação completa de auditoria - 2026-05-16
+
+### Status final
+
+**APROVADO COM RESSALVAS**
+
+O sistema passa localmente em testes, typecheck, Prisma e build, e a produção responde corretamente pela API dedicada `apijarvis`. As ressalvas são de infraestrutura/integrações externas: `/api` no domínio principal ainda retorna frontend, credenciais reais de n8n/WhatsApp/Home Assistant não estão configuradas em produção, e hardening SSH/firewall/offsite backup ainda dependem de ação manual.
+
+### Evidências
+
+- Git: branch `main`, commit `eced34a`, remote GitHub correto.
+- Docker: disponível; PostgreSQL local healthy.
+- Backend: 29 testes aprovados; `npm run validate` aprovado.
+- Frontend: 9 testes aprovados; `npm run validate` aprovado.
+- Prisma: schema válido e migrations em dia.
+- Scripts: status, validate e backup executados.
+- Produção: frontend público HTTP 200; API dedicada health/full HTTP 200 JSON.
+- Segurança: arquivos sensíveis ignorados; nenhum segredo real versionado identificado.
+
+### Comandos que passaram
+
+- `npm install` backend/frontend
+- `npm audit --omit=dev` backend/frontend
+- `npx prisma generate`
+- `npx prisma validate`
+- `npx prisma migrate status`
+- `npm run test` backend/frontend
+- `npm run validate` backend/frontend
+- `.\status-jarvis.ps1`
+- `.\validate-jarvis.ps1`
+- `.\backup-jarvis.ps1`
+
+### Comandos/checagens com ressalva
+
+- `Test-NetConnection localhost -Port 3001`: backend local não estava iniciado.
+- `Test-NetConnection localhost -Port 5173`: frontend local não estava iniciado.
+- `https://jarvis.juninnzxtec.com.br/api/health`: retornou HTML do frontend.
+- `https://jarvis.juninnzxtec.com.br/api/health/full`: retornou HTML do frontend.
+
+### Próximo passo recomendado
+
+Prioridade 1: aplicar na VPS o hardening documentado, rotacionar segredos, garantir `ALLOW_DEMO_LOGIN=false`, configurar admin real, validar portas internas e decidir definitivamente entre corrigir `/api` no domínio principal ou manter somente `apijarvis` como API pública oficial.
+## Validacao Fase 8 - Importacao OFX/CSV Banco Inter via WhatsApp
+
+Status: **APROVADO**
+
+Comandos executados:
+
+- `npm install` backend/frontend.
+- `npm audit --omit=dev` backend/frontend.
+- `npx prisma generate`.
+- `npx prisma validate`.
+- `npx prisma migrate dev --name phase8_bank_statement_import`.
+- `npx prisma db seed`.
+- `npm run validate` backend.
+- `npm run validate` frontend.
+- `docker compose ps`.
+- `Test-NetConnection localhost -Port 5432`.
+- `status-jarvis.ps1`.
+- `backup-jarvis.ps1`.
+- `validate-jarvis.ps1`.
+
+Resultados:
+
+- Backend: 31 testes aprovados.
+- Frontend: 9 testes aprovados.
+- Typecheck e build aprovados.
+- Prisma sem alteracao estrutural pendente.
+- CSV/OFX Banco Inter validados com fixture sintetica de 2221 transacoes.
+- WhatsApp file import validado com webhook mockado.
+
+Pendencia real:
+
+- Os arquivos reais do extrato nao estavam presentes no workspace. Quando forem enviados para uma pasta ignorada, rodar uma validacao manual de contagem real antes do deploy.

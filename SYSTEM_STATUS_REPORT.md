@@ -165,3 +165,93 @@ Sistema aprovado para uso pessoal assistido e evolucao continua. Para producao c
   - `.\validate-jarvis.ps1`: passou.
   - `GET /api/health/public` local temporario: ok.
 - Status: APROVADO COM RESSALVAS por depender de deploy/acoes manuais na VPS.
+## Auditoria de estado atual - 2026-05-16 06:25 America/Sao_Paulo
+
+### Resultado
+
+**APROVADO COM RESSALVAS**
+
+### Comandos executados e resultados
+
+- `git status --short`: limpo no início da auditoria.
+- `git remote -v`: origin apontando para `https://github.com/juninnzx21/meujarvis.git`.
+- `git branch --show-current`: `main`.
+- `docker --version`: disponível.
+- `docker compose version`: disponível.
+- `docker compose ps`: PostgreSQL `jarvis-postgres` healthy.
+- `Test-NetConnection localhost -Port 5432`: sucesso.
+- `Test-NetConnection localhost -Port 3001`: falhou porque backend local não estava rodando.
+- `Test-NetConnection localhost -Port 5173`: falhou porque frontend local não estava rodando.
+- Backend: `npm install`, `npm audit --omit=dev`, `npx prisma generate`, `npx prisma validate`, `npx prisma migrate status`, `npm run test`, `npm run validate`: passaram.
+- Frontend: `npm install`, `npm audit --omit=dev`, `npm run test`, `npm run validate`: passaram.
+- `status-jarvis.ps1`: passou; reportou backend/frontend local indisponíveis por não estarem iniciados.
+- `validate-jarvis.ps1`: passou.
+- `backup-jarvis.ps1`: passou e criou backup local em pasta ignorada pelo Git.
+
+### Produção
+
+- `https://jarvis.juninnzxtec.com.br`: frontend HTTP 200.
+- `https://jarvis.juninnzxtec.com.br/api/health`: retorna HTML do frontend, não JSON da API.
+- `https://jarvis.juninnzxtec.com.br/api/health/full`: retorna HTML do frontend, não JSON da API.
+- `https://apijarvis.juninnzxtec.com.br/api/health`: JSON OK, app/database/scheduler OK.
+- `https://apijarvis.juninnzxtec.com.br/api/health/full`: JSON OK, integrações reportadas sem expor segredos.
+
+### Status por módulo
+
+- Auth: funcional; demo bloqueável por env.
+- Chat: funcional com histórico, fallback IA/local e streaming preparado.
+- Voz: funcional no navegador quando Web Speech API existe; sem wake word real.
+- Memórias: funcional, incluindo base pessoal.
+- Tarefas: funcional, com lembretes e vencidas.
+- Automações: funcional para ações seguras; perigosas bloqueadas.
+- Comandos: funcional.
+- Rotinas: funcional, incluindo agendamento pelo scheduler.
+- Scheduler: funcional e ativo em produção segundo health dedicado.
+- Notificações: funcional.
+- Relatórios: funcional.
+- Logs: funcional com redaction; há melhoria pendente para logs de erros esperados.
+- Settings: funcional com criptografia de tokens sensíveis.
+- Financeiro: funcional local/testes; integração externa depende de autenticação/configuração.
+- n8n: preparado; produção reporta não configurado.
+- WhatsApp/Evolution: preparado; produção reporta não configurado.
+- Home Assistant: preparado; produção reporta não configurado.
+
+### Pendências reais
+
+- Ajustar ou aceitar oficialmente que a API pública é `apijarvis`, não `/api` no domínio principal.
+- Aplicar hardening SSH/firewall na VPS.
+- Rotacionar segredos compartilhados.
+- Configurar credenciais reais das integrações.
+- Configurar backup offsite e monitoramento externo.
+- Implantar testes E2E reais.
+## Fase 8 - Importacao bancaria via WhatsApp - 2026-05-16
+
+### Resultado
+
+**APROVADO**
+
+### Implementado
+
+- Parser OFX dedicado para Banco Inter/Intermedium.
+- Parser CSV dedicado para extrato Conta Corrente Banco Inter PJ.
+- Deteccao de banco `077`, conta `439443873`, tipo `CHECKING`, periodo e saldo final.
+- Geracao de `externalId` por FITID no OFX e SHA-256 deterministico no CSV.
+- Criacao de `StatementImport` e `StatementImportRow` com revisao obrigatoria.
+- Duplicatas marcadas antes de importar.
+- Webhook WhatsApp detecta anexo, baixa conteudo seguro e cria previa.
+- Arquivos WhatsApp salvos em `backend/storage/imports/whatsapp`, fora do Git.
+- Tela `/finance/import` lista importacoes recentes.
+- Tela `/finance/import/:id/review` mostra banco, conta, periodo, saldo, totais, filtros e confirmacao antes de importar.
+
+### Evidencias
+
+- Backend: 31 testes aprovados.
+- Frontend: 9 testes aprovados.
+- `npm run validate` backend passou.
+- `npm run validate` frontend passou.
+- `validate-jarvis.ps1` passou.
+- `backup-jarvis.ps1` criou backup local em pasta ignorada.
+
+### Observacao sobre arquivos reais
+
+Os arquivos `Extrato-17-10-2024-a-16-05-2026-OFX.ofx`, `Extrato-17-10-2024-a-16-05-2026-CSV.csv` e `Extrato-17-10-2024-a-16-05-2026-PDF.pdf` nao foram encontrados no workspace durante a validacao. Para nao versionar extratos reais, os testes usam fixtures sinteticas equivalentes com 2221 transacoes e os mesmos metadados esperados.

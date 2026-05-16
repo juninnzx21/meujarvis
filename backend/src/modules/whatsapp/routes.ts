@@ -5,6 +5,7 @@ import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../prisma/client.js";
 import { aiOrchestratorService } from "../../services/aiOrchestratorService.js";
 import { financeIntegrationService } from "../../services/financeIntegrationService.js";
+import { statementImportService } from "../../services/statementImportService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -36,6 +37,26 @@ router.post("/webhook", asyncHandler(async (req, res) => {
   const admin = await prisma.user.findFirst({ where: { role: "admin" } });
   let content = inbound.text;
   let transcriptionStatus = "";
+  let statementImportId = "";
+  if (admin && inbound.attachment.hasAttachment && !inbound.fromJarvis && !inbound.isGroup) {
+    const file = await whatsappService.downloadInboundAttachment(req.body, admin.id);
+    if (file.status === "success") {
+      const statement = await statementImportService.uploadFromWhatsApp(admin.id, {
+        fileName: file.fileName,
+        content: file.content,
+        phone: inbound.cleanPhone,
+        confirmedAccount: false
+      });
+      statementImportId = statement.id;
+      await whatsappService.send(
+        inbound.cleanPhone || inbound.phone,
+        `Recebi seu extrato. Detectei ${statement.fileType.toUpperCase()}, ${statement.bankNameDetected ?? "banco em revisao"}, conta ${statement.accountDetected ?? "a confirmar"} e ${statement.totalRows} movimentacoes. Preparei uma previa segura antes de importar: /finance/import/${statement.id}/review`,
+        admin.id
+      );
+    } else if (file.status !== "no_attachment") {
+      await whatsappService.send(inbound.cleanPhone || inbound.phone, file.message ?? "Recebi o arquivo, mas nao consegui ler com seguranca. Envie OFX ou CSV.", admin.id);
+    }
+  }
   if (!content && inbound.hasAudio && admin) {
     const transcription = await whatsappService.transcribeInboundAudio(req.body, admin.id);
     content = transcription.text;
@@ -64,7 +85,7 @@ router.post("/webhook", asyncHandler(async (req, res) => {
       await whatsappService.send(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);
     }
   }
-  res.json({ received: true, processedText: Boolean(content), transcriptionStatus: transcriptionStatus || undefined });
+  res.json({ received: true, processedText: Boolean(content), statementImportId: statementImportId || undefined, transcriptionStatus: transcriptionStatus || undefined });
 }));
 
 router.get("/messages", authMiddleware, asyncHandler(async (req, res) => {

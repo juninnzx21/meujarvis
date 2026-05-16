@@ -80,7 +80,8 @@ const nativeTransactionSchema = z.object({
 const uploadSchema = z.object({
   fileName: z.string().min(3).max(180),
   content: z.string().min(3),
-  bankAccountId: z.string().optional()
+  bankAccountId: z.string().optional(),
+  confirmedAccount: z.boolean().optional()
 });
 
 const rowUpdateSchema = z.object({
@@ -154,6 +155,15 @@ router.post("/assistant", validate(z.object({ content: z.string().min(2).max(100
 
 router.post("/imports/upload", validate(uploadSchema), asyncHandler(async (req, res) => {
   res.status(201).json({ import: await statementImportService.upload(req.user!.id, req.body) });
+}));
+router.post("/import/upload", validate(uploadSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ import: await statementImportService.upload(req.user!.id, req.body) });
+}));
+router.post("/import/whatsapp", validate(uploadSchema.extend({ phone: z.string().optional() })), asyncHandler(async (req, res) => {
+  res.status(201).json({ import: await statementImportService.uploadFromWhatsApp(req.user!.id, req.body) });
+}));
+router.get("/imports", asyncHandler(async (req, res) => {
+  res.json({ imports: await statementImportService.listImports(req.user!.id) });
 }));
 router.get("/imports/:id", asyncHandler(async (req, res) => {
   res.json({ import: await statementImportService.getImport(req.user!.id, pathParam(req.params.id)) });

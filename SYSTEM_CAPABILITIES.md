@@ -148,3 +148,56 @@ docker compose up -d
 - Tokens de integracoes salvos por usuario em `Setting` sao criptografados no backend.
 - Login demo pode ser bloqueado em producao por `ALLOW_DEMO_LOGIN=false`.
 - Admin real pode ser criado por `npm run create:admin`.
+## Capacidades reais auditadas - 2026-05-16
+
+### O sistema possui hoje
+
+- Autenticação JWT com bcrypt, usuário admin/local e bloqueio configurável do login demo em produção.
+- Dashboard, status operacional, health simples/full/public.
+- Chat com histórico, memória, detecção simples de intenções, fallback OpenAI/Gemini/local.
+- Voz via navegador com Web Speech API/SpeechSynthesis quando disponível.
+- Memórias estruturadas, base pessoal, busca textual e criação via chat.
+- Tarefas, lembretes, status, prioridade, vencidas e scheduler.
+- Automações seguras com allowlist, logs e bloqueio de ações perigosas.
+- Comandos, rotinas manuais/agendadas, relatórios e notificações.
+- Logs estruturados com redaction.
+- Configurações com criptografia de tokens sensíveis em `Setting`.
+- Integrações preparadas: n8n, WhatsApp/Evolution API, Home Assistant.
+- Módulo financeiro com contas, categorias, lançamentos, importação/revisão de extrato, relatórios e assistente guiado.
+- Scripts PowerShell: start, stop, status, validate, backup, restore e backup offsite planejado.
+- Documentação operacional, segurança, deploy, monitoramento e roadmap.
+
+### O que dá para fazer hoje
+
+- Entrar no painel, navegar pelas telas e usar os módulos principais.
+- Conversar com o JARVIS e criar tarefas/memórias via chat.
+- Gerenciar tarefas, lembretes, notificações, rotinas, automações e logs.
+- Configurar integrações pelo painel quando houver credenciais.
+- Preparar WhatsApp/Evolution e n8n com testes seguros.
+- Consultar status da aplicação e da API dedicada.
+- Criar contas financeiras, lançar entradas/saídas, importar CSV simulado/revisar/importar e consultar relatórios.
+- Fazer backup local do PostgreSQL via script.
+
+### Limitações atuais
+
+- A API oficial pública é `https://apijarvis.juninnzxtec.com.br/api`; `https://jarvis.juninnzxtec.com.br/api/*` ainda retorna frontend.
+- Sem credenciais reais, n8n, WhatsApp/Evolution e Home Assistant ficam em `not_configured`.
+- Não há wake word real nem escuta contínua.
+- Não há push notification externo.
+- Não há app mobile nativo.
+- Memória semântica/pgvector ainda é planejada.
+- Testes E2E com navegador real ainda são plano, não suíte ativa.
+- Hardening SSH/firewall e backup offsite real dependem de ação manual na VPS.
+
+### URLs úteis
+
+- Frontend produção: `https://jarvis.juninnzxtec.com.br`
+- API dedicada produção: `https://apijarvis.juninnzxtec.com.br/api`
+- Health API dedicada: `https://apijarvis.juninnzxtec.com.br/api/health`
+- Health full API dedicada: `https://apijarvis.juninnzxtec.com.br/api/health/full`
+- Local frontend, quando iniciado: `http://localhost:5173`
+- Local backend, quando iniciado: `http://localhost:3001/api`
+
+### Login demo
+
+O login demo existe para desenvolvimento/local, mas deve ficar bloqueado em produção com `ALLOW_DEMO_LOGIN=false`. Para produção real, usar `npm run create:admin` e criar um admin próprio.

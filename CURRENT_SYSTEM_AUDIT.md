@@ -310,3 +310,77 @@ O sistema esta usavel para rotina pessoal e evolucao real. Para producao comerci
 - `https://apijarvis.juninnzxtec.com.br/api/health/full` respondeu com scheduler ativo e integracoes externas sem quebrar.
 - Riscos corrigidos no codigo local: criptografia de segredos em `Setting`, bloqueio configuravel de login demo e endpoint publico minimo de health.
 - Pendencia manual: aplicar deploy em producao, configurar `SETTINGS_ENCRYPTION_KEY`, `ALLOW_DEMO_LOGIN=false` e rotacionar segredos compartilhados.
+## Auditoria completa - 2026-05-16 06:25 America/Sao_Paulo
+
+### Resumo executivo
+
+Status: **APROVADO COM RESSALVAS**.
+
+O JARVIS Home AI está funcional no código local, com backend, frontend, Prisma, testes, build, scheduler, financeiro, memórias, tarefas, automações, rotinas, notificações, logs e fallbacks validados. A produção responde corretamente no frontend público e na API dedicada `https://apijarvis.juninnzxtec.com.br/api`. A ressalva principal é que `https://jarvis.juninnzxtec.com.br/api/*` ainda retorna o HTML do frontend; a API pública operacional oficial documentada é `apijarvis`.
+
+### Ambiente auditado
+
+- Diretório usado: `E:\jarvis-home-assistant`
+- Branch: `main`
+- Commit atual: `eced34a feat: harden production security and settings encryption`
+- Remote: `https://github.com/juninnzx21/meujarvis.git`
+- Docker: funcionando
+- Docker Compose: funcionando
+- Node/npm: funcionando
+- PostgreSQL local: container `jarvis-postgres` healthy
+- Backend local: não estava rodando em `localhost:3001` no início da auditoria
+- Frontend local: não estava rodando em `localhost:5173` no início da auditoria
+
+### Segurança de arquivos
+
+- `.env`, `backend/.env`, `frontend/.env`, `backups/`, `node_modules/` e `frontend/dist/` estão ignorados pelo Git.
+- A varredura encontrou padrões em `.env` local ignorado, exemplos `.env.example`, documentação de placeholders e nomes de variáveis no código.
+- Nenhum segredo real foi identificado como versionado durante esta auditoria.
+- Observação: a pasta `backups/` contém backup local gerado por `backup-jarvis.ps1`, corretamente ignorado.
+
+### Produção
+
+- `https://jarvis.juninnzxtec.com.br`: HTTP 200, frontend entregue.
+- `https://jarvis.juninnzxtec.com.br/api/health`: HTTP 200, mas retorna HTML do frontend. Não é a API operacional.
+- `https://jarvis.juninnzxtec.com.br/api/health/full`: HTTP 200, mas retorna HTML do frontend. Não é a API operacional.
+- `https://apijarvis.juninnzxtec.com.br/api/health`: HTTP 200 JSON, app ok, database ok, scheduler ativo.
+- `https://apijarvis.juninnzxtec.com.br/api/health/full`: HTTP 200 JSON, integrações externas reportadas sem expor segredos.
+
+### Validações executadas
+
+- Backend: `npm install`, `npm audit --omit=dev`, `npx prisma generate`, `npx prisma validate`, `npx prisma migrate status`, `npm run test`, `npm run validate` passaram.
+- Frontend: `npm install`, `npm audit --omit=dev`, `npm run test`, `npm run validate` passaram.
+- Testes backend: 29 testes aprovados.
+- Testes frontend: 9 testes aprovados.
+- Scripts: `status-jarvis.ps1`, `validate-jarvis.ps1` e `backup-jarvis.ps1` executados. Backup local criado com sucesso.
+
+### Módulos existentes
+
+Backend existente: auth, chat, voice, memory, tasks, automations, routines, commands, reports, notifications, logs, settings, health/status, scheduler, n8n, WhatsApp/Evolution, Home Assistant, OpenAI/Gemini, financeiro e scripts de backup/operação.
+
+Frontend existente: Login, Dashboard, Status, Chat, Voz, Memórias, Tarefas, Automações, Comandos, Rotinas, Relatórios, Notificações, Logs, Configurações, n8n, WhatsApp, Casa Inteligente e Financeiro.
+
+### Banco de dados
+
+Modelos Prisma identificados: User, Conversation, Message, Memory, Task, Routine, RoutineRun, Notification, Automation, AutomationLog, SystemLog, Setting, WhatsAppMessage, BankAccount, FinancialCategory, FinancialTransaction, StatementImport, StatementImportRow, FinancialRule e AssistantDraftAction.
+
+### Integrações
+
+- OpenAI: variável configurada em produção segundo health; health/full indicou estado operacional com fallback disponível quando houver erro.
+- Gemini: variável configurada em produção segundo health; usado como fallback.
+- n8n: não configurado em produção no health/full; endpoints e tela existem.
+- WhatsApp/Evolution: não configurado em produção no health/full; endpoints, tela, webhook e proteção contra auto reply/spam existem.
+- Home Assistant: não configurado em produção no health/full; endpoints, tela e bloqueios de ações sensíveis existem.
+- Controle Financeiro externo: módulo de configuração existe, mas depende de credenciais/autenticação correta do sistema externo para uso real.
+
+### Erros, ressalvas e riscos
+
+- `jarvis.juninnzxtec.com.br/api/*` não roteia para backend; usar `apijarvis` como API oficial ou corrigir Caddy/DNS.
+- Backend e frontend locais não estavam ativos no início; a validação foi feita por scripts/testes/build, não por navegação local.
+- `docker compose ps` mostrou PostgreSQL exposto como `0.0.0.0:5432`, apesar do `docker-compose.yml` atual declarar bind em `127.0.0.1`. Recriar o container em produção/local e validar portas é recomendado.
+- Logs de teste exibem um erro 400 esperado de importação financeira sem linhas aprovadas como `Unhandled application error`; comportamento é esperado no teste, mas o nível de log pode ser refinado para não parecer falha crítica.
+- Integrações reais ainda dependem de credenciais e configuração externa.
+
+### Status final
+
+**APROVADO COM RESSALVAS**: código local valida, testes passam, produção responde pela API dedicada, documentação está atualizada, e não há evidência de segredo versionado. Ressalvas: roteamento `/api` do domínio principal, integrações externas sem credenciais e hardening final de infraestrutura ainda pendente.

@@ -49,6 +49,19 @@ function normalizePhone(phone: string) {
   return phone.replace(/@s\.whatsapp\.net|@c\.us|@g\.us/g, "").replace(/\D/g, "");
 }
 
+function detectAttachment(message: any, body: Record<string, any>) {
+  const document = message?.documentMessage ?? message?.document ?? body?.documentMessage ?? body?.document ?? null;
+  const file = message?.fileMessage ?? body?.fileMessage ?? body?.file ?? null;
+  const image = message?.imageMessage ?? body?.imageMessage ?? null;
+  const media = document || file || image || body?.media || null;
+  const fileName = String(media?.fileName ?? body?.fileName ?? body?.filename ?? "extrato").trim();
+  const mimeType = String(media?.mimetype ?? media?.mimeType ?? body?.mimeType ?? body?.mimetype ?? "");
+  const mediaUrl = findFirstString(media || body, [/^(url|mediaUrl|downloadUrl|fileUrl)$/i]);
+  const base64 = findFirstString(media || body, [/^(base64|media|file|data)$/i]);
+  const hasAttachment = Boolean(media || /\.(ofx|csv|txt|xlsx|pdf)$/i.test(fileName) || (mimeType && !mimeType.startsWith("audio/")));
+  return { hasAttachment, fileName, mimeType, mediaUrl, base64 };
+}
+
 export const whatsappService = {
   configured: Boolean(env.EVOLUTION_API_URL && env.EVOLUTION_API_KEY && env.EVOLUTION_INSTANCE),
   async runtimeConfig(userId?: string): Promise<WhatsAppRuntimeConfig> {
@@ -147,7 +160,34 @@ export const whatsappService = {
     const mimeType = findFirstString(audio || body, [/mimetype|mimeType/i]) || "audio/ogg";
     const fromJarvis = Boolean(body?.jarvisAutoReply || body?.data?.key?.fromMe || body?.key?.fromMe);
     const isGroup = phone.includes("@g.us");
-    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio: Boolean(audio || mediaUrl || base64) };
+    const attachment = detectAttachment(message, body);
+    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio: Boolean(audio || mimeType.startsWith("audio/")), attachment };
+  },
+  async downloadInboundAttachment(payload: unknown, userId?: string) {
+    const inbound = this.extractInbound(payload);
+    const attachment = inbound.attachment;
+    if (!attachment.hasAttachment) return { status: "no_attachment" as const };
+    const allowed = /\.(ofx|csv|txt|xlsx|pdf)$/i.test(attachment.fileName);
+    if (!allowed) return { status: "unsupported_attachment" as const, message: "Formato de arquivo nao suportado." };
+    let buffer: Buffer | null = null;
+    if (attachment.base64) {
+      const normalizedBase64 = attachment.base64.replace(/^data:[^;]+;base64,/, "");
+      if (/^[A-Za-z0-9+/=\s]+$/.test(normalizedBase64) && normalizedBase64.length > 16) {
+        buffer = Buffer.from(normalizedBase64, "base64");
+      }
+    } else if (attachment.mediaUrl && /^https?:\/\//i.test(attachment.mediaUrl)) {
+      const config = await this.runtimeConfig(userId);
+      const response = await axios.get<ArrayBuffer>(attachment.mediaUrl, {
+        responseType: "arraybuffer",
+        headers: config.apiKey ? { apikey: config.apiKey } : undefined,
+        timeout: 30000,
+        maxContentLength: 8 * 1024 * 1024
+      });
+      buffer = Buffer.from(response.data);
+    }
+    if (!buffer || buffer.length === 0) return { status: "attachment_unavailable" as const, message: "Arquivo recebido, mas a midia nao veio disponivel." };
+    if (buffer.length > 8 * 1024 * 1024) return { status: "too_large" as const, message: "Arquivo acima do limite seguro." };
+    return { status: "success" as const, fileName: attachment.fileName, mimeType: attachment.mimeType, content: buffer.toString("utf8") };
   },
   async transcribeInboundAudio(payload: unknown, userId?: string) {
     const inbound = this.extractInbound(payload);

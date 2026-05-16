@@ -1,189 +1,231 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { Prisma, type FinancialDirection, type StatementFileType, type StatementImportRowStatus } from "@prisma/client";
+import { parseStatementContent } from "../modules/finance/parsers/statementParser.js";
+import type { ParsedStatement, ParsedStatementTransaction } from "../modules/finance/parsers/types.js";
 import { prisma } from "../prisma/client.js";
+import { redactSensitive } from "../utils/redact.js";
 import { financeLedgerService } from "./financeLedgerService.js";
 import { writeSystemLog } from "./systemLogService.js";
 
 const storageDir = join(process.cwd(), "storage", "imports");
-const maxUploadBytes = 2 * 1024 * 1024;
+const whatsappStorageDir = join(storageDir, "whatsapp");
+const maxUploadBytes = 8 * 1024 * 1024;
 const allowedTypes: StatementFileType[] = ["csv", "ofx", "txt", "xlsx", "pdf"];
 
 function safeFileName(fileName: string) {
   return basename(fileName).replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 160) || "extrato.txt";
 }
 
-function detectFileType(fileName: string): StatementFileType {
+export function detectStatementFileType(fileName: string): StatementFileType {
   const ext = extname(fileName).replace(".", "").toLowerCase();
   if (["csv", "ofx", "txt", "xlsx", "pdf"].includes(ext)) return ext as StatementFileType;
   return "unknown";
 }
 
-function parseMoney(value: string) {
-  const clean = value
-    .replace(/[^\d,.-]/g, "")
-    .replace(/\.(?=\d{3}(?:\D|$))/g, "")
-    .replace(",", ".")
-    .trim();
-  if (!clean) return null;
-  const parsed = Number(clean);
-  return Number.isFinite(parsed) ? parsed : null;
+function normalizeAccount(value?: string | null) {
+  return (value ?? "").replace(/\D/g, "");
 }
 
-function parseDate(value: string) {
-  const text = value.trim();
-  const br = text.match(/^(\d{2})[/-](\d{2})[/-](\d{2,4})$/);
-  if (br) {
-    const year = br[3].length === 2 ? `20${br[3]}` : br[3];
-    return new Date(`${year}-${br[2]}-${br[1]}T12:00:00.000Z`);
+function formatAccountVariants(accountId?: string | null) {
+  const clean = normalizeAccount(accountId);
+  if (!clean) return [];
+  return clean.length > 1 ? [clean, `${clean.slice(0, -1)}-${clean.slice(-1)}`] : [clean];
+}
+
+function isBancoInter(parsed: ParsedStatement) {
+  const text = financeLedgerService.normalizeText(`${parsed.bankName ?? ""} ${parsed.bankCode ?? ""} ${parsed.accountType ?? ""}`);
+  return parsed.bankCode === "077" || text.includes("inter") || text.includes("intermedium");
+}
+
+function statusFromCategorization(tx: ParsedStatementTransaction, duplicate: unknown, confidence: number): StatementImportRowStatus {
+  if (duplicate) return "duplicate";
+  if (tx.amount === null || !tx.date || tx.direction === "unknown") return "pending";
+  return confidence >= 0.85 ? "approved" : "pending";
+}
+
+function safeRaw(tx: ParsedStatementTransaction) {
+  return redactSensitive({
+    ...tx.raw,
+    fitId: tx.fitId,
+    externalId: tx.externalId,
+    source: "statement_import"
+  }) as Prisma.InputJsonValue;
+}
+
+async function findOrCreateDetectedAccount(userId: string, parsed: ParsedStatement, explicitBankAccountId?: string, confirmedAccount?: boolean) {
+  if (explicitBankAccountId) {
+    return prisma.bankAccount.findFirstOrThrow({ where: { id: explicitBankAccountId, userId } });
   }
-  const iso = new Date(text);
-  return Number.isNaN(iso.getTime()) ? null : iso;
-}
 
-function splitCsvLine(line: string, delimiter: string) {
-  const cells: string[] = [];
-  let current = "";
-  let quoted = false;
-  for (const char of line) {
-    if (char === "\"") {
-      quoted = !quoted;
-      continue;
-    }
-    if (char === delimiter && !quoted) {
-      cells.push(current.trim());
-      current = "";
-      continue;
-    }
-    current += char;
+  const variants = formatAccountVariants(parsed.accountId);
+  const preciseConditions = [
+    parsed.bankCode && variants.length ? { bankCode: parsed.bankCode, accountNumber: { in: variants } } : undefined,
+    variants.length ? { accountNumber: { in: variants } } : undefined
+  ].filter(Boolean) as Prisma.BankAccountWhereInput[];
+  const account = preciseConditions.length
+    ? await prisma.bankAccount.findFirst({ where: { userId, OR: preciseConditions } })
+    : await prisma.bankAccount.findFirst({
+      where: {
+        userId,
+        OR: [
+          { accountName: { contains: "PJ DO INTER", mode: "insensitive" } },
+          { accountName: { contains: "Inter PJ", mode: "insensitive" } },
+          { bankName: { contains: "Inter", mode: "insensitive" } }
+        ]
+      }
+    });
+  if (account) return account;
+
+  if (isBancoInter(parsed) && parsed.accountId && confirmedAccount) {
+    return financeLedgerService.createAccount(userId, {
+      bankName: "Banco Inter",
+      bankCode: "077",
+      accountType: "business",
+      accountName: "PJ DO INTER",
+      accountNumber: normalizeAccount(parsed.accountId),
+      currentBalance: parsed.finalBalance ?? 0
+    });
   }
-  cells.push(current.trim());
-  return cells;
+  return null;
 }
 
-function normalizeHeader(value: string) {
-  return financeLedgerService.normalizeText(value);
-}
-
-function directionFromText(description: string, amount: number | null): FinancialDirection {
-  const text = financeLedgerService.normalizeText(description);
-  if (text.includes("pix recebido") || text.includes("recebimento") || text.includes("credito") || text.includes("estorno")) return "in";
-  if (text.includes("pix enviado") || text.includes("pagamento") || text.includes("debito") || text.includes("tarifa") || text.includes("boleto")) return "out";
-  if (amount !== null) return amount >= 0 ? "in" : "out";
-  return "unknown";
-}
-
-function detectBank(content: string, fileName: string) {
-  const text = financeLedgerService.normalizeText(`${fileName} ${content.slice(0, 4000)}`);
-  if (text.includes("banco inter") || text.includes("inter pj") || text.includes("conta digital pj") || text.includes("inter empresas")) {
-    return { bankNameDetected: "Banco Inter", accountDetected: text.includes("pj") ? "Inter PJ" : "Inter" };
-  }
-  return { bankNameDetected: undefined, accountDetected: undefined };
-}
-
-async function parseDelimitedRows(userId: string, content: string, bankAccountId?: string) {
-  const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (!lines.length) return [];
-  const delimiter = (lines[0].match(/;/g)?.length ?? 0) >= (lines[0].match(/,/g)?.length ?? 0) ? ";" : ",";
-  const header = splitCsvLine(lines[0], delimiter).map(normalizeHeader);
-  const dateIndex = header.findIndex((item) => ["data", "dt", "date"].includes(item) || item.includes("data lancamento"));
-  const descriptionIndex = header.findIndex((item) => item.includes("descricao") || item.includes("historico") || item.includes("lancamento") || item.includes("descri"));
-  const amountIndex = header.findIndex((item) => item === "valor" || item.includes("amount") || item.includes("vlr"));
-  const creditIndex = header.findIndex((item) => item.includes("credito"));
-  const debitIndex = header.findIndex((item) => item.includes("debito"));
-  const balanceIndex = header.findIndex((item) => item.includes("saldo"));
-  const externalIndex = header.findIndex((item) => item.includes("id") || item.includes("identificador"));
-
+async function buildRows(userId: string, parsed: ParsedStatement, bankAccountId?: string | null) {
   const rows = [];
-  for (const line of lines.slice(1)) {
-    const cells = splitCsvLine(line, delimiter);
-    const description = cells[descriptionIndex] || cells[1] || line;
-    const rawAmount = amountIndex >= 0 ? parseMoney(cells[amountIndex] ?? "") : null;
-    const debit = debitIndex >= 0 ? parseMoney(cells[debitIndex] ?? "") : null;
-    const credit = creditIndex >= 0 ? parseMoney(cells[creditIndex] ?? "") : null;
-    const signedAmount = rawAmount ?? (credit && credit > 0 ? credit : debit && debit > 0 ? -debit : null);
-    const amount = signedAmount === null ? null : Math.abs(signedAmount);
-    const direction = directionFromText(description, signedAmount);
-    const date = dateIndex >= 0 ? parseDate(cells[dateIndex] ?? "") : null;
-    const category = await financeLedgerService.categorize(userId, description, direction);
-    const duplicate = bankAccountId && date && amount !== null
-      ? await financeLedgerService.detectDuplicate(userId, bankAccountId, date, new Prisma.Decimal(amount), description, externalIndex >= 0 ? cells[externalIndex] : undefined)
+  for (const tx of parsed.transactions) {
+    const category = await financeLedgerService.categorize(userId, tx.description, tx.direction);
+    const duplicate = bankAccountId && tx.date && tx.amount !== null
+      ? await financeLedgerService.detectDuplicate(userId, bankAccountId, tx.date, new Prisma.Decimal(tx.amount), tx.originalDescription, tx.externalId)
       : null;
     rows.push({
-      date,
-      description,
-      amount,
-      direction,
-      balanceAfter: balanceIndex >= 0 ? parseMoney(cells[balanceIndex] ?? "") : null,
-      categorySuggestion: category.category?.name,
+      date: tx.date,
+      description: tx.description.slice(0, 255),
+      amount: tx.amount,
+      direction: tx.direction,
+      balanceAfter: tx.balanceAfter ?? null,
+      categorySuggestion: category.category?.name ?? (category.reason === "review" ? "revisar" : undefined),
       categoryId: category.category?.id,
-      status: duplicate ? "duplicate" as StatementImportRowStatus : category.confidence >= 0.65 && amount !== null && direction !== "unknown" ? "pending" as StatementImportRowStatus : "pending" as StatementImportRowStatus,
-      raw: { cells, externalId: externalIndex >= 0 ? cells[externalIndex] : undefined }
+      status: statusFromCategorization(tx, duplicate, category.confidence),
+      raw: safeRaw(tx)
     });
   }
   return rows;
 }
 
+function summarizeRows(rows: Array<{ amount: number | null; direction: FinancialDirection; status: StatementImportRowStatus }>) {
+  const incomeRows = rows.filter((row) => row.direction === "in");
+  const expenseRows = rows.filter((row) => row.direction === "out");
+  const incomeTotal = incomeRows.reduce((total, row) => total.plus(row.amount ?? 0), new Prisma.Decimal(0));
+  const expenseTotal = expenseRows.reduce((total, row) => total.plus(row.amount ?? 0), new Prisma.Decimal(0));
+  return {
+    incomeRows: incomeRows.length,
+    expenseRows: expenseRows.length,
+    pendingRows: rows.filter((row) => row.status === "pending").length,
+    approvedRows: rows.filter((row) => row.status === "approved").length,
+    duplicateRows: rows.filter((row) => row.status === "duplicate").length,
+    incomeTotal: incomeTotal.toString(),
+    expenseTotal: expenseTotal.toString()
+  };
+}
+
 export const statementImportService = {
-  async upload(userId: string, input: { fileName: string; content: string; bankAccountId?: string }) {
-    const fileType = detectFileType(input.fileName);
+  async upload(userId: string, input: { fileName: string; content: string; bankAccountId?: string; source?: "panel" | "whatsapp"; confirmedAccount?: boolean }) {
+    const fileType = detectStatementFileType(input.fileName);
     if (!allowedTypes.includes(fileType)) throw Object.assign(new Error("Formato de extrato nao suportado."), { statusCode: 400 });
     const bytes = Buffer.byteLength(input.content, "utf8");
     if (bytes > maxUploadBytes) throw Object.assign(new Error("Arquivo muito grande para importacao segura nesta fase."), { statusCode: 400 });
     if (fileType === "pdf" || fileType === "xlsx") {
-      throw Object.assign(new Error("Nao consegui interpretar esse arquivo com seguranca. Envie CSV/OFX/TXT ou revise manualmente."), { statusCode: 400 });
+      throw Object.assign(new Error("Nao consegui interpretar esse arquivo com seguranca. Envie OFX ou CSV. PDF fica apenas para conferencia manual."), { statusCode: 400 });
     }
 
-    await mkdir(storageDir, { recursive: true });
+    const targetDir = input.source === "whatsapp" ? whatsappStorageDir : storageDir;
+    await mkdir(targetDir, { recursive: true });
     const name = safeFileName(input.fileName);
     const storedName = `${Date.now()}-${name}`;
-    await writeFile(join(storageDir, storedName), input.content, "utf8");
+    await writeFile(join(targetDir, storedName), input.content, "utf8");
 
-    const detected = detectBank(input.content, input.fileName);
+    const parsed = parseStatementContent(fileType, input.content, input.fileName);
+    const detectedAccount = await findOrCreateDetectedAccount(userId, parsed, input.bankAccountId, input.confirmedAccount);
+    const rows = await buildRows(userId, parsed, detectedAccount?.id);
+    const summary = summarizeRows(rows);
+
     const statement = await prisma.statementImport.create({
       data: {
         userId,
-        bankAccountId: input.bankAccountId,
+        bankAccountId: detectedAccount?.id,
         fileName: name,
         fileType,
-        bankNameDetected: detected.bankNameDetected,
-        accountDetected: detected.accountDetected,
-        status: "uploaded",
-        metadata: { storedName, bytes }
-      }
-    });
-
-    const rows = await parseDelimitedRows(userId, input.content, input.bankAccountId);
-    await prisma.statementImportRow.createMany({
-      data: rows.map((row) => ({
-        importId: statement.id,
-        date: row.date,
-        description: row.description,
-        amount: row.amount,
-        direction: row.direction,
-        balanceAfter: row.balanceAfter,
-        categorySuggestion: row.categorySuggestion,
-        categoryId: row.categoryId,
-        status: row.status,
-        raw: row.raw
-      }))
-    });
-    const updated = await prisma.statementImport.update({
-      where: { id: statement.id },
-      data: {
+        bankNameDetected: parsed.bankName,
+        accountDetected: parsed.accountId,
+        periodStart: parsed.periodStart ?? undefined,
+        periodEnd: parsed.periodEnd ?? undefined,
         status: "review_required",
         totalRows: rows.length,
-        duplicateRows: rows.filter((row) => row.status === "duplicate").length,
-        reviewRows: rows.filter((row) => row.status === "pending").length
+        duplicateRows: summary.duplicateRows,
+        reviewRows: summary.pendingRows,
+        metadata: {
+          storedName,
+          storage: input.source === "whatsapp" ? "whatsapp" : "panel",
+          bytes,
+          bankCode: parsed.bankCode,
+          accountType: parsed.accountType,
+          finalBalance: parsed.finalBalance,
+          parser: typeof parsed.metadata?.parser === "string" ? parsed.metadata.parser : undefined,
+          summary
+        },
+        rows: {
+          create: rows.map((row) => ({
+            date: row.date,
+            description: row.description,
+            amount: row.amount,
+            direction: row.direction,
+            balanceAfter: row.balanceAfter,
+            categorySuggestion: row.categorySuggestion,
+            categoryId: row.categoryId,
+            status: row.status,
+            raw: row.raw
+          }))
+        }
       },
       include: { rows: true, bankAccount: true }
     });
-    await writeSystemLog({ userId, module: "finance", action: "statement_upload", message: "Extrato enviado para revisao", metadata: { importId: statement.id, fileType, rows: rows.length, bankNameDetected: detected.bankNameDetected } });
-    return updated;
+
+    await writeSystemLog({
+      userId,
+      module: "finance",
+      action: input.source === "whatsapp" ? "statement_whatsapp_upload" : "statement_upload",
+      message: "Extrato enviado para revisao",
+      metadata: {
+        importId: statement.id,
+        fileType,
+        rowCount: rows.length,
+        bankName: parsed.bankName,
+        bankCode: parsed.bankCode,
+        accountDetected: parsed.accountId ? "configured" : "absent",
+        status: statement.status
+      }
+    });
+    return statement;
+  },
+
+  async uploadFromWhatsApp(userId: string, input: { fileName: string; content: string; phone?: string; confirmedAccount?: boolean }) {
+    return this.upload(userId, { ...input, source: "whatsapp", confirmedAccount: input.confirmedAccount });
+  },
+
+  async listImports(userId: string) {
+    return prisma.statementImport.findMany({
+      where: { userId },
+      include: { bankAccount: true },
+      orderBy: { createdAt: "desc" },
+      take: 50
+    });
   },
 
   async getImport(userId: string, id: string) {
-    return prisma.statementImport.findFirstOrThrow({ where: { id, userId }, include: { rows: { include: { category: true }, orderBy: { createdAt: "asc" } }, bankAccount: true } });
+    return prisma.statementImport.findFirstOrThrow({
+      where: { id, userId },
+      include: { rows: { include: { category: true }, orderBy: [{ date: "asc" }, { createdAt: "asc" }] }, bankAccount: true }
+    });
   },
 
   async updateRow(userId: string, importId: string, rowId: string, input: { status?: StatementImportRowStatus; categoryId?: string | null; description?: string; bankAccountId?: string }) {
@@ -198,7 +240,10 @@ export const statementImportService = {
 
   async approveAll(userId: string, importId: string) {
     await prisma.statementImport.findFirstOrThrow({ where: { id: importId, userId } });
-    const result = await prisma.statementImportRow.updateMany({ where: { importId, status: "pending", amount: { not: null }, direction: { not: "unknown" } }, data: { status: "approved" } });
+    const result = await prisma.statementImportRow.updateMany({
+      where: { importId, status: { in: ["pending", "approved"] }, amount: { not: null }, direction: { not: "unknown" } },
+      data: { status: "approved" }
+    });
     await writeSystemLog({ userId, module: "finance", action: "statement_approve_all", message: "Linhas de extrato aprovadas para importacao", metadata: { importId, count: result.count } });
     return result;
   },
@@ -212,16 +257,19 @@ export const statementImportService = {
     let importedRows = 0;
     for (const row of rows) {
       if (!row.amount || !row.date || row.direction === "unknown") continue;
+      const raw = (row.raw && typeof row.raw === "object" ? row.raw : {}) as Record<string, unknown>;
+      const externalId = typeof raw.externalId === "string" ? raw.externalId : typeof raw.fitId === "string" ? raw.fitId : undefined;
       const tx = await financeLedgerService.createTransaction(userId, {
         bankAccountId: statement.bankAccountId,
         categoryId: row.categoryId,
         type: row.direction === "in" ? "income" : "expense",
         direction: row.direction === "in" ? "in" : "out",
         amount: row.amount.toString(),
-        date: row.date!.toISOString(),
+        date: row.date.toISOString(),
         description: row.description,
         originalDescription: row.description,
         origin: "statement_import",
+        transactionExternalId: externalId,
         source: "statement_import",
         status: "confirmed",
         metadata: { importId, rowId: row.id }
@@ -231,7 +279,12 @@ export const statementImportService = {
     }
     const updated = await prisma.statementImport.update({
       where: { id: importId },
-      data: { status: "imported", importedRows, reviewRows: await prisma.statementImportRow.count({ where: { importId, status: "pending" } }), duplicateRows: await prisma.statementImportRow.count({ where: { importId, status: "duplicate" } }) }
+      data: {
+        status: "imported",
+        importedRows,
+        reviewRows: await prisma.statementImportRow.count({ where: { importId, status: "pending" } }),
+        duplicateRows: await prisma.statementImportRow.count({ where: { importId, status: "duplicate" } })
+      }
     });
     await writeSystemLog({ userId, module: "finance", action: "statement_import", message: "Extrato importado apos revisao", metadata: { importId, importedRows } });
     return updated;

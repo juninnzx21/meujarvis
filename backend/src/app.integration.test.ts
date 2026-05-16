@@ -5,6 +5,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { app } from "./app.js";
 import { env } from "./config/env.js";
+import { parseInterCsvStatement } from "./modules/finance/parsers/interCsvParser.js";
+import { parseOfxStatement } from "./modules/finance/parsers/ofxParser.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
 import { openAiService } from "./services/openAiService.js";
@@ -30,6 +32,42 @@ let financeAccountId = "";
 let financeCategoryId = "";
 let statementImportId = "";
 const schedulerTaskIds: string[] = [];
+
+function generateInterCsv(rows = 2221) {
+  const lines = [
+    "Extrato Conta Corrente",
+    "Conta ;439443873",
+    "Periodo ;17/10/2024 a 16/05/2026",
+    "Saldo ;326,05",
+    "",
+    "Data Lancamento;Historico;Descricao;Valor;Saldo"
+  ];
+  for (let i = 0; i < rows; i += 1) {
+    const day = String((i % 28) + 1).padStart(2, "0");
+    const month = String((i % 12) + 1).padStart(2, "0");
+    const year = i < 400 ? "2024" : i < 1600 ? "2025" : "2026";
+    const amount = i % 2 === 0 ? "120,00" : "-49,90";
+    const balance = (326.05 + i).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+    const history = i % 2 === 0 ? "Pix recebido" : "FABWEB HOSPEDAGEM";
+    lines.push(`${day}/${month}/${year};${history};Cliente ${i};${amount};${balance}`);
+  }
+  return lines.join("\n");
+}
+
+function generateInterOfx(rows = 2221) {
+  const transactions = Array.from({ length: rows }, (_, i) => {
+    const day = String((i % 28) + 1).padStart(2, "0");
+    const month = String((i % 12) + 1).padStart(2, "0");
+    const year = i < 400 ? "2024" : i < 1600 ? "2025" : "2026";
+    const amount = i % 2 === 0 ? "120.00" : "-49.90";
+    const type = i % 2 === 0 ? "CREDIT" : "DEBIT";
+    const memo = i % 2 === 0 ? `Pix recebido Cliente ${i}` : `FABWEB HOSPEDAGEM ${i}`;
+    return `<STMTTRN><TRNTYPE>${type}<DTPOSTED>${year}${month}${day}<TRNAMT>${amount}<FITID>FIT-${i}<MEMO>${memo}</STMTTRN>`;
+  }).join("\n");
+  return `OFXHEADER:100
+DATA:OFXSGML
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><BANKACCTFROM><BANKID>077<ACCTID>439443873<ACCTTYPE>CHECKING</BANKACCTFROM><BANKTRANLIST><DTSTART>20241017<DTEND>20260516${transactions}</BANKTRANLIST><LEDGERBAL><BALAMT>326.05<DTASOF>20260516</LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`;
+}
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
 
@@ -604,6 +642,28 @@ describe("JARVIS Home AI API", () => {
     expect(Number(report.body.totalBalance)).toBeGreaterThanOrEqual(200);
   });
 
+  it("parses Banco Inter OFX and CSV metadata with 2221 transactions", () => {
+    const ofx = parseOfxStatement(generateInterOfx());
+    expect(ofx.bankName).toBe("Banco Inter");
+    expect(ofx.bankCode).toBe("077");
+    expect(ofx.accountId).toBe("439443873");
+    expect(ofx.accountType).toBe("CHECKING");
+    expect(ofx.periodStart?.toISOString().slice(0, 10)).toBe("2024-10-17");
+    expect(ofx.periodEnd?.toISOString().slice(0, 10)).toBe("2026-05-16");
+    expect(ofx.finalBalance).toBe(326.05);
+    expect(ofx.transactions).toHaveLength(2221);
+    expect(ofx.transactions[0].externalId).toBe("FIT-0");
+
+    const csv = parseInterCsvStatement(generateInterCsv());
+    expect(csv.bankName).toBe("Banco Inter");
+    expect(csv.bankCode).toBe("077");
+    expect(csv.accountId).toBe("439443873");
+    expect(csv.periodStart?.toISOString().slice(0, 10)).toBe("2024-10-17");
+    expect(csv.periodEnd?.toISOString().slice(0, 10)).toBe("2026-05-16");
+    expect(csv.finalBalance).toBe(326.05);
+    expect(csv.transactions).toHaveLength(2221);
+  });
+
   it("handles guided finance assistant drafts and confirmation", async () => {
     const start = await request(app).post("/api/finance/assistant").set(auth()).send({ content: "adicionar entrada de 55" }).expect(200);
     expect(start.body.intent).toBe("finance.collect_account");
@@ -636,7 +696,8 @@ describe("JARVIS Home AI API", () => {
     expect(uploaded.body.import.status).toBe("review_required");
     expect(uploaded.body.import.totalRows).toBe(2);
 
-    await request(app).post(`/api/finance/imports/${statementImportId}/import-approved`).set(auth()).expect(400);
+    const beforeImport = await prisma.financialTransaction.count({ where: { metadata: { path: ["importId"], equals: statementImportId } } });
+    expect(beforeImport).toBe(0);
     const approved = await request(app).post(`/api/finance/imports/${statementImportId}/approve-all`).set(auth()).expect(200);
     expect(approved.body.count).toBe(2);
     const imported = await request(app).post(`/api/finance/imports/${statementImportId}/import-approved`).set(auth()).expect(200);
@@ -649,5 +710,49 @@ describe("JARVIS Home AI API", () => {
       .expect(201);
     expect(dup.body.import.duplicateRows).toBeGreaterThanOrEqual(1);
     await prisma.statementImport.deleteMany({ where: { id: dup.body.import.id } });
+  });
+
+  it("imports Banco Inter OFX metadata, creates PJ DO INTER when confirmed, and supports WhatsApp file import mock", async () => {
+    await prisma.financialTransaction.deleteMany({ where: { userId, transactionExternalId: { startsWith: "FIT-" } } });
+    const ofx = generateInterOfx(4);
+    const uploaded = await request(app)
+      .post("/api/finance/import/upload")
+      .set(auth())
+      .send({ fileName: "Extrato-17-10-2024-a-16-05-2026-OFX.ofx", content: ofx, confirmedAccount: true })
+      .expect(201);
+    const importId = uploaded.body.import.id;
+    expect(uploaded.body.import.bankNameDetected).toBe("Banco Inter");
+    expect(uploaded.body.import.accountDetected).toBe("439443873");
+    expect(uploaded.body.import.totalRows).toBe(4);
+    expect(uploaded.body.import.bankAccount.accountName).toBe("PJ DO INTER");
+
+    const detail = await request(app).get(`/api/finance/imports/${importId}`).set(auth()).expect(200);
+    expect(detail.body.import.metadata.finalBalance).toBe(326.05);
+    expect(detail.body.import.metadata.summary.incomeRows).toBe(2);
+    expect(detail.body.import.metadata.summary.expenseRows).toBe(2);
+
+    const beforeImport = await prisma.financialTransaction.count({ where: { metadata: { path: ["importId"], equals: importId } } });
+    expect(beforeImport).toBe(0);
+    await request(app).post(`/api/finance/imports/${importId}/approve-all`).set(auth()).expect(200);
+    const imported = await request(app).post(`/api/finance/imports/${importId}/import-approved`).set(auth()).expect(200);
+    expect(imported.body.import.importedRows).toBeGreaterThan(0);
+
+    const webhook = await request(app)
+      .post("/api/whatsapp/webhook")
+      .send({
+        data: {
+          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          message: {
+            documentMessage: {
+              fileName: "Extrato-17-10-2024-a-16-05-2026-CSV.csv",
+              mimetype: "text/csv",
+              base64: Buffer.from(generateInterCsv(3), "utf8").toString("base64")
+            }
+          }
+        }
+      })
+      .expect(200);
+    expect(webhook.body.statementImportId).toEqual(expect.any(String));
+    await prisma.statementImport.deleteMany({ where: { id: { in: [importId, webhook.body.statementImportId] } } });
   });
 });

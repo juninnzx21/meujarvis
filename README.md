@@ -250,3 +250,31 @@ Guia completo: [PERSONAL_PROFILE_MEMORY.md](./PERSONAL_PROFILE_MEMORY.md).
 - O backend usa PostgreSQL via Prisma.
 - Banco MySQL/MariaDB da hospedagem compartilhada nao deve substituir o PostgreSQL sem uma fase de migracao.
 - Plano seguro: [DATABASE_MIGRATION_PLAN.md](./DATABASE_MIGRATION_PLAN.md).
+## Importacao financeira por WhatsApp
+
+O JARVIS aceita extratos OFX/CSV enviados pelo painel financeiro ou pelo webhook WhatsApp/Evolution. O melhor formato para Banco Inter PJ e **OFX**; CSV e fallback confiavel; PDF e apenas conferencia.
+
+Fluxo seguro:
+
+1. Receber arquivo `.ofx` ou `.csv`.
+2. Parsear localmente, sem enviar o extrato para IA externa.
+3. Detectar banco, conta, periodo, saldo e movimentacoes.
+4. Criar previa em `/finance/import/{id}/review`.
+5. Importar somente linhas aprovadas.
+
+Endpoints principais:
+
+- `POST /api/finance/import/upload`
+- `POST /api/finance/import/whatsapp`
+- `GET /api/finance/imports`
+- `GET /api/finance/imports/:id`
+- `GET /api/finance/imports/:id/rows`
+- `POST /api/finance/imports/:id/approve-all`
+- `POST /api/finance/imports/:id/import-approved`
+- `POST /api/whatsapp/webhook`
+
+Documentacao relacionada:
+
+- `FINANCE_IMPORT_GUIDE.md`
+- `WHATSAPP_FILE_IMPORT.md`
+- `BANK_INTER_IMPORT.md`

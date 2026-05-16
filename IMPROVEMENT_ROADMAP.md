@@ -147,3 +147,36 @@ Fase 10:
 - Parser financeiro PDF/XLSX confiavel.
 - Alertas reais por n8n/WhatsApp/Telegram.
 - Rotacao automatizada de tokens por integracao.
+## Roadmap recomendado após auditoria - 2026-05-16
+
+### Crítico
+
+1. **Rotacionar segredos compartilhados**: todas as chaves, senhas e tokens que já foram expostos em conversa ou documentação operacional devem ser trocados.
+2. **Aplicar hardening na VPS**: usuário deploy com chave SSH, desabilitar root por senha, revisar sudo e UFW.
+3. **Corrigir ou oficializar roteamento de API**: manter `apijarvis` como API oficial ou ajustar Caddy para `jarvis/api/*`.
+4. **Garantir `ALLOW_DEMO_LOGIN=false` em produção** e criar admin real com `npm run create:admin`.
+5. **Configurar `SETTINGS_ENCRYPTION_KEY` forte em produção** e manter fora do Git.
+6. **Recriar/validar containers com portas internas presas em 127.0.0.1**, especialmente PostgreSQL.
+
+### Importante
+
+7. Configurar monitoramento externo para frontend, health, health/full, scheduler e certificado HTTPS.
+8. Implementar backup offsite criptografado com retenção definida.
+9. Configurar n8n real, Evolution API real e Home Assistant real por etapas, com testes de cada integração.
+10. Criar suíte E2E Playwright para login, dashboard, chat, tarefas, financeiro, notificações e responsividade.
+11. Melhorar logs de erros esperados para não registrar 400 de validação como `Unhandled application error`.
+12. Melhorar observabilidade de IA, incluindo motivo de fallback OpenAI/Gemini/local.
+
+### Futuro
+
+13. Implementar pgvector/memória semântica real.
+14. Implementar streaming token a token real no chat.
+15. Criar PWA avançado/push notification.
+16. Criar perfis de usuário/permissões para uso comercial.
+17. Criar auditoria LGPD/privacidade para dados financeiros e WhatsApp.
+18. Criar deploy automatizado CI/CD com checks de segredos.
+
+### Prontidão
+
+- Uso pessoal diário: alto, desde que as credenciais reais e hardening básico sejam aplicados.
+- Produção comercial: médio; precisa de E2E, monitoramento, backup offsite, RBAC, hardening VPS e política de privacidade.

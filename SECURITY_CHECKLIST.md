@@ -43,6 +43,10 @@
 - [x] Login demo e bloqueavel por `ALLOW_DEMO_LOGIN=false`.
 - [x] Endpoint publico minimo `/api/health/public` criado para monitoramento.
 - [x] `apijarvis.juninnzxtec.com.br/api` oficializado como API publica.
+- [x] OFX/CSV bancario e parseado localmente.
+- [x] Arquivos recebidos via WhatsApp ficam em `backend/storage/imports/whatsapp`.
+- [x] PDF de extrato e tratado apenas como conferencia/fallback, nao como fonte principal em massa.
+- [x] Importacao por WhatsApp cria previa e exige revisao antes de gravar.
 - [ ] Rotacionar DirectAdmin/hospedagem.
 - [ ] Rotacionar senha root da VPS.
 - [ ] Rotacionar todos os segredos compartilhados e gerar `SETTINGS_ENCRYPTION_KEY` dedicado na producao.
