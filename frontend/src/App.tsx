@@ -6,6 +6,12 @@ import { ChatPage } from "./pages/Chat/ChatPage";
 import { CommandsPage } from "./pages/Commands/CommandsPage";
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { FinancePage } from "./pages/Finance/FinancePage";
+import { FinanceAccountsPage } from "./pages/Finance/FinanceAccountsPage";
+import { FinanceCategoriesPage } from "./pages/Finance/FinanceCategoriesPage";
+import { FinanceImportPage } from "./pages/Finance/FinanceImportPage";
+import { FinanceReportsPage } from "./pages/Finance/FinanceReportsPage";
+import { FinanceReviewPage } from "./pages/Finance/FinanceReviewPage";
+import { FinanceTransactionsPage } from "./pages/Finance/FinanceTransactionsPage";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { LogsPage } from "./pages/Logs/LogsPage";
 import { MemoryPage } from "./pages/Memory/MemoryPage";
@@ -39,6 +45,13 @@ export default function App() {
         <Route path="routines" element={<RoutinesPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="finance" element={<FinancePage />} />
+        <Route path="finance/accounts" element={<FinanceAccountsPage />} />
+        <Route path="finance/transactions" element={<FinanceTransactionsPage />} />
+        <Route path="finance/categories" element={<FinanceCategoriesPage />} />
+        <Route path="finance/import" element={<FinanceImportPage />} />
+        <Route path="finance/import/:id/review" element={<FinanceReviewPage />} />
+        <Route path="finance/review" element={<FinanceReviewPage />} />
+        <Route path="finance/reports" element={<FinanceReportsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="automations" element={<AutomationsPage />} />
         <Route path="memory" element={<MemoryPage />} />

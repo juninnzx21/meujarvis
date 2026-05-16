@@ -30,6 +30,8 @@ backups/*.sql
 !backend/prisma/migrations/**/*.sql
 *.dump
 *.backup
+backend/storage/imports/
+backend/storage/imports/*
 
 /logs/
 *.log

@@ -1,6 +1,7 @@
 import { prisma } from "../prisma/client.js";
 import { isForbiddenAction } from "../middlewares/security.js";
 import { getHealth } from "./healthService.js";
+import { financialAssistantService } from "./financialAssistantService.js";
 import { homeAssistantService } from "./homeAssistantService.js";
 import { detectIntent } from "./intentDetectorService.js";
 import { findRelevantMemories } from "./memorySearchService.js";
@@ -121,6 +122,11 @@ export const aiOrchestratorService = {
         intent: "home_assistant.conversation",
         data: result
       };
+    }
+
+    if (financialAssistantService.isFinancialCommand(content)) {
+      const financial = await financialAssistantService.process(userId, content);
+      if (financial) return financial;
     }
 
     const memories = await findRelevantMemories(userId, content, 5);

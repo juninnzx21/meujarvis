@@ -123,3 +123,12 @@ A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.t
 - Cada execucao segura cria `RoutineRun`, `SystemLog` e `Notification`.
 - O scheduler bloqueia WhatsApp direto, Home Assistant sensivel, shell, envio em massa e acoes destrutivas.
 - `/api/health/full` inclui status do scheduler para a tela `/status` e scripts operacionais.
+
+## Fase 7 - Financeiro inteligente
+
+- `financeLedgerService`: contas bancarias, categorias, regras, lancamentos, saldos, duplicatas e relatorios.
+- `statementImportService`: upload seguro, armazenamento temporario em `backend/storage/imports`, parser CSV/OFX/TXT e revisao obrigatoria.
+- `financialAssistantService`: fluxo multi-etapa para lancamentos financeiros via chat, com coleta de dados faltantes e confirmacao antes de salvar.
+- Modelos Prisma: `BankAccount`, `FinancialCategory`, `FinancialTransaction`, `StatementImport`, `StatementImportRow`, `FinancialRule` e `AssistantDraftAction`.
+- Frontend: `/finance`, `/finance/accounts`, `/finance/transactions`, `/finance/categories`, `/finance/import`, `/finance/import/:id/review` e `/finance/reports`.
+- Segurança: extratos nao sao versionados, nao sao enviados para IA externa por padrao, logs recebem apenas metadados resumidos/redigidos e nenhuma importacao grava transacoes sem aprovacao.

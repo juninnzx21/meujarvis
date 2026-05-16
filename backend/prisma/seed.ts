@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { defaultFinancialCategories } from "../src/services/financeLedgerService.js";
 
 const prisma = new PrismaClient();
 
@@ -37,6 +38,14 @@ async function ensureRoutine(userId: string, name: string, data: Omit<Prisma.Rou
   const existing = await prisma.routine.findFirst({ where: { userId, name } });
   if (existing) return existing;
   return prisma.routine.create({ data: { userId, name, ...data } });
+}
+
+async function ensureFinancialCategory(userId: string, item: (typeof defaultFinancialCategories)[number]) {
+  return prisma.financialCategory.upsert({
+    where: { userId_name_type: { userId, name: item.name, type: item.type } },
+    update: { keywords: [...item.keywords], isDefault: true },
+    create: { userId, name: item.name, type: item.type, keywords: [...item.keywords], isDefault: true }
+  });
 }
 
 async function main() {
@@ -95,6 +104,23 @@ async function main() {
   await ensureRoutine(admin.id, "Revisão de tarefas pendentes", { description: "Lista pendencias e atrasos.", triggerType: "manual", enabled: true, config: { report: "tasks" } });
   await ensureRoutine(admin.id, "Checagem do sistema", { description: "Consulta status operacional.", triggerType: "manual", enabled: true, config: { report: "system" } });
   await ensureRoutine(admin.id, "Teste de integrações", { description: "Executa verificacoes seguras de integracoes.", triggerType: "manual", enabled: false, config: { report: "integrations" } });
+
+  for (const category of defaultFinancialCategories) {
+    await ensureFinancialCategory(admin.id, category);
+  }
+
+  const interPj = await prisma.bankAccount.findFirst({ where: { userId: admin.id, bankName: "Banco Inter", accountName: "PJ DO INTER" } });
+  if (!interPj) {
+    await prisma.bankAccount.create({
+      data: {
+        userId: admin.id,
+        bankName: "Banco Inter",
+        accountName: "PJ DO INTER",
+        accountType: "business",
+        currentBalance: 0
+      }
+    });
+  }
 
   await prisma.systemLog.createMany({
     data: [

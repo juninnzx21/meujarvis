@@ -26,6 +26,9 @@ let routineId = "";
 let scheduledRoutineId = "";
 let notificationId = "";
 let userId = "";
+let financeAccountId = "";
+let financeCategoryId = "";
+let statementImportId = "";
 const schedulerTaskIds: string[] = [];
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
@@ -50,6 +53,17 @@ describe("JARVIS Home AI API", () => {
     if (notificationId) {
       await prisma.notification.deleteMany({ where: { id: notificationId } });
     }
+    if (statementImportId) {
+      await prisma.statementImport.deleteMany({ where: { id: statementImportId } });
+    }
+    await prisma.financialTransaction.deleteMany({ where: { userId, description: { contains: "Teste automatizado financeiro nativo" } } });
+    if (financeAccountId) {
+      await prisma.bankAccount.deleteMany({ where: { id: financeAccountId } });
+    }
+    if (financeCategoryId) {
+      await prisma.financialCategory.deleteMany({ where: { id: financeCategoryId } });
+    }
+    await prisma.assistantDraftAction.deleteMany({ where: { userId } });
     await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token", "n8n_webhook_url", "n8n_api_key"] } } });
@@ -539,5 +553,87 @@ describe("JARVIS Home AI API", () => {
       expect(existsSync(path), `${script} should exist`).toBe(true);
       expect(readFileSync(path, "utf8")).toContain("E:\\jarvis-home-assistant");
     }
+  });
+
+  it("supports native finance accounts, categories, manual transactions and reports", async () => {
+    const account = await request(app)
+      .post("/api/finance/bank-accounts")
+      .set(auth())
+      .send({ bankName: "Banco Inter", accountName: `Teste automatizado financeiro nativo ${Date.now()}`, accountType: "business", currentBalance: 100 })
+      .expect(201);
+    financeAccountId = account.body.account.id;
+
+    const category = await request(app)
+      .post("/api/finance/categories")
+      .set(auth())
+      .send({ name: `Teste automatizado financeiro nativo categoria ${Date.now()}`, type: "income", keywords: ["cliente teste nativo"] })
+      .expect(201);
+    financeCategoryId = category.body.category.id;
+
+    const income = await request(app)
+      .post("/api/finance/transactions")
+      .set(auth())
+      .send({ bankAccountId: financeAccountId, categoryId: financeCategoryId, type: "income", direction: "in", amount: 120, description: "Teste automatizado financeiro nativo entrada cliente teste nativo", date: new Date().toISOString() })
+      .expect(201);
+    expect(income.body.transaction.status).toBe("confirmed");
+
+    await request(app)
+      .post("/api/finance/transactions")
+      .set(auth())
+      .send({ bankAccountId: financeAccountId, type: "expense", direction: "out", amount: 20, description: "Teste automatizado financeiro nativo saida servidor", date: new Date().toISOString() })
+      .expect(201);
+
+    const updated = await prisma.bankAccount.findUniqueOrThrow({ where: { id: financeAccountId } });
+    expect(Number(updated.currentBalance)).toBe(200);
+
+    const report = await request(app).get("/api/finance/reports/summary").set(auth()).expect(200);
+    expect(Number(report.body.totalBalance)).toBeGreaterThanOrEqual(200);
+  });
+
+  it("handles guided finance assistant drafts and confirmation", async () => {
+    const start = await request(app).post("/api/finance/assistant").set(auth()).send({ content: "adicionar entrada de 55" }).expect(200);
+    expect(start.body.intent).toBe("finance.collect_account");
+
+    const account = await request(app).post("/api/finance/assistant").set(auth()).send({ content: "Inter PJ" }).expect(200);
+    expect(account.body.intent).toMatch(/finance.collect_description|finance.create_account_confirmation/);
+
+    const description = account.body.intent === "finance.create_account_confirmation"
+      ? await request(app).post("/api/finance/assistant").set(auth()).send({ content: "sim" }).expect(200).then(() => request(app).post("/api/finance/assistant").set(auth()).send({ content: "0" }).expect(200)).then(() => request(app).post("/api/finance/assistant").set(auth()).send({ content: "cliente site teste" }).expect(200))
+      : await request(app).post("/api/finance/assistant").set(auth()).send({ content: "cliente site teste" }).expect(200);
+    expect(description.body.intent).toBe("finance.awaiting_confirmation");
+
+    const saved = await request(app).post("/api/finance/assistant").set(auth()).send({ content: "sim" }).expect(200);
+    expect(saved.body.intent).toBe("finance.transaction_saved");
+  });
+
+  it("imports Inter CSV only after review and detects duplicates", async () => {
+    const csv = [
+      "Data;Descricao;Valor;Saldo",
+      `${new Date().toLocaleDateString("pt-BR")};PIX recebido Teste automatizado financeiro nativo cliente;120,00;120,00`,
+      `${new Date().toLocaleDateString("pt-BR")};Pagamento servidor Teste automatizado financeiro nativo;-30,00;90,00`
+    ].join("\n");
+
+    const uploaded = await request(app)
+      .post("/api/finance/imports/upload")
+      .set(auth())
+      .send({ fileName: "extrato-inter-pj.csv", content: csv, bankAccountId: financeAccountId })
+      .expect(201);
+    statementImportId = uploaded.body.import.id;
+    expect(uploaded.body.import.status).toBe("review_required");
+    expect(uploaded.body.import.totalRows).toBe(2);
+
+    await request(app).post(`/api/finance/imports/${statementImportId}/import-approved`).set(auth()).expect(400);
+    const approved = await request(app).post(`/api/finance/imports/${statementImportId}/approve-all`).set(auth()).expect(200);
+    expect(approved.body.count).toBe(2);
+    const imported = await request(app).post(`/api/finance/imports/${statementImportId}/import-approved`).set(auth()).expect(200);
+    expect(imported.body.import.status).toBe("imported");
+
+    const dup = await request(app)
+      .post("/api/finance/imports/upload")
+      .set(auth())
+      .send({ fileName: "extrato-inter-pj.csv", content: csv, bankAccountId: financeAccountId })
+      .expect(201);
+    expect(dup.body.import.duplicateRows).toBeGreaterThanOrEqual(1);
+    await prisma.statementImport.deleteMany({ where: { id: dup.body.import.id } });
   });
 });

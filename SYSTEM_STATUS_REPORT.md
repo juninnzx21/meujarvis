@@ -108,3 +108,27 @@ O sistema local valida, testes passam, banco local esta healthy, producao dedica
 ## Conclusao
 
 Sistema aprovado para uso pessoal assistido e evolucao continua. Para producao comercial, ainda exige hardening, controle de credenciais, monitoramento, CI/CD, e2e e melhorias de isolamento/seguranca.
+# Atualizacao - Fase 7 Financeiro Inteligente
+
+- Data/hora local: 2026-05-16.
+- Diretorio usado: `E:\jarvis-home-assistant`.
+- Modulo financeiro nativo criado com contas bancarias, categorias, lancamentos, importacao de extratos, revisao, relatorios e assistente guiado.
+- Prisma migration criada/aplicada: `20260516090446_phase7_finance`.
+- Seed atualizado com categorias financeiras padrao e conta `PJ DO INTER`.
+- Frontend atualizado com rotas `/finance`, `/finance/accounts`, `/finance/transactions`, `/finance/categories`, `/finance/import`, `/finance/import/:id/review`, `/finance/review` e `/finance/reports`.
+- Segurança: `backend/storage/imports/` ignorado pelo Git, revisao obrigatoria antes da importacao, redaction ampliada para CPF/CNPJ/chaves Pix e sem envio de extrato para IA externa por padrao.
+- Testes executados nesta etapa:
+  - `npx prisma validate`: passou.
+  - `npx prisma migrate dev --name phase7_finance`: passou.
+  - `npx prisma db seed`: passou.
+  - `npm run test` backend: 28 testes passaram.
+  - `npm run test` frontend: 9 testes passaram.
+- Pendencias reais: parser PDF/XLSX confiavel, OCR, regras criadas pela UI ao corrigir categoria e validacao visual manual completa no navegador ainda devem evoluir.
+- Validacao final adicional:
+  - `npm run validate` backend: passou.
+  - `npm run validate` frontend: passou.
+  - `.\validate-jarvis.ps1`: passou.
+  - `.\backup-jarvis.ps1`: passou.
+  - Health local temporario: app ok e database ok.
+  - Browser local: login demo e paginas financeiras principais renderizaram corretamente.
+- Status final da Fase 7: APROVADO.

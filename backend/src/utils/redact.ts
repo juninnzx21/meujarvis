@@ -5,7 +5,11 @@ export function redactSensitive(value: unknown): unknown {
   if (typeof value === "string") {
     return value
       .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [REDACTED]")
-      .replace(/sk-[A-Za-z0-9_-]+/g, "[REDACTED_API_KEY]");
+      .replace(/sk-[A-Za-z0-9_-]+/g, "[REDACTED_API_KEY]")
+      .replace(/AIza[A-Za-z0-9_-]+/g, "[REDACTED_API_KEY]")
+      .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, "[REDACTED_CPF]")
+      .replace(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, "[REDACTED_CNPJ]")
+      .replace(/\b(?:chave\s*)?pix[:\s]+[A-Za-z0-9@._-]+/gi, "pix [REDACTED]");
   }
   if (Array.isArray(value)) return value.map((item) => redactSensitive(item));
   if (typeof value === "object") {

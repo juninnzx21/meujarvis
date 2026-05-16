@@ -29,6 +29,14 @@
 - [x] Backend e Postgres do JARVIS estao presos em `127.0.0.1` na VPS.
 - [x] Docker Compose usa `restart: unless-stopped`.
 - [x] API dedicada `apijarvis.juninnzxtec.com.br` documentada.
+- [x] `backend/storage/imports/` ignorado no Git.
+- [x] Extratos financeiros nao sao salvos em pasta publica.
+- [x] Logs financeiros registram somente metadados resumidos/redigidos.
+- [x] CPF/CNPJ, chaves Pix e credenciais sao redigidos em logs.
+- [x] Categorizacao financeira local por padrao.
+- [x] Importacao de extrato exige revisao antes de gravar transacoes.
+- [x] Duplicidade financeira e verificada antes de gravar.
+- [x] PDF/XLSX sao recusados quando nao houver parser confiavel.
 - [ ] Rotacionar DirectAdmin/hospedagem.
 - [ ] Rotacionar senha root da VPS.
 - [ ] Criar usuario `deploy` com chave SSH.

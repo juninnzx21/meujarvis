@@ -14,6 +14,33 @@ Base full stack para um assistente pessoal inteligente com painel web, chat com 
 - Email: `admin@jarvis.local`
 - Senha: `12345678`
 
+## Fase 7 - Financeiro inteligente
+
+O JARVIS agora possui modulo financeiro nativo para contas bancarias, categorias, lancamentos, importacao de extratos e relatorios.
+
+Rotas do painel:
+
+- `/finance`
+- `/finance/accounts`
+- `/finance/transactions`
+- `/finance/categories`
+- `/finance/import`
+- `/finance/import/:id/review`
+- `/finance/reports`
+
+Comandos uteis no chat:
+
+- `adicionar entrada de 500`
+- `registrar saida de 150 no banco Inter`
+- `quanto entrou esse mes?`
+- `qual meu saldo total?`
+- `tenho lancamentos duplicados?`
+
+Documentacao especifica:
+
+- `FINANCE_MODULE.md`
+- `BANK_INTER_IMPORT.md`
+
 ## Producao
 
 - Frontend publico: `https://jarvis.juninnzxtec.com.br`
