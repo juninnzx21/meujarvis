@@ -7,6 +7,7 @@ import { aiOrchestratorService } from "../../services/aiOrchestratorService.js";
 import { financeIntegrationService } from "../../services/financeIntegrationService.js";
 import { getHealth } from "../../services/healthService.js";
 import { statementImportService } from "../../services/statementImportService.js";
+import { writeSystemLog } from "../../services/systemLogService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { redactSensitive } from "../../utils/redact.js";
@@ -41,6 +42,22 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: 
     ]);
   } finally {
     if (timeout) clearTimeout(timeout);
+  }
+}
+
+async function safeSendWhatsApp(phone: string, content: string, userId?: string) {
+  try {
+    return await whatsappService.send(phone, content, userId);
+  } catch (error) {
+    await writeSystemLog({
+      userId,
+      level: "warning",
+      module: "whatsapp",
+      action: "webhook_reply_failed",
+      message: "Falha ao enviar resposta WhatsApp sem derrubar webhook",
+      metadata: redactSensitive({ error }) as never
+    });
+    return { status: "send_failed", message: "Resposta processada, mas nao consegui enviar pelo WhatsApp agora." };
   }
 }
 
@@ -111,13 +128,13 @@ router.post("/webhook", asyncHandler(async (req, res) => {
         confirmedAccount: false
       });
       statementImportId = statement.id;
-      await whatsappService.send(
+      await safeSendWhatsApp(
         inbound.cleanPhone || inbound.phone,
         `Recebi seu extrato. Detectei ${statement.fileType.toUpperCase()}, ${statement.bankNameDetected ?? "banco em revisao"}, conta ${statement.accountDetected ?? "a confirmar"} e ${statement.totalRows} movimentacoes. Preparei uma previa segura antes de importar: /finance/import/${statement.id}/review`,
         admin.id
       );
     } else if (file.status !== "no_attachment") {
-      await whatsappService.send(inbound.cleanPhone || inbound.phone, file.message ?? "Recebi o arquivo, mas nao consegui ler com seguranca. Envie OFX ou CSV.", admin.id);
+      await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, file.message ?? "Recebi o arquivo, mas nao consegui ler com seguranca. Envie OFX ou CSV.", admin.id);
     }
   }
   if (admin) {
@@ -125,7 +142,7 @@ router.post("/webhook", asyncHandler(async (req, res) => {
     if (config.autoReply && content) {
       const financeReply = await financeIntegrationService.handleWhatsAppText(admin.id, content);
       if (financeReply) {
-        await whatsappService.send(inbound.cleanPhone || inbound.phone, financeReply, admin.id);
+        await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, financeReply, admin.id);
       } else {
         const localReply = await getLocalWhatsAppReply(content);
         const response: { reply: string } = localReply
@@ -135,10 +152,10 @@ router.post("/webhook", asyncHandler(async (req, res) => {
             8000,
             { reply: "Recebi seu comando, mas a IA demorou para responder. Tente de novo em instantes ou use um comando direto como status do sistema." }
           );
-        await whatsappService.send(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
+        await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
       }
     } else if (inbound.hasAudio && !content) {
-      await whatsappService.send(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);
+      await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);
     }
   }
   res.json({ received: true, processedText: Boolean(content), statementImportId: statementImportId || undefined, transcriptionStatus: transcriptionStatus || undefined });
