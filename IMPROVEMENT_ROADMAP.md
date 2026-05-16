@@ -14,6 +14,8 @@ Operacao 2026-05-16 16:29: proximo deploy documentado em `DEPLOY_NEXT_STEPS.md`;
 
 Fase 10 implementa a fundacao 100000/10, mas pgvector real, RAG com embeddings externos, deploy de n8n em subdominio, E2E Playwright completo e credenciais reais seguem como evolucoes com ressalva operacional.
 
+Validação 2026-05-16 19:11: commit `8188a4c` e tag `v1.1.1-personal-memory-base` foram validados localmente. Backend/frontend, Prisma, scripts, n8n local, produção `jarvis`, API oficial `apijarvis`, n8njarvis, PWA/mobile, documentos/RAG preparado, financeiro, WhatsApp mockado e memórias pessoais passaram. Ressalvas restantes: deploy do commit atual na VPS, seed pessoal em produção, health full refletir Settings de integrações, credenciais reais de Evolution/Home Assistant/n8n e E2E Playwright completo.
+
 ## Prioridade critica
 
 1. Rotacionar todos os segredos ja compartilhados fora do repositorio.

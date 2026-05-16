@@ -12,6 +12,23 @@ Commit atual validado: `b09a7d6 test: run full jarvis system validation`
 
 Resultado final: **APROVADO COM RESSALVAS**
 
+## Validação completa 2026-05-16 19:11
+
+Resultado desta rodada: **APROVADO COM RESSALVAS**.
+
+- Commit validado: `8188a4c feat: enrich personal profile memory base`.
+- Tag recente: `v1.1.1-personal-memory-base`.
+- Backend: audit 0 vulnerabilidades, Prisma OK, migrations OK, seed pessoal idempotente, 37 testes passando, validate e build passando.
+- Frontend: audit 0 vulnerabilidades, 12 testes passando, validate e build passando.
+- Produção: `https://jarvis.juninnzxtec.com.br` OK, API oficial `https://apijarvis.juninnzxtec.com.br/api` OK, health público OK, health full OK, `https://n8njarvis.juninnzxtec.com.br` OK.
+- Segurança: `.env`, backups, imports, documents, n8n/data, node_modules e dist ignorados. Nenhum segredo real versionado identificado.
+- WhatsApp/Evolution: testes automatizados do webhook passaram, incluindo wake phrase, fromMe/grupo e anexos. Uso real ainda depende de credenciais/configuração operacional.
+- Financeiro: testes de contas, categorias, assistente, OFX/CSV, revisão obrigatória e importação aprovada passaram.
+- Documentos/RAG: endpoints e frontend existem; busca textual/local preparada; IA externa/pgvector não ativados por padrão.
+- PWA/mobile: manifest, service worker seguro, atalhos e `/mobile-assistant` validados por código/build.
+
+Ressalvas reais: backend/frontend dev locais não estavam ativos, `jarvis/api` não é rota pública da API, health full ainda não reflete Settings de integrações, Home Assistant/Evolution/n8n real exigem credenciais e teste operacional, E2E Playwright completo segue planejado.
+
 API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.
 
 Webhook WhatsApp/Evolution oficial: `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.

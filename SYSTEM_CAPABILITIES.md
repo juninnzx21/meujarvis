@@ -6,6 +6,8 @@ Diretorio: `E:\jarvis-home-assistant`
 
 Status: **APROVADO COM RESSALVAS**
 
+Validação 2026-05-16 19:11: backend/frontend, Prisma, scripts, n8n local, produção `jarvis`, API oficial `apijarvis`, health público/full, PWA/mobile, documentos/RAG preparado, financeiro, WhatsApp mockado e memórias pessoais foram revalidados. Resultado: **APROVADO COM RESSALVAS**.
+
 Atualizacao operacional: API publica oficial `https://apijarvis.juninnzxtec.com.br/api`; frontend publico `https://jarvis.juninnzxtec.com.br`.
 
 WhatsApp/Evolution deve usar `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook` e a frase obrigatoria `ei jarvis`.

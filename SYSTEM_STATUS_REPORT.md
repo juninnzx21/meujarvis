@@ -6,6 +6,19 @@ Diretorio usado: `E:\jarvis-home-assistant`
 
 Status final: **APROVADO COM RESSALVAS**
 
+## Validação completa 2026-05-16 19:11
+
+- Commit validado: `8188a4c feat: enrich personal profile memory base`.
+- Tag recente: `v1.1.1-personal-memory-base`.
+- Backend: `npm install`, `npm audit --omit=dev`, `prisma generate`, `prisma validate`, `prisma migrate status`, `npm run seed:personal`, `npm run test`, `npm run validate` e `npm run build` passaram.
+- Frontend: `npm install`, `npm audit --omit=dev`, `npm run test`, `npm run validate` e `npm run build` passaram.
+- Banco/Prisma: PostgreSQL principal healthy, porta `127.0.0.1:5432`, migrations em sincronia.
+- n8n local: `jarvis-n8n` e `jarvis-n8n-postgres` rodando; `status-n8n.ps1` retornou HTTP 200.
+- Produção: frontend `jarvis` 200, API oficial `apijarvis` 200 JSON em `/health`, `/health/public` e `/health/full`, n8njarvis 200 HTML.
+- Memórias pessoais: seed idempotente `created=0 updated=0 skipped=0 total=47`.
+- Segurança: arquivos sensíveis ignorados; varredura não encontrou segredo real versionado.
+- Ressalvas: backend/frontend dev locais offline no status, `jarvis/api` retorna frontend, `health/full` ainda usa flags env-based para n8n/WhatsApp/Home Assistant, E2E Playwright completo segue planejado.
+
 Atualizacao operacional desta rodada:
 
 - API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.

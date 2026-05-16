@@ -1,5 +1,45 @@
 ﻿# Auditoria Atual do JARVIS Home AI
 
+## Auditoria 2026-05-16 19:11 - Pós Central de Integrações e Memórias
+
+Status final desta rodada: **APROVADO COM RESSALVAS**.
+
+Diretório validado: `E:\jarvis-home-assistant`.
+
+Branch/commit: `main` em `8188a4c feat: enrich personal profile memory base`.
+
+Tag recente confirmada: `v1.1.1-personal-memory-base`.
+
+### Evidências principais
+
+- Git/remoto OK: `https://github.com/juninnzx21/meujarvis.git`.
+- Docker local OK: PostgreSQL principal healthy em `127.0.0.1:5432`, n8n-postgres healthy em `127.0.0.1:15433`, n8n local em `127.0.0.1:15678`.
+- Backend OK: `npm audit --omit=dev`, `prisma generate`, `prisma validate`, `prisma migrate status`, `npm run seed:personal`, `npm run test`, `npm run validate` e `npm run build` passaram.
+- Frontend OK: `npm audit --omit=dev`, `npm run test`, `npm run validate` e `npm run build` passaram.
+- Scripts OK: `status-jarvis.ps1`, `validate-jarvis.ps1`, `backup-jarvis.ps1`, `start-n8n.ps1` e `status-n8n.ps1` executados. Backend/frontend dev locais estavam offline no status, mas builds/testes passaram.
+- Produção OK: `https://jarvis.juninnzxtec.com.br` respondeu HTML do frontend; `https://apijarvis.juninnzxtec.com.br/api/health`, `/health/public` e `/health/full` responderam JSON; `https://n8njarvis.juninnzxtec.com.br` respondeu HTML do n8n.
+- Memórias pessoais OK: seed idempotente com `created=0 updated=0 skipped=0 total=47` após a base já importada.
+- PWA/mobile OK: manifest, shortcuts, `sw.js` e proteção para não cachear `/api`, Authorization ou cookies confirmados.
+- Workflows n8n OK: 10 JSONs presentes. A varredura encontrou apenas termos de evento como `task.created`/`task.overdue`, sem credenciais reais.
+
+### Segurança
+
+Arquivos sensíveis ignorados: `.env`, `backend/.env`, `frontend/.env`, `backups/`, `backend/storage/imports/`, `backend/storage/documents/`, `n8n/data/`, `node_modules` e `frontend/dist`.
+
+Varredura de padrões sensíveis encontrou ocorrências redigidas em `.env` ignorados, exemplos/placeholders, documentação, testes e código de redaction/autenticação. Não foi identificado segredo real versionado nesta rodada.
+
+### Ressalvas reais
+
+- `https://jarvis.juninnzxtec.com.br/api/health` continua retornando HTML do frontend. Não é contrato público; a API oficial é `https://apijarvis.juninnzxtec.com.br/api`.
+- `health/full` público mostra flags env-based de n8n/WhatsApp/Home Assistant como não configuradas, embora a Central de Integrações possa armazenar configurações por usuário em `Setting`. Isso deve ser alinhado futuramente.
+- Backend e frontend dev locais não estavam ativos nas portas `3001` e `5173` durante `status-jarvis.ps1`; não é bloqueante porque validate/build passaram.
+- Integrações reais de Evolution, Home Assistant e alertas n8n ainda dependem de credenciais/configuração externa e teste operacional real.
+- E2E Playwright completo permanece planejado/documentado, não ativo.
+
+### Próximo passo exato
+
+Deployar o commit `8188a4c` na VPS, rodar `npm run seed:personal` no backend de produção, validar login/chat com memórias pessoais e alinhar o health full para refletir o status real da Central de Integrações.
+
 Data/hora: 2026-05-16 16:29:54 -03:00
 
 Diretorio auditado: `E:\jarvis-home-assistant`
