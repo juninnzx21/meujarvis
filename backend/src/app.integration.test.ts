@@ -788,5 +788,26 @@ describe("JARVIS Home AI API", () => {
       .expect(200);
     expect(file.body.ignored).toBe("wake_phrase_required");
     expect(file.body.statementImportId).toBeUndefined();
+
+    const transcribeSpy = vi.spyOn(openAiService, "transcribeAudio");
+    const fileOnly = await request(app)
+      .post("/api/whatsapp/webhook")
+      .send({
+        data: {
+          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          message: {
+            documentMessage: {
+              fileName: "Extrato-17-10-2024-a-16-05-2026-OFX.ofx",
+              mimetype: "application/octet-stream",
+              base64: Buffer.from(generateInterOfx(1), "utf8").toString("base64")
+            }
+          }
+        }
+      })
+      .expect(200);
+    expect(fileOnly.body.ignored).toBe("wake_phrase_required");
+    expect(fileOnly.body.transcriptionStatus).toBeUndefined();
+    expect(transcribeSpy).not.toHaveBeenCalled();
+    transcribeSpy.mockRestore();
   });
 });

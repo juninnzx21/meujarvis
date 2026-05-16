@@ -169,11 +169,13 @@ export const whatsappService = {
     const audio = message?.audioMessage ?? body?.audioMessage ?? body?.audio ?? null;
     const mediaUrl = findFirstString(audio || body, [/^(url|mediaUrl|downloadUrl|fileUrl)$/i]);
     const base64 = findFirstString(audio || body, [/^(base64|media|file|data)$/i]);
-    const mimeType = findFirstString(audio || body, [/mimetype|mimeType/i]) || "audio/ogg";
+    const detectedMimeType = findFirstString(audio || body, [/mimetype|mimeType/i]);
+    const mimeType = detectedMimeType || (audio ? "audio/ogg" : "");
     const fromJarvis = Boolean(body?.jarvisAutoReply || body?.data?.key?.fromMe || body?.key?.fromMe);
     const isGroup = phone.includes("@g.us");
     const attachment = detectAttachment(message, body);
-    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio: Boolean(audio || mimeType.startsWith("audio/")), attachment };
+    const hasAudio = Boolean(audio || (mimeType && mimeType.startsWith("audio/") && !attachment.hasAttachment));
+    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio, attachment };
   },
   hasWakePhrase(text: string) {
     return normalizeWakeText(text).includes("ei jarvis");

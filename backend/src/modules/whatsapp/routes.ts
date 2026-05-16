@@ -40,7 +40,7 @@ router.post("/webhook", asyncHandler(async (req, res) => {
   let statementImportId = "";
   let wakePhraseDetected = whatsappService.hasWakePhrase(content);
 
-  if (!content && inbound.hasAudio && admin) {
+  if (!content && inbound.hasAudio && !inbound.attachment.hasAttachment && admin) {
     const transcription = await whatsappService.transcribeInboundAudio(req.body, admin.id);
     content = transcription.text;
     transcriptionStatus = transcription.status;
