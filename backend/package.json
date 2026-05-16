@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "seed:personal": "tsx prisma/seed-personal-profile.ts",
+    "create:admin": "tsx scripts/create-admin.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "typecheck:seed": "tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --esModuleInterop prisma/seed.ts prisma/seed-personal-profile.ts",

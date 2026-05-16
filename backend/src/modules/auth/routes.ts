@@ -28,6 +28,11 @@ router.post("/register", validate(registerSchema), asyncHandler(async (req, res)
 
 router.post("/login", validate(credentialsSchema), asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const isDemo = email.toLowerCase() === "admin@jarvis.local";
+  if (isDemo && !env.ALLOW_DEMO_LOGIN) {
+    await writeSystemLog({ level: "security", module: "auth", action: "demo_login_blocked", message: "Login demo bloqueado por configuracao de producao", metadata: { email } });
+    return res.status(403).json({ message: "Login demo desativado neste ambiente." });
+  }
   const user = await prisma.user.findUnique({ where: { email } });
   const ok = user ? await bcrypt.compare(password, user.passwordHash) : false;
   if (!user || !ok) {

@@ -132,3 +132,36 @@ Sistema aprovado para uso pessoal assistido e evolucao continua. Para producao c
   - Health local temporario: app ok e database ok.
   - Browser local: login demo e paginas financeiras principais renderizaram corretamente.
 - Status final da Fase 7: APROVADO.
+
+# Atualizacao - Hardening de producao Fase 7
+
+- Data/hora local: 2026-05-16.
+- Diretorio usado: `E:\jarvis-home-assistant`.
+- API oficial definida: `https://apijarvis.juninnzxtec.com.br/api`.
+- Producao validada com requests seguros:
+  - `https://jarvis.juninnzxtec.com.br`: HTTP 200.
+  - `https://apijarvis.juninnzxtec.com.br/api/health`: app/database ok.
+  - `https://apijarvis.juninnzxtec.com.br/api/health/full`: respondeu sem expor segredos.
+- Decisao: `/api/*` no dominio `jarvis` nao e contrato publico; usar `apijarvis`.
+- Implementado:
+  - Criptografia AES-256-GCM para segredos em `Setting`.
+  - Compatibilidade com valores antigos plaintext.
+  - Redacao de segredos em `/api/settings`.
+  - `ALLOW_DEMO_LOGIN=false` para bloquear demo em producao.
+  - Script `npm run create:admin`.
+  - Endpoint `/api/health/public`.
+  - Scheduler com tratamento por etapa e `errorCountRecent`.
+- Pendencias manuais:
+  - Deploy da alteracao em producao.
+  - Gerar `SETTINGS_ENCRYPTION_KEY` dedicado no `.env` remoto.
+  - Configurar `ALLOW_DEMO_LOGIN=false` no `.env` remoto.
+  - Rotacionar segredos compartilhados.
+  - Criar usuario SSH `deploy` e hardening de firewall.
+- Validacao local final:
+  - Backend `npm run test`: 29 testes passaram.
+  - Backend `npm run validate`: passou.
+  - Frontend `npm run test`: 9 testes passaram.
+  - Frontend `npm run validate`: passou.
+  - `.\validate-jarvis.ps1`: passou.
+  - `GET /api/health/public` local temporario: ok.
+- Status: APROVADO COM RESSALVAS por depender de deploy/acoes manuais na VPS.

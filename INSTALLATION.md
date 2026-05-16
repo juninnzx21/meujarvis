@@ -128,3 +128,25 @@ powershell -ExecutionPolicy Bypass -File .\stop-jarvis.ps1
 powershell -ExecutionPolicy Bypass -File .\backup-jarvis.ps1
 powershell -ExecutionPolicy Bypass -File .\validate-jarvis.ps1
 ```
+
+## Variaveis de hardening em producao
+
+No `.env` remoto, configure sem versionar:
+
+```text
+SETTINGS_ENCRYPTION_KEY=valor-forte-gerado-fora-do-repositorio
+ALLOW_DEMO_LOGIN=false
+```
+
+No build publico do frontend, use:
+
+```text
+VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api
+```
+
+Para criar um administrador real:
+
+```powershell
+Set-Location E:\jarvis-home-assistant\backend
+npm run create:admin
+```

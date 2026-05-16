@@ -36,6 +36,8 @@ const envSchema = z.object({
   HOME_ASSISTANT_URL: optionalTrimmedString,
   HOME_ASSISTANT_TOKEN: optionalTrimmedString,
   LOG_LEVEL: trimmedString.default("info"),
+  SETTINGS_ENCRYPTION_KEY: optionalTrimmedString,
+  ALLOW_DEMO_LOGIN: booleanFromEnv.default(process.env.NODE_ENV === "production" ? false : true),
   SCHEDULER_ENABLED: booleanFromEnv.default(true),
   SCHEDULER_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60)
 });

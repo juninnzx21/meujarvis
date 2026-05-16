@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
 import { writeSystemLog } from "./systemLogService.js";
 import { redactSensitive } from "../utils/redact.js";
+import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
 
 const keys = {
   webhookUrl: "n8n_webhook_url",
@@ -20,12 +21,6 @@ function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function maskSecret(value: string) {
-  if (!value) return "";
-  if (value.length <= 8) return "********";
-  return `${value.slice(0, 4)}...${value.slice(-4)}`;
-}
-
 export const n8nService = {
   configured: Boolean(env.N8N_WEBHOOK_URL),
   async runtimeConfig(userId?: string): Promise<N8nRuntimeConfig> {
@@ -34,8 +29,8 @@ export const n8nService = {
         where: { userId, key: { in: Object.values(keys) } }
       });
       const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-      const webhookUrl = asString(settings[keys.webhookUrl]);
-      const apiKey = asString(settings[keys.apiKey]);
+      const webhookUrl = asString(decryptSettingValue(keys.webhookUrl, settings[keys.webhookUrl]));
+      const apiKey = asString(decryptSettingValue(keys.apiKey, settings[keys.apiKey]));
       if (webhookUrl || apiKey) return { webhookUrl, apiKey, source: "settings" };
     }
     return { webhookUrl: env.N8N_WEBHOOK_URL, apiKey: env.N8N_API_KEY, source: "env" };
@@ -67,7 +62,7 @@ export const n8nService = {
     const apiKey = input.apiKey?.trim() ? input.apiKey.trim() : current.apiKey;
     const entries: Array<[string, Prisma.InputJsonValue]> = [
       [keys.webhookUrl, input.webhookUrl.trim()],
-      [keys.apiKey, apiKey]
+      [keys.apiKey, encryptSettingValue(keys.apiKey, apiKey) as Prisma.InputJsonValue]
     ];
     await Promise.all(entries.map(([key, value]) => prisma.setting.upsert({
       where: { userId_key: { userId, key } },

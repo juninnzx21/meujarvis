@@ -24,6 +24,7 @@ Checklist:
 - [ ] Desabilitar `PasswordAuthentication` somente depois de confirmar acesso por chave.
 - [ ] PostgreSQL: trocar usuario/senha padrao e atualizar `.env` remoto.
 - [ ] `JWT_SECRET`: gerar novo valor forte e atualizar `.env` remoto.
+- [ ] `SETTINGS_ENCRYPTION_KEY`: gerar valor forte dedicado e atualizar `.env` remoto.
 - [ ] OpenAI: rotacionar chave no provedor e atualizar `.env`.
 - [ ] Gemini: rotacionar chave no provedor e atualizar `.env`.
 - [ ] n8n: rotacionar webhook/API key quando configurado.
@@ -75,6 +76,33 @@ systemctl reload ssh
 ```
 
 Mantenha uma sessao root aberta enquanto testa o novo login.
+
+## Login demo em producao
+
+Configurar no `.env` remoto:
+
+```text
+ALLOW_DEMO_LOGIN=false
+```
+
+Criar administrador real:
+
+```bash
+cd /opt/jarvis-home-assistant/backend
+npm run create:admin
+```
+
+Nao registrar senha em arquivo, commit, print ou documentacao.
+
+## Criptografia de Settings
+
+Configurar no `.env` remoto:
+
+```text
+SETTINGS_ENCRYPTION_KEY=valor-forte-gerado-fora-do-repositorio
+```
+
+Tokens salvos por usuario em `Setting` passam a ser criptografados no backend com AES-256-GCM. Valores antigos em texto puro continuam legiveis e sao criptografados ao salvar novamente.
 
 ## Firewall
 

@@ -8,7 +8,7 @@
 
 `https://jarvis.juninnzxtec.com.br`
 
-API dedicada:
+API publica oficial:
 
 `https://apijarvis.juninnzxtec.com.br/api`
 
@@ -64,6 +64,9 @@ O dominio `jarvis.juninnzxtec.com.br` nao usa mais Caddy como rota publica ofici
 ## Observacoes
 
 - Credenciais reais ficam somente em `.env` remoto/local e nao foram versionadas.
+- `https://jarvis.juninnzxtec.com.br/api/*` entrega o frontend estatico na Fabweb e nao e a API oficial.
+- A API oficial e `https://apijarvis.juninnzxtec.com.br/api`.
+- Hardening Fase 7 adiciona `SETTINGS_ENCRYPTION_KEY`, `ALLOW_DEMO_LOGIN=false` e endpoint `/api/health/public`; aplicar em producao no proximo deploy.
 - O GitHub nao recebeu `.env`, backups, `node_modules`, `dist` ou dumps.
 - O resolvedor local pode manter cache antigo de DNS por ate o TTL da zona.
 - Resultado esperado de DNS: `jarvis -> 166.0.186.20` e `apijarvis -> 45.76.251.177`.

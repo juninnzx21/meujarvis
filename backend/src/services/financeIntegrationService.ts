@@ -2,6 +2,7 @@ import axios from "axios";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../prisma/client.js";
 import { writeSystemLog } from "./systemLogService.js";
+import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
 
 const keys = {
   apiUrl: "finance_api_url",
@@ -31,12 +32,6 @@ export type ParsedFinancialTransaction = {
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function maskSecret(value: string) {
-  if (!value) return "";
-  if (value.length <= 10) return "********";
-  return `${value.slice(0, 5)}...${value.slice(-5)}`;
 }
 
 function normalizeApiUrl(value: string) {
@@ -111,7 +106,7 @@ export const financeIntegrationService = {
     const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
     return {
       apiUrl: normalizeApiUrl(asString(settings[keys.apiUrl])),
-      token: asString(settings[keys.token]),
+      token: asString(decryptSettingValue(keys.token, settings[keys.token])),
       userEmail: asString(settings[keys.userEmail]),
       defaultAccountName: asString(settings[keys.defaultAccountName]) || "PJ DO INTER",
       defaultAccountId: asString(settings[keys.defaultAccountId])
@@ -142,7 +137,7 @@ export const financeIntegrationService = {
     const defaultAccountId = input.defaultAccountId?.trim() || current.defaultAccountId;
     const entries: Array<[string, Prisma.InputJsonValue]> = [
       [keys.apiUrl, normalizeApiUrl(input.apiUrl)],
-      [keys.token, token],
+      [keys.token, encryptSettingValue(keys.token, token) as Prisma.InputJsonValue],
       [keys.userEmail, userEmail],
       [keys.defaultAccountName, defaultAccountName],
       [keys.defaultAccountId, defaultAccountId]

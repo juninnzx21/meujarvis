@@ -127,3 +127,23 @@ Fase 9:
 Fase 10:
 
 - Multi-tenant, CI/CD, RBAC, auditoria comercial e observabilidade avancada.
+# Roadmap atualizado apos hardening Fase 7
+
+## Critico
+
+- Rotacionar todos os segredos compartilhados.
+- Definir `SETTINGS_ENCRYPTION_KEY` dedicado em producao.
+- Manter `ALLOW_DEMO_LOGIN=false` em producao.
+- Criar usuario `deploy` com chave SSH e desabilitar root por senha apos validar acesso.
+
+## Importante
+
+- Conectar monitor externo nas URLs de health.
+- Implementar backup offsite criptografado.
+- Criar testes E2E Playwright em ambiente isolado.
+
+## Futuro
+
+- Parser financeiro PDF/XLSX confiavel.
+- Alertas reais por n8n/WhatsApp/Telegram.
+- Rotacao automatizada de tokens por integracao.

@@ -82,6 +82,15 @@ describe("JARVIS Home AI API", () => {
     expect(me.body.user.email).toBe(credentials.email);
   });
 
+  it("can block demo login when production flag disables it", async () => {
+    const previous = env.ALLOW_DEMO_LOGIN;
+    env.ALLOW_DEMO_LOGIN = false;
+    await request(app).post("/api/auth/login").send(credentials).expect(403).expect((res) => {
+      expect(res.body.message).toContain("demo");
+    });
+    env.ALLOW_DEMO_LOGIN = previous;
+  });
+
   it("reports health and safe integration fallback status", async () => {
     const health = await request(app).get("/api/health").expect(200);
     expect(health.body.app).toBe("ok");
@@ -291,6 +300,9 @@ describe("JARVIS Home AI API", () => {
       .expect(200);
     expect(saved.body.status).toBe("configured");
     expect(JSON.stringify(saved.body)).not.toContain("secret-n8n-token");
+    const stored = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "n8n_api_key" } } });
+    expect(String(stored.value)).toMatch(/^enc:v1:/);
+    expect(String(stored.value)).not.toContain("secret-n8n-token");
 
     vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, token: "secret-token" } });
 
@@ -299,6 +311,8 @@ describe("JARVIS Home AI API", () => {
 
     const logs = await request(app).get("/api/logs?module=n8n").set(auth()).expect(200);
     expect(JSON.stringify(logs.body)).not.toContain("secret-token");
+    const settings = await request(app).get("/api/settings").set(auth()).expect(200);
+    expect(JSON.stringify(settings.body)).not.toContain("secret-n8n-token");
 
     const cleared = await request(app).delete("/api/n8n/config").set(auth()).expect(200);
     expect(cleared.body.status).toBe("not_configured");

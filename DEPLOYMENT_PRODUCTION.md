@@ -3,7 +3,7 @@
 ## Dominio
 
 - Aplicacao: `https://jarvis.juninnzxtec.com.br`
-- API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
+- API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`
 - DNS: A record `jarvis` apontando para a Fabweb (`166.0.186.20`).
   A record `apijarvis` apontando para a VPS (`45.76.251.177`).
 
@@ -28,6 +28,8 @@ O arquivo `.env` fica somente na VPS e nunca deve ser commitado.
 - `GEMINI_API_KEY`
 - `SCHEDULER_ENABLED`
 - `SCHEDULER_INTERVAL_SECONDS`
+- `SETTINGS_ENCRYPTION_KEY`
+- `ALLOW_DEMO_LOGIN=false`
 - `BACKEND_HOST_PORT`
 - `POSTGRES_HOST_PORT`
 
@@ -50,8 +52,22 @@ docker compose exec backend npx prisma db seed
 ```bash
 curl -I https://jarvis.juninnzxtec.com.br
 curl https://apijarvis.juninnzxtec.com.br/api/health
+curl https://apijarvis.juninnzxtec.com.br/api/health/public
 curl https://apijarvis.juninnzxtec.com.br/api/health/full
 ```
+
+Observacao operacional: `https://jarvis.juninnzxtec.com.br/api/*` nao e a rota oficial da API. O frontend publico deve ser buildado com `VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api`.
+
+## Admin real de producao
+
+Em producao, mantenha `ALLOW_DEMO_LOGIN=false`. Para criar ou atualizar um administrador real:
+
+```bash
+cd /opt/jarvis-home-assistant/backend
+npm run create:admin
+```
+
+Nao salve a senha em arquivo. Use esse comando apenas em sessao segura e depois limpe o historico se necessario.
 
 ## Publicacao do frontend na Fabweb
 

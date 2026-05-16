@@ -132,3 +132,12 @@ A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.t
 - Modelos Prisma: `BankAccount`, `FinancialCategory`, `FinancialTransaction`, `StatementImport`, `StatementImportRow`, `FinancialRule` e `AssistantDraftAction`.
 - Frontend: `/finance`, `/finance/accounts`, `/finance/transactions`, `/finance/categories`, `/finance/import`, `/finance/import/:id/review` e `/finance/reports`.
 - Segurança: extratos nao sao versionados, nao sao enviados para IA externa por padrao, logs recebem apenas metadados resumidos/redigidos e nenhuma importacao grava transacoes sem aprovacao.
+
+## Hardening Fase 7
+
+- `encryptionService`: criptografia AES-256-GCM para segredos salvos em `Setting`.
+- Compatibilidade com legado: valores antigos em texto puro sao descriptografados como texto normal e passam a ser criptografados no proximo save.
+- `ALLOW_DEMO_LOGIN=false`: bloqueia o usuario demo `admin@jarvis.local` em producao.
+- `create:admin`: script operacional para criar/atualizar admin real sem registrar senha.
+- `GET /api/health/public`: endpoint minimo para monitor externo sem detalhes sensiveis.
+- API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.

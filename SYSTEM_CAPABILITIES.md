@@ -140,3 +140,11 @@ cd E:\jarvis-home-assistant
 docker compose ps
 docker compose up -d
 ```
+# Atualizacao hardening Fase 7
+
+- API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.
+- Frontend publico: `https://jarvis.juninnzxtec.com.br`.
+- Health publico minimo: `/api/health/public`.
+- Tokens de integracoes salvos por usuario em `Setting` sao criptografados no backend.
+- Login demo pode ser bloqueado em producao por `ALLOW_DEMO_LOGIN=false`.
+- Admin real pode ser criado por `npm run create:admin`.

@@ -37,8 +37,15 @@
 - [x] Importacao de extrato exige revisao antes de gravar transacoes.
 - [x] Duplicidade financeira e verificada antes de gravar.
 - [x] PDF/XLSX sao recusados quando nao houver parser confiavel.
+- [x] Tokens sensiveis salvos em `Setting` sao criptografados com AES-256-GCM.
+- [x] Valores antigos plaintext em `Setting` continuam compativeis e sao criptografados ao salvar novamente.
+- [x] `/api/settings` nao retorna segredo bruto.
+- [x] Login demo e bloqueavel por `ALLOW_DEMO_LOGIN=false`.
+- [x] Endpoint publico minimo `/api/health/public` criado para monitoramento.
+- [x] `apijarvis.juninnzxtec.com.br/api` oficializado como API publica.
 - [ ] Rotacionar DirectAdmin/hospedagem.
 - [ ] Rotacionar senha root da VPS.
+- [ ] Rotacionar todos os segredos compartilhados e gerar `SETTINGS_ENCRYPTION_KEY` dedicado na producao.
 - [ ] Criar usuario `deploy` com chave SSH.
 - [ ] Desabilitar login root por senha depois de validar chave.
 - [ ] Revisar portas UFW extras antes de remover.

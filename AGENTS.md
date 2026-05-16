@@ -19,3 +19,6 @@
 - Nao envie extratos financeiros para IA externa sem consentimento explicito.
 - Mantenha `backend/storage/imports/`, backups e dumps fora do Git.
 - Logs financeiros devem conter apenas metadados resumidos e redigidos.
+- Segredos salvos em `Setting` devem usar `encryptSettingValue`/`decryptSettingValue`; nunca retornar valor real em rotas.
+- Em producao, `ALLOW_DEMO_LOGIN=false` deve bloquear `admin@jarvis.local`.
+- A API publica oficial e `https://apijarvis.juninnzxtec.com.br/api`; nao trate `/api` no dominio `jarvis` como contrato publico.

@@ -41,6 +41,35 @@ Documentacao especifica:
 - `FINANCE_MODULE.md`
 - `BANK_INTER_IMPORT.md`
 
+## Produção e API pública
+
+- Frontend: `https://jarvis.juninnzxtec.com.br`
+- API pública oficial: `https://apijarvis.juninnzxtec.com.br/api`
+- Health público: `https://apijarvis.juninnzxtec.com.br/api/health/public`
+
+O domínio principal `jarvis.juninnzxtec.com.br` serve o frontend estático na Fabweb. Rotas `/api/*` públicas devem usar `apijarvis`.
+
+## Hardening de produção
+
+Variáveis importantes:
+
+- `SETTINGS_ENCRYPTION_KEY`: chave dedicada para criptografar tokens salvos em `Setting`.
+- `ALLOW_DEMO_LOGIN=false`: bloqueia `admin@jarvis.local` em produção.
+
+Criar admin real:
+
+```bash
+cd backend
+npm run create:admin
+```
+
+Guias:
+
+- `PRODUCTION_SECURITY_HARDENING.md`
+- `MONITORING_SETUP.md`
+- `OFFSITE_BACKUP_PLAN.md`
+- `E2E_TEST_PLAN.md`
+
 ## Producao
 
 - Frontend publico: `https://jarvis.juninnzxtec.com.br`

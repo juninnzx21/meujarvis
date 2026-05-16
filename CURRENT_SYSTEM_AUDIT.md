@@ -300,3 +300,13 @@ Baixos:
 **APROVADO COM RESSALVAS**.
 
 O sistema esta usavel para rotina pessoal e evolucao real. Para producao comercial, precisa hardening adicional, rotacao de segredos, criptografia de tokens, roteamento unificado da API, e2e real, monitoramento externo, backup offsite e politicas de usuario/tenant.
+# Atualizacao de auditoria - hardening Fase 7
+
+- Diretorio: `E:\jarvis-home-assistant`.
+- Branch: `main`.
+- API publica oficial validada: `https://apijarvis.juninnzxtec.com.br/api`.
+- `https://jarvis.juninnzxtec.com.br/api/health` retorna HTML do frontend; decisao operacional documentada: usar `apijarvis` para API.
+- `https://apijarvis.juninnzxtec.com.br/api/health` respondeu `app=ok` e `database=ok`.
+- `https://apijarvis.juninnzxtec.com.br/api/health/full` respondeu com scheduler ativo e integracoes externas sem quebrar.
+- Riscos corrigidos no codigo local: criptografia de segredos em `Setting`, bloqueio configuravel de login demo e endpoint publico minimo de health.
+- Pendencia manual: aplicar deploy em producao, configurar `SETTINGS_ENCRYPTION_KEY`, `ALLOW_DEMO_LOGIN=false` e rotacionar segredos compartilhados.

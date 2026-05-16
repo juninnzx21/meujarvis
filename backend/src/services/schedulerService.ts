@@ -19,6 +19,7 @@ class SchedulerService {
   private running = false;
   private lastRunAt: Date | null = null;
   private lastError: string | null = null;
+  private recentErrors: Array<{ at: Date; stage: string; message: string }> = [];
 
   get enabled() {
     return env.SCHEDULER_ENABLED;
@@ -30,7 +31,8 @@ class SchedulerService {
       running: this.timer !== null,
       intervalSeconds: env.SCHEDULER_INTERVAL_SECONDS,
       lastRunAt: this.lastRunAt?.toISOString() ?? null,
-      lastError: this.lastError
+      lastError: this.lastError,
+      errorCountRecent: this.errorCountRecent()
     };
   }
 
@@ -60,18 +62,17 @@ class SchedulerService {
     this.running = true;
     this.lastRunAt = now;
     try {
-      const [routines, reminders, overdue] = await Promise.all([
-        this.runScheduledRoutines(now),
-        this.processTaskReminders(now),
-        this.processOverdueTasks(now)
-      ]);
+      const errorsBefore = this.errorCountRecent();
+      const routines = await this.runStage("routines", () => this.runScheduledRoutines(now));
+      const reminders = await this.runStage("reminders", () => this.processTaskReminders(now));
+      const overdue = await this.runStage("overdue", () => this.processOverdueTasks(now));
       await writeSystemLog({
         module: "scheduler",
         action: "tick",
         message: "Scheduler executado",
         metadata: { routines, reminders, overdue }
       });
-      this.lastError = null;
+      if (this.errorCountRecent() === errorsBefore) this.lastError = null;
       return { skipped: false, routines, reminders, overdue };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
@@ -86,6 +87,30 @@ class SchedulerService {
       return { skipped: false, error: this.lastError };
     } finally {
       this.running = false;
+    }
+  }
+
+  private errorCountRecent() {
+    const cutoff = Date.now() - 60 * 60 * 1000;
+    this.recentErrors = this.recentErrors.filter((item) => item.at.getTime() >= cutoff);
+    return this.recentErrors.length;
+  }
+
+  private async runStage(stage: string, callback: () => Promise<number>) {
+    try {
+      return await callback();
+    } catch (error) {
+      const message = String(redactSensitive(error instanceof Error ? error.message : "Erro desconhecido"));
+      this.lastError = `${stage}: ${message}`;
+      this.recentErrors.push({ at: new Date(), stage, message });
+      await writeSystemLog({
+        level: "error",
+        module: "scheduler",
+        action: `${stage}_error`,
+        message: "Erro em etapa do scheduler",
+        metadata: { stage, error: message }
+      });
+      return 0;
     }
   }
 

@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
 import { openAiService } from "./openAiService.js";
 import { writeSystemLog } from "./systemLogService.js";
+import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
 
 const keys = {
   apiUrl: "whatsapp_evolution_api_url",
@@ -26,12 +27,6 @@ function asString(value: unknown) {
 
 function asBoolean(value: unknown) {
   return typeof value === "boolean" ? value : value === "true";
-}
-
-function maskSecret(value: string) {
-  if (!value) return "";
-  if (value.length <= 8) return "********";
-  return `${value.slice(0, 4)}...${value.slice(-4)}`;
 }
 
 function findFirstString(value: unknown, keysToMatch: RegExp[]): string {
@@ -62,8 +57,8 @@ export const whatsappService = {
         where: { userId, key: { in: Object.values(keys) } }
       });
       const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-      const apiUrl = asString(settings[keys.apiUrl]);
-      const apiKey = asString(settings[keys.apiKey]);
+      const apiUrl = asString(decryptSettingValue(keys.apiUrl, settings[keys.apiUrl]));
+      const apiKey = asString(decryptSettingValue(keys.apiKey, settings[keys.apiKey]));
       const instance = asString(settings[keys.instance]);
       if (apiUrl || apiKey || instance) {
         return {
@@ -111,7 +106,7 @@ export const whatsappService = {
       [keys.apiUrl, input.apiUrl.trim()],
       [keys.instance, input.instance.trim()],
       [keys.autoReply, input.autoReply],
-      [keys.apiKey, apiKey]
+      [keys.apiKey, encryptSettingValue(keys.apiKey, apiKey) as Prisma.InputJsonValue]
     ];
     await Promise.all(entries.map(([key, value]) => prisma.setting.upsert({
       where: { userId_key: { userId, key } },

@@ -114,3 +114,43 @@ Fase 7: hardening real de producao com rotacao de segredos, correcao de roteamen
 ## Resultado
 
 Status final da Fase 7: APROVADO.
+
+# Hardening de producao - Fase 7
+
+## Validacoes seguras de producao
+
+- `https://jarvis.juninnzxtec.com.br`: HTTP 200.
+- `https://jarvis.juninnzxtec.com.br/api/health`: retorna HTML do frontend; documentado como decisao operacional.
+- `https://apijarvis.juninnzxtec.com.br/api/health`: `app=ok`, `database=ok`.
+- `https://apijarvis.juninnzxtec.com.br/api/health/full`: respondeu com scheduler ativo e sem expor segredos.
+
+## Correcoes implementadas
+
+- Criptografia AES-256-GCM para tokens/API keys salvos em `Setting`.
+- Compatibilidade de leitura com valores antigos em plaintext.
+- `/api/settings` redige valores sensiveis.
+- `ALLOW_DEMO_LOGIN=false` bloqueia `admin@jarvis.local`.
+- `npm run create:admin` cria admin real com senha hash bcrypt.
+- Scheduler registra erro por etapa e expoe `errorCountRecent`.
+- Criado `/api/health/public`.
+
+## Resultado
+
+Status: APROVADO COM RESSALVAS.
+
+Ressalvas: hardening SSH/firewall, rotacao de segredos, configuracao de `SETTINGS_ENCRYPTION_KEY` remoto, bloqueio demo em producao e backup offsite dependem de acao manual/deploy na VPS.
+
+## Comandos finais executados
+
+- `npm install` backend/frontend: passou.
+- `npm audit --omit=dev` backend/frontend: passou, 0 vulnerabilidades.
+- `npx prisma generate`: passou.
+- `npx prisma validate`: passou.
+- `npx prisma migrate status`: banco em dia.
+- `npm run test` backend: 29 testes passaram.
+- `npm run validate` backend: passou.
+- `npm run test` frontend: 9 testes passaram.
+- `npm run validate` frontend: passou.
+- `.\status-jarvis.ps1`: PostgreSQL healthy; backend/frontend locais estavam parados antes do teste temporario.
+- `.\validate-jarvis.ps1`: passou.
+- `GET http://localhost:3001/api/health/public` com backend temporario: `app=ok`, `database=ok`, `scheduler=ok`.
