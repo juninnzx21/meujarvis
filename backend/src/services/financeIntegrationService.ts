@@ -86,7 +86,7 @@ function cleanDescription(text: string) {
 }
 
 function looksFinancial(text: string) {
-  return /(pix|comprovante|nota fiscal|nf-e|nfe|boleto|entrada|saida|saída|recebi|paguei|valor|despesa|receita|extrato|resumo financeiro|saldo do mês|saldo do mes)/i.test(text);
+  return /(pix|comprovante|nota fiscal|nf-e|nfe|boleto|entrada|saida|saída|recebi|paguei|valor|despesa|receita|extrato|resumo financeiro|saldo|saldo do mês|saldo do mes|atualizar saldo|atualiza saldo)/i.test(text);
 }
 
 function extractItems(payload: unknown): Array<Record<string, unknown>> {
@@ -96,6 +96,13 @@ function extractItems(payload: unknown): Array<Record<string, unknown>> {
     if (Array.isArray(candidate)) return candidate as Array<Record<string, unknown>>;
   }
   return [];
+}
+
+function isInvalidFinancialAccountError(error: unknown) {
+  if (!axios.isAxiosError(error)) return false;
+  const data = error.response?.data as any;
+  const message = JSON.stringify(data || "").toLowerCase();
+  return error.response?.status === 422 && message.includes("financial_account_id");
 }
 
 export const financeIntegrationService = {
@@ -219,13 +226,25 @@ export const financeIntegrationService = {
   async resolveDefaultAccountId(userId: string, input?: Record<string, unknown>) {
     if (typeof input?.financial_account_id === "string" && input.financial_account_id.trim()) return input.financial_account_id.trim();
     const config = await this.runtimeConfig(userId);
-    if (config.defaultAccountId) return config.defaultAccountId;
     if (!config.defaultAccountName || !this.isConfigured(config)) return undefined;
     try {
       const accounts = await this.listAccounts(userId);
       if (accounts.status !== "success") return undefined;
       const target = normalizeSearch(config.defaultAccountName);
-      const found = extractItems(accounts.data).find((account) => {
+      const items = extractItems(accounts.data);
+      if (config.defaultAccountId && items.some((account) => String(account.id ?? "") === config.defaultAccountId)) return config.defaultAccountId;
+      if (config.defaultAccountId) {
+        await prisma.setting.deleteMany({ where: { userId, key: keys.defaultAccountId } });
+        await writeSystemLog({
+          userId,
+          level: "warning",
+          module: "finance",
+          action: "default_account_invalid",
+          message: "Conta padrao financeira salva ficou invalida e foi limpa",
+          metadata: { defaultAccountName: config.defaultAccountName }
+        });
+      }
+      const found = items.find((account) => {
         const name = normalizeSearch(String(account.name ?? account.title ?? account.description ?? ""));
         return name === target || name.includes(target) || target.includes(name);
       });
@@ -288,7 +307,22 @@ export const financeIntegrationService = {
       financial_account_id: accountId,
       notes: input.notes
     };
-    const result = await this.request(userId, "post", "/api/v1/transactions", payload);
+    let result;
+    try {
+      result = await this.request(userId, "post", "/api/v1/transactions", payload);
+    } catch (error) {
+      if (!isInvalidFinancialAccountError(error)) throw error;
+      await prisma.setting.deleteMany({ where: { userId, key: keys.defaultAccountId } });
+      await writeSystemLog({
+        userId,
+        level: "warning",
+        module: "finance",
+        action: "transaction_retry_without_account",
+        message: "Conta financeira invalida; transacao sera reenviada sem conta vinculada",
+        metadata: { type: String(payload.type), amount: Number(payload.amount) }
+      });
+      result = await this.request(userId, "post", "/api/v1/transactions", { ...payload, financial_account_id: undefined });
+    }
     if (result.status === "success") {
       await writeSystemLog({
         userId,
@@ -301,7 +335,7 @@ export const financeIntegrationService = {
     return result;
   },
   async handleWhatsAppText(userId: string, text: string) {
-    if (/resumo|extrato|saldo do mes|saldo do mês|financeiro do mes|financeiro do mês/i.test(text)) {
+    if (/resumo|extrato|saldo|atualizar saldo|atualiza saldo|financeiro do mes|financeiro do mês/i.test(text)) {
       const summary = await this.monthlySummary(userId);
       if (summary.status !== "success") return "Controle financeiro ainda nao esta configurado ou nao respondeu.";
       const data = (summary.data as any)?.data ?? summary.data;
@@ -313,6 +347,7 @@ export const financeIntegrationService = {
     const result = await this.createTransaction(userId, parsed);
     if (result.status !== "success") return "Entendi o lancamento financeiro, mas o controle financeiro nao esta configurado ou recusou a operacao.";
     const config = await this.runtimeConfig(userId);
-    return `${parsed.type === "income" ? "Entrada" : "Saida"} registrada no controle financeiro: ${parsed.description}, R$ ${parsed.amount.toFixed(2)}. Conta: ${config.defaultAccountName}.`;
+    const accountLabel = (result.data as any)?.data?.financial_account_id ? config.defaultAccountName : `${config.defaultAccountName} nao encontrada; lancado sem conta vinculada`;
+    return `${parsed.type === "income" ? "Entrada" : "Saida"} registrada no controle financeiro: ${parsed.description}, R$ ${parsed.amount.toFixed(2)}. Conta: ${accountLabel}.`;
   }
 };
