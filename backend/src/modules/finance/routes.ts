@@ -15,6 +15,13 @@ const configSchema = z.object({
   defaultAccountId: z.string().max(120).optional()
 });
 
+const authSchema = z.object({
+  apiUrl: z.string().url("Informe a URL do Controle Financeiro.").transform((value) => value.replace(/\/+$/, "")),
+  email: z.string().email("Informe o email do Controle Financeiro."),
+  password: z.string().min(6, "Informe a senha do Controle Financeiro."),
+  defaultAccountName: z.string().min(1).max(120).optional()
+});
+
 const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
   status: z.string().max(40).optional(),
@@ -32,6 +39,8 @@ router.put("/config", validate(configSchema), asyncHandler(async (req, res) => {
   res.json(await financeIntegrationService.saveConfig(req.user!.id, req.body));
 }));
 router.delete("/config", asyncHandler(async (req, res) => res.json(await financeIntegrationService.clearConfig(req.user!.id))));
+router.post("/auth/login", validate(authSchema), asyncHandler(async (req, res) => res.json(await financeIntegrationService.authenticate(req.user!.id, req.body))));
+router.delete("/auth", asyncHandler(async (req, res) => res.json(await financeIntegrationService.disconnect(req.user!.id))));
 router.post("/test-connection", asyncHandler(async (req, res) => res.json(await financeIntegrationService.testConnection(req.user!.id))));
 router.get("/accounts", asyncHandler(async (req, res) => res.json(await financeIntegrationService.listAccounts(req.user!.id))));
 router.get("/summary/month", asyncHandler(async (req, res) => res.json(await financeIntegrationService.monthlySummary(req.user!.id))));

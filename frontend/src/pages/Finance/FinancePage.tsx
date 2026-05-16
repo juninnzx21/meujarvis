@@ -7,6 +7,7 @@ type FinanceStatus = {
   status?: string;
   apiUrl?: string;
   tokenMasked?: string;
+  userEmail?: string;
   defaultAccountName?: string;
   defaultAccountIdConfigured?: boolean;
 };
@@ -16,6 +17,7 @@ const defaultApiUrl = "https://controlefinanceiro.juninnzxtec.com.br";
 export function FinancePage() {
   const [status, setStatus] = useState<FinanceStatus>({});
   const [config, setConfig] = useState({ apiUrl: defaultApiUrl, token: "", defaultAccountName: "PJ DO INTER" });
+  const [auth, setAuth] = useState({ email: "", password: "" });
   const [transaction, setTransaction] = useState({ type: "expense", description: "", amount: "", transaction_date: new Date().toISOString().slice(0, 10), payment_method: "pix" });
   const [text, setText] = useState("");
   const [parsed, setParsed] = useState<any>(null);
@@ -57,6 +59,42 @@ export function FinancePage() {
     setStatus(res.data);
     setConfig({ apiUrl: defaultApiUrl, token: "", defaultAccountName: "PJ DO INTER" });
     setMessage("Configuracao financeira removida.");
+  }
+
+  async function linkFinanceAccount(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await api.post("/finance/auth/login", {
+        apiUrl: config.apiUrl,
+        email: auth.email,
+        password: auth.password,
+        defaultAccountName: config.defaultAccountName
+      });
+      setStatus(res.data);
+      setAuth({ email: "", password: "" });
+      setConfig((current) => ({ ...current, token: "" }));
+      setMessage(res.data.message || "Controle Financeiro vinculado com sucesso.");
+    } catch (error) {
+      setMessage(friendlyError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function disconnectFinanceAccount() {
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await api.delete("/finance/auth");
+      setStatus(res.data);
+      setMessage("Conta do Controle Financeiro desvinculada.");
+    } catch (error) {
+      setMessage(friendlyError(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function testConnection() {
@@ -141,6 +179,22 @@ export function FinancePage() {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
+        <div className="space-y-5">
+        <form onSubmit={linkFinanceAccount} className="glass space-y-4 rounded-2xl p-5">
+          <h3 className="text-xl font-black text-white">Vincular conta financeira</h3>
+          <p className="text-sm text-slate-400">O JARVIS usa seu login para pedir um token seguro ao Controle Financeiro. A senha nao fica salva.</p>
+          <input className="input" value={auth.email} onChange={(e) => setAuth({ ...auth, email: e.target.value })} placeholder="Email do Controle Financeiro" />
+          <input className="input" type="password" value={auth.password} onChange={(e) => setAuth({ ...auth, password: e.target.value })} placeholder="Senha do Controle Financeiro" />
+          <div className="flex flex-wrap gap-3">
+            <button className="btn btn-primary" disabled={loading}><ShieldCheck size={18} /> Vincular e salvar token</button>
+            <button type="button" onClick={disconnectFinanceAccount} className="btn btn-ghost" disabled={loading}><Trash2 size={18} /> Desvincular</button>
+          </div>
+          <div className="rounded-xl bg-white/5 p-3 text-sm text-slate-400">
+            <p>Conta vinculada: {status.userEmail || "nenhuma"}</p>
+            <p>Token: {status.tokenMasked ? "configurado" : "ausente"}</p>
+          </div>
+        </form>
+
         <form onSubmit={saveConfig} className="glass space-y-4 rounded-2xl p-5">
           <h3 className="text-xl font-black text-white">Configuracao segura</h3>
           <label className="block text-sm font-semibold text-slate-300">
@@ -167,6 +221,7 @@ export function FinancePage() {
             <p>Conta atual: {status.defaultAccountName || config.defaultAccountName}. O ID da conta sera resolvido quando o token financeiro estiver configurado.</p>
           </div>
         </form>
+        </div>
 
         <aside className="glass space-y-4 rounded-2xl p-5">
           <div className="flex items-center justify-between gap-3">

@@ -6,6 +6,7 @@ import { writeSystemLog } from "./systemLogService.js";
 const keys = {
   apiUrl: "finance_api_url",
   token: "finance_api_token",
+  userEmail: "finance_user_email",
   defaultAccountName: "finance_default_account_name",
   defaultAccountId: "finance_default_account_id"
 };
@@ -13,6 +14,7 @@ const keys = {
 type FinanceConfig = {
   apiUrl: string;
   token: string;
+  userEmail: string;
   defaultAccountName: string;
   defaultAccountId: string;
 };
@@ -103,6 +105,7 @@ export const financeIntegrationService = {
     return {
       apiUrl: normalizeApiUrl(asString(settings[keys.apiUrl])),
       token: asString(settings[keys.token]),
+      userEmail: asString(settings[keys.userEmail]),
       defaultAccountName: asString(settings[keys.defaultAccountName]) || "PJ DO INTER",
       defaultAccountId: asString(settings[keys.defaultAccountId])
     };
@@ -119,18 +122,21 @@ export const financeIntegrationService = {
       apiUrlConfigured: Boolean(config.apiUrl),
       tokenConfigured: Boolean(config.token),
       tokenMasked: maskSecret(config.token),
+      userEmail: config.userEmail,
       defaultAccountName: config.defaultAccountName,
       defaultAccountIdConfigured: Boolean(config.defaultAccountId)
     };
   },
-  async saveConfig(userId: string, input: { apiUrl: string; token?: string; defaultAccountName?: string; defaultAccountId?: string }) {
+  async saveConfig(userId: string, input: { apiUrl: string; token?: string; userEmail?: string; defaultAccountName?: string; defaultAccountId?: string }) {
     const current = await this.runtimeConfig(userId);
     const token = input.token?.trim() ? input.token.trim() : current.token;
+    const userEmail = input.userEmail?.trim() || current.userEmail;
     const defaultAccountName = input.defaultAccountName?.trim() || current.defaultAccountName || "PJ DO INTER";
     const defaultAccountId = input.defaultAccountId?.trim() || current.defaultAccountId;
     const entries: Array<[string, Prisma.InputJsonValue]> = [
       [keys.apiUrl, normalizeApiUrl(input.apiUrl)],
       [keys.token, token],
+      [keys.userEmail, userEmail],
       [keys.defaultAccountName, defaultAccountName],
       [keys.defaultAccountId, defaultAccountId]
     ];
@@ -146,6 +152,38 @@ export const financeIntegrationService = {
       message: "Configuracao do controle financeiro atualizada",
       metadata: { apiUrlConfigured: Boolean(input.apiUrl), tokenConfigured: Boolean(token), defaultAccountName }
     });
+    return this.status(userId);
+  },
+  async authenticate(userId: string, input: { apiUrl: string; email: string; password: string; defaultAccountName?: string }) {
+    const apiUrl = normalizeApiUrl(input.apiUrl);
+    const response = await axios.request({
+      method: "post",
+      url: `${apiUrl}/api/v1/auth/login`,
+      data: { email: input.email, password: input.password },
+      headers: { Accept: "application/json" },
+      timeout: 20000
+    });
+    const data = response.data?.data ?? response.data;
+    const token = data?.token ?? data?.access_token;
+    const email = data?.user?.email ?? input.email;
+    if (!token) {
+      await writeSystemLog({ userId, level: "warning", module: "finance", action: "auth_failed", message: "Controle financeiro nao retornou token" });
+      return { status: "error", message: "Controle financeiro nao retornou token." };
+    }
+    await this.saveConfig(userId, {
+      apiUrl,
+      token: String(token),
+      userEmail: String(email),
+      defaultAccountName: input.defaultAccountName || "PJ DO INTER",
+      defaultAccountId: ""
+    });
+    const accountId = await this.resolveDefaultAccountId(userId);
+    await writeSystemLog({ userId, module: "finance", action: "auth_login", message: "Controle financeiro vinculado ao JARVIS", metadata: { email, defaultAccountApplied: Boolean(accountId) } });
+    return { ...(await this.status(userId)), message: "Controle financeiro vinculado com sucesso." };
+  },
+  async disconnect(userId: string) {
+    await prisma.setting.deleteMany({ where: { userId, key: { in: [keys.token, keys.userEmail, keys.defaultAccountId] } } });
+    await writeSystemLog({ userId, module: "finance", action: "auth_disconnect", message: "Controle financeiro desvinculado do JARVIS" });
     return this.status(userId);
   },
   async clearConfig(userId: string) {
