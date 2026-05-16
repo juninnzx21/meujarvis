@@ -4,33 +4,39 @@ import { personalProfileMemories, type PersonalProfileMemory } from "./personal-
 const prisma = new PrismaClient();
 
 const allowedSensitiveSystemTitles = new Set([
+  "Dados proibidos em memória comum",
   "Dados proibidos em memoria comum",
+  "Como lidar com informações sensíveis",
   "Como lidar com informacoes sensiveis",
   "Respostas sem expor segredos"
 ]);
 
-export function isSensitiveMemory(memory: Pick<PersonalProfileMemory, "type" | "title" | "content">) {
-  if (memory.type === "system" && allowedSensitiveSystemTitles.has(memory.title)) return false;
-  const content = memory.content.toLowerCase();
+function normalizeTitle(title: string) {
+  return title.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+export function isSensitiveMemory(content: string, title: string, type: PersonalProfileMemory["type"]) {
+  if (type === "system" && allowedSensitiveSystemTitles.has(title)) return false;
+
+  const text = content.toLowerCase();
   const blockedPatterns = [
-    /\bsenha\s*[:=]/i,
-    /\bpassword\s*[:=]/i,
-    /\btoken\s*[:=]/i,
-    /\bapi\s*key\s*[:=]/i,
-    /\bsecret\s*[:=]/i,
-    /\bjwt\s*[:=]/i,
+    /\b(senha|password)\s*[:=]\s*\S{6,}/i,
+    /\b(token|api\s*key|secret|jwt|bearer)\s*[:=]\s*\S{8,}/i,
     /\bprivate\s+key\b/i,
-    /\bssh-rsa\s+private\b/i,
+    /\bssh\s+private\s+key\b/i,
+    /\bchave\s+privada\b/i,
     /\bbearer\s+[a-z0-9._~+/=-]{12,}/i,
-    /\bcpf\s*[:=]/i,
-    /\bcartao\s*[:=]/i,
-    /\bcartão\s*[:=]/i,
-    /\bbanco\s*[:=]/i,
-    /\bacesso\s+root\s*[:=]/i,
+    /\bcpf\s*[:=]\s*[\d.-]{8,}/i,
+    /\bcart(?:a|ã)o\s*[:=]\s*[\d\s-]{12,}/i,
+    /\bbanco\s+completo\s*[:=]/i,
+    /\bcredencial\s*[:=]\s*\S{6,}/i,
+    /\broot\s+password\s*[:=]/i,
+    /\bacesso\s+root\s*[:=]\s*\S{6,}/i,
     /\bdirectadmin\s+password\b/i,
     /\bdatabase\s+password\b/i
   ];
-  return blockedPatterns.some((pattern) => pattern.test(content));
+
+  return blockedPatterns.some((pattern) => pattern.test(text));
 }
 
 export async function importPersonalProfile() {
@@ -40,13 +46,21 @@ export async function importPersonalProfile() {
   const summary = { created: 0, updated: 0, skipped: 0, total: personalProfileMemories.length };
 
   for (const memory of personalProfileMemories) {
-    if (isSensitiveMemory(memory)) {
+    if (isSensitiveMemory(memory.content, memory.title, memory.type)) {
+      console.log(`memória ignorada por segurança: ${memory.title}`);
       summary.skipped += 1;
       continue;
     }
 
+    const titleCandidates = Array.from(new Set([
+      memory.title,
+      normalizeTitle(memory.title),
+      ...(memory.aliases ?? [])
+    ]));
+
     const existing = await prisma.memory.findFirst({
-      where: { userId: admin.id, title: memory.title, type: memory.type }
+      where: { userId: admin.id, type: memory.type, title: { in: titleCandidates } },
+      orderBy: { updatedAt: "desc" }
     });
 
     if (!existing) {
@@ -65,6 +79,7 @@ export async function importPersonalProfile() {
     }
 
     const needsUpdate =
+      existing.title !== memory.title ||
       existing.content !== memory.content ||
       existing.importance !== memory.importance ||
       JSON.stringify(existing.tags) !== JSON.stringify(memory.tags);
@@ -73,6 +88,7 @@ export async function importPersonalProfile() {
       await prisma.memory.update({
         where: { id: existing.id },
         data: {
+          title: memory.title,
           content: memory.content,
           tags: memory.tags,
           importance: memory.importance
@@ -80,6 +96,15 @@ export async function importPersonalProfile() {
       });
       summary.updated += 1;
     }
+
+    await prisma.memory.deleteMany({
+      where: {
+        userId: admin.id,
+        type: memory.type,
+        title: { in: titleCandidates },
+        id: { not: existing.id }
+      }
+    });
   }
 
   await prisma.systemLog.create({

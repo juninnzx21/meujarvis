@@ -19,6 +19,7 @@ Atualizacao operacional desta rodada:
 - Auditoria final completa: Docker Desktop foi iniciado, PostgreSQL subiu em `127.0.0.1:5432`, backend/frontend passaram em testes/validate/build, scripts status/validate/backup passaram e producao API dedicada respondeu health/full.
 - Proximo passo operacional: estado local confirmado, backend/frontend revalidados, scripts reexecutados, producao validada pela API oficial, guia `DEPLOY_NEXT_STEPS.md` criado e configuracao Evolution/WhatsApp mantida como pendencia de credenciais reais.
 - Fase 10: n8n proprio, scripts n8n, workflows, EventBus, IntegrationEvent, memoria semantica local, documentos/RAG preparado, CI inicial e documentacao 100000 adicionados.
+- Base pessoal enriquecida: 47 memorias canonicas sobre Junior Rodrigues / Juninnzx, projetos, stack, preferencias, JARVIS, n8n, WhatsApp, financeiro, mobile/PWA, deploys e roadmap. O seed atualiza aliases antigos, remove duplicatas equivalentes e bloqueia conteudo sensivel.
 
 ## Ambiente
 

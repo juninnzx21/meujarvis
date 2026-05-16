@@ -14,7 +14,7 @@
 - Ao testar integracoes reais, use endpoints de teste seguros e confirme que logs redigiram request/response.
 - Scheduler deve permanecer seguro: sem shell, sem WhatsApp automatico, sem envio em massa e sem Home Assistant sensivel sem confirmacao.
 - A base pessoal em `backend/prisma/personal-profile/profile-data.ts` nunca deve conter senhas, tokens, API keys, chaves privadas, credenciais, dados bancarios ou dumps.
-- Para atualizar memorias pessoais, rode `npm run seed:personal` no backend e valide que nao houve duplicacao.
+- Para atualizar memorias pessoais, rode `npm run seed:personal` no backend e valide que nao houve duplicacao; o seed deve preservar aliases de titulos antigos para atualizar memorias existentes.
 - No modulo financeiro, nunca importe extrato sem revisao/aprovacao.
 - Nao envie extratos financeiros para IA externa sem consentimento explicito.
 - Mantenha `backend/storage/imports/`, backups e dumps fora do Git.

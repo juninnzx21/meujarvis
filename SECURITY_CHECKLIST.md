@@ -21,6 +21,8 @@
 
 - [x] Memorias pessoais nao devem salvar senhas reais, tokens reais, API keys reais, chaves privadas, credenciais, dados bancarios ou dumps.
 - [x] A base pessoal deve usar apenas fatos duradouros, preferencias, contexto tecnico e roadmap seguros.
+- [x] `npm run seed:personal` bloqueia padroes sensiveis, registra apenas resumo e nao imprime conteudo bloqueado.
+- [x] A base pessoal usa aliases de titulos antigos para atualizar memorias sem duplicar.
 - [x] Segredos reais devem ficar em vault/gerenciador de senhas, nunca em `Memory`.
 - [x] Senhas sao armazenadas com bcrypt.
 - [x] JWT protege rotas privadas.

@@ -278,10 +278,11 @@ O Controle Financeiro externo e configurado pelo painel `/finance`, nao por vari
 
 ## Base de conhecimento pessoal
 
-O JARVIS possui seed opcional para importar memorias estruturadas sobre o usuario, projetos, stack, preferencias, padroes de deploy e roadmap, sem salvar segredos.
+O JARVIS possui seed opcional para importar 47 memorias estruturadas sobre Junior Rodrigues / Juninnzx: identidade, carreira, projetos, stack, preferencias, padroes de deploy, infraestrutura, JARVIS, n8n, WhatsApp/Evolution, financeiro, mobile/PWA e roadmap. O importador bloqueia conteudo sensivel, atualiza memorias existentes e remove duplicatas antigas por titulo equivalente.
 
 ```powershell
 cd E:\jarvis-home-assistant\backend
+npx prisma db seed
 npm run seed:personal
 ```
 

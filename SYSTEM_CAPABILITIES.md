@@ -39,7 +39,7 @@ Observacao: `https://jarvis.juninnzxtec.com.br/api/*` retornou HTML do frontend 
 - Dashboard premium dark.
 - Chat com historico, memoria, tarefas, intencoes e fallback seguro.
 - Voz via navegador e estrutura de voice no backend.
-- Memorias estruturadas, incluindo base pessoal importavel.
+- Memorias estruturadas, incluindo base pessoal com 47 itens sobre Junior Rodrigues / Juninnzx, projetos, stack, preferencias, deploys, JARVIS, n8n, WhatsApp, financeiro, mobile/PWA e roadmap.
 - Tarefas com prioridade, status, vencimento, lembrete e filtros.
 - Automacoes seguras com logs.
 - Central de comandos.

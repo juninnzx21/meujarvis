@@ -28,6 +28,8 @@ Proximo passo operacional: backend/frontend foram revalidados, scripts operacion
 
 Fase 10: adicionada fundacao JARVIS 100000/10 com n8n proprio em Docker, workflows importaveis, EventBus/IntegrationEvent, memoria semantica local segura, modulo de documentos/RAG preparado, CI inicial e documentacao operacional.
 
+Base pessoal: `npm run seed:personal` foi atualizado para importar 47 memorias canonicas sobre Junior Rodrigues / Juninnzx, reconhecer aliases de titulos antigos, remover duplicatas equivalentes, bloquear padroes sensiveis e registrar apenas resumo redigido em `SystemLog`.
+
 ## Resumo
 
 A auditoria confirmou que o projeto local esta consistente: dependencias instalam, auditoria npm nao encontrou vulnerabilidades, Prisma valida, migrations estao em sincronia, testes backend/frontend passam e builds passam.

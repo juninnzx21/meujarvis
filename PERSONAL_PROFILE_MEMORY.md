@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-A Base de Conhecimento Pessoal permite que o JARVIS conheca melhor Junior Rodrigues / Juninnzx sem guardar segredos. Ela alimenta memorias estruturadas sobre identidade, carreira, projetos, stack, infraestrutura, preferencias de trabalho, padroes de deploy, seguranca e roadmap.
+A base pessoal ensina o JARVIS sobre Junior Rodrigues / Juninnzx sem guardar segredos. Ela alimenta memórias estruturadas sobre identidade, carreira, projetos, stack, preferências, infraestrutura, padrões de trabalho, validações, deploys, domínios, roadmap e contexto técnico duradouro.
 
 ## Arquivos
 
@@ -12,13 +12,13 @@ A Base de Conhecimento Pessoal permite que o JARVIS conheca melhor Junior Rodrig
 
 ## Categorias
 
-A base cobre identidade, contato profissional publico, formacao, experiencia, stack, ambiente, preferencias, prompts Codex, seguranca, infraestrutura, dominios, JARVIS, Meta Locadora, Controle Financeiro, Controle de Mercado, outros projetos, deploy, rotinas, roadmap, pendencias, linguagem, relacao com IA e dados que nao devem ser salvos.
+A base cobre identidade, contato profissional público, formação, experiência, stack, ambiente local, preferências de resposta, prompts Codex, validação, segurança, infraestrutura, marca pessoal, JARVIS, n8n, WhatsApp/Evolution, financeiro, mobile/PWA, Meta Locadora, Controle Financeiro, Controle de Mercado, sites comerciais, deploy Laravel, deploy Node/Docker, documentação e prioridades futuras.
 
-## Quantidade atual
+## Quantidade Atual
 
-Total planejado: 47 memorias.
+Total planejado: 47 memórias.
 
-## Como rodar
+## Como Rodar
 
 ```powershell
 Set-Location E:\jarvis-home-assistant\backend
@@ -26,40 +26,43 @@ npx prisma db seed
 npm run seed:personal
 ```
 
-O importador procura o usuario `admin@jarvis.local`, cria ou atualiza memorias e registra um resumo em `SystemLog`.
+O importador procura o usuário `admin@jarvis.local`, cria ou atualiza memórias e registra um resumo em `SystemLog`.
 
-## Idempotencia
+## Idempotência
 
-O seed usa chave natural `userId + title + type`. Se a memoria nao existe, cria. Se existe e mudou, atualiza. Se esta igual, nao duplica.
+O seed usa chave natural `userId + title + type`. Quando encontra títulos antigos equivalentes, ele atualiza para o título canônico e remove duplicatas antigas daquele mesmo item. Rodar o comando novamente não deve criar novas cópias.
 
-## Seguranca
+## Segurança
 
-O importador bloqueia padroes sensiveis como `senha:`, `password:`, `token:`, `api key:`, `secret:`, `jwt:`, `private key`, `bearer`, `cpf:`, `cartao:`, `banco:`, `acesso root:`, `directadmin password` e `database password`.
+O importador bloqueia padrões sensíveis associados a senha, password, token, api key, secret, jwt, bearer, private key, chave privada, CPF, cartão, banco completo, credencial, root password, DirectAdmin password e database password.
 
-Excecao controlada: memorias `system` que ensinam o que nao salvar podem citar esses termos sem valores reais.
+Exceção controlada: memórias `system` que ensinam o que não salvar podem citar esses termos sem valores reais.
 
-Nunca salvar senhas reais, tokens reais, API keys reais, chave privada SSH, credenciais, dados bancarios, dumps ou backups em `Memory`. Se houver necessidade futura de guardar segredo, usar vault/gerenciador de senhas.
+Nunca salvar senhas reais, tokens reais, API keys reais, chaves SSH privadas, credenciais de VPS, DirectAdmin, banco, GitHub, OpenAI, Gemini, n8n, Evolution API, Home Assistant, dados bancários sensíveis, dumps ou backups em `Memory`. Se houver necessidade futura de guardar segredo, usar `.env`, vault ou gerenciador de senhas.
 
-## Como validar no painel
+## Como Validar No Painel
 
 1. Acesse `https://jarvis.juninnzxtec.com.br`.
-2. Entre com usuario admin.
-3. Abra `Memorias`.
-4. Pesquise por `Junior Rodrigues`, `JARVIS`, `Meta Locadora`, `validacao` e `infraestrutura`.
+2. Entre com usuário admin.
+3. Abra `Memória`.
+4. Pesquise por `Junior Rodrigues`, `JARVIS`, `Meta Locadora`, `Controle Financeiro`, `n8n`, `WhatsApp`, `deploy` e `validação`.
 
-## Como validar por API local
+## Como Validar No Chat
 
-```powershell
-$login = Invoke-RestMethod -Method Post -Uri http://localhost:3001/api/auth/login -ContentType 'application/json' -Body '{"email":"admin@jarvis.local","password":"12345678"}'
-$headers = @{ Authorization = "Bearer $($login.token)" }
-Invoke-RestMethod -Uri "http://localhost:3001/api/memories?q=JARVIS" -Headers $headers
-```
+Pergunte:
 
-## Como o JARVIS usa essas memorias
+- `Jarvis, o que você sabe sobre mim?`
+- `Jarvis, quais são meus projetos?`
+- `Jarvis, qual minha stack?`
+- `Jarvis, como eu gosto que você responda?`
+- `Jarvis, qual meu padrão de deploy?`
+- `Jarvis, o que falta no meu JARVIS?`
+- `Jarvis, quais são minhas prioridades?`
+- `Jarvis, como validar um projeto meu?`
 
-O orquestrador de IA carrega memorias relevantes por busca textual e inclui o contexto no prompt. Isso melhora respostas sobre projetos, padroes de deploy, stack, preferencias, validacoes e proximos passos.
+O orquestrador carrega memórias relevantes por busca textual/semântica local e inclui o contexto no prompt com segurança.
 
-## Como atualizar
+## Como Atualizar
 
 Edite `backend/prisma/personal-profile/profile-data.ts` e rode:
 
@@ -68,10 +71,10 @@ Set-Location E:\jarvis-home-assistant\backend
 npm run seed:personal
 ```
 
-## Como remover ou editar memorias
+## Como Remover Ou Editar Memórias
 
-Pelo painel, abra `Memorias`, busque pelo titulo e edite ou exclua. Por banco/API, use apenas rotas autenticadas e nunca remova em massa sem backup.
+Pelo painel, abra `Memória`, busque pelo título e edite ou exclua. Pela API, use apenas rotas autenticadas. Não remova em massa sem backup.
 
-## Decisao sobre endpoint administrativo
+## Endpoint Administrativo
 
-Nesta fase foi implementado apenas `npm run seed:personal`. O endpoint `POST /api/memories/import-personal-profile` foi adiado para evitar acoplar o backend compilado a arquivos dentro de `prisma/`, que hoje ficam fora do build TypeScript.
+Nesta fase o caminho oficial segue sendo `npm run seed:personal`. O endpoint `POST /api/memories/import-personal-profile` permanece documentado como opcional para fase futura, porque os arquivos `prisma/` ficam fora do build TypeScript de produção e acoplar o backend compilado a eles aumentaria risco operacional.

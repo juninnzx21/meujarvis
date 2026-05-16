@@ -114,7 +114,9 @@ Scripts PowerShell na raiz controlam ciclo local:
 
 ## Base de conhecimento pessoal
 
-A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.ts` e e importada por `backend/prisma/seed-personal-profile.ts`. O importador grava memorias em `Memory` de forma idempotente usando `userId + title + type`, bloqueia padroes sensiveis e registra `SystemLog` sem imprimir segredos. O backend nao importa esses arquivos em runtime de producao; nesta fase o uso oficial e via script `npm run seed:personal`.
+A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.ts` e e importada por `backend/prisma/seed-personal-profile.ts`. O importador grava 47 memorias em `Memory` de forma idempotente usando `userId + title + type`, reconhece aliases de titulos antigos, atualiza o conteudo canonico, remove duplicatas equivalentes, bloqueia padroes sensiveis e registra `SystemLog` sem imprimir segredos. O backend nao importa esses arquivos em runtime de producao; nesta fase o uso oficial e via script `npm run seed:personal`.
+
+As memorias cobrem identidade, stack, preferencias de resposta, validacao, prompts Codex, infraestrutura, JARVIS, n8n, WhatsApp/Evolution, financeiro, PWA/mobile, projetos comerciais, deploy e prioridades futuras. O chat consulta memorias relevantes pelo `aiOrchestratorService` antes de montar a resposta.
 
 ## Fase 5
 
