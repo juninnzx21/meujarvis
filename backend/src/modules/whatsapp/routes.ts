@@ -49,13 +49,16 @@ async function safeSendWhatsApp(phone: string, content: string, userId?: string)
   try {
     return await whatsappService.send(phone, content, userId);
   } catch (error) {
+    const safeError = error instanceof Error
+      ? { name: error.name, message: redactSensitive(error.message) }
+      : { message: redactSensitive(String(error)) };
     await writeSystemLog({
       userId,
       level: "warning",
       module: "whatsapp",
       action: "webhook_reply_failed",
       message: "Falha ao enviar resposta WhatsApp sem derrubar webhook",
-      metadata: redactSensitive({ error }) as never
+      metadata: safeError as never
     });
     return { status: "send_failed", message: "Resposta processada, mas nao consegui enviar pelo WhatsApp agora." };
   }
