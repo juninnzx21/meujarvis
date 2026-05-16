@@ -1,5 +1,13 @@
 # DEPLOYMENT STATUS REPORT
 
+## Atualizacao operacional - 2026-05-16
+
+- Frontend oficial: `https://jarvis.juninnzxtec.com.br`.
+- API oficial: `https://apijarvis.juninnzxtec.com.br/api`.
+- `jarvis.juninnzxtec.com.br/api/*` pode retornar HTML do frontend e nao deve ser usado como API enquanto essa topologia estiver ativa.
+- Health de producao deve ser validado em `https://apijarvis.juninnzxtec.com.br/api/health`.
+- Webhook WhatsApp/Evolution: `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
+
 ## Data/hora
 
 2026-05-14 15:50:00 -03:00

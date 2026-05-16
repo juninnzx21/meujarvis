@@ -1,5 +1,15 @@
 # Instalacao
 
+## Variavel de API em producao
+
+Para build do frontend publicado em `https://jarvis.juninnzxtec.com.br`, use:
+
+```env
+VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api
+```
+
+Essa e a API publica oficial atual. O endpoint `/api/*` no dominio principal pode servir o frontend dependendo da hospedagem/Caddy.
+
 ## Windows PowerShell
 
 Pre-requisitos:

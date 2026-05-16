@@ -82,7 +82,7 @@ class SchedulerService {
         module: "scheduler",
         action: "tick_error",
         message: "Erro no scheduler",
-        metadata: { error: message }
+        metadata: { error: this.lastError }
       });
       return { skipped: false, error: this.lastError };
     } finally {

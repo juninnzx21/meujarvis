@@ -1,5 +1,25 @@
 # Setup de integracoes
 
+## API publica oficial
+
+Use `https://apijarvis.juninnzxtec.com.br/api` para integracoes externas.
+
+Webhook WhatsApp/Evolution:
+
+`https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`
+
+## Diagnosticos OpenAI e Gemini
+
+O health diferencia estados sem expor chaves: `missing_key`, `invalid_key`, `quota_exceeded`, `model_not_found`, `network_error` e `api_error`.
+
+Se OpenAI ou Gemini retornarem `quota_exceeded`, ajuste billing/quota no provedor. Se retornarem `model_not_found`, revise `OPENAI_MODEL` ou `GEMINI_MODEL`. Nunca cole chaves em documentacao ou logs.
+
+## WhatsApp/Evolution
+
+Consulte `WHATSAPP_PRODUCTION_SETUP.md`.
+
+Regras principais: frase obrigatoria `ei jarvis`, auto reply desativado por padrao, grupos ignorados por padrao, mensagens `fromMe` ignoradas e OFX/CSV sempre em previa de revisao.
+
 Todas as credenciais ficam somente em `.env` e `backend\.env`. Nunca coloque chaves no frontend.
 
 ## OpenAI

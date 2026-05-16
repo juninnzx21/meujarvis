@@ -9,6 +9,7 @@ import { parseInterCsvStatement } from "./modules/finance/parsers/interCsvParser
 import { parseOfxStatement } from "./modules/finance/parsers/ofxParser.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
+import { geminiService } from "./services/geminiService.js";
 import { openAiService } from "./services/openAiService.js";
 import { schedulerService } from "./services/schedulerService.js";
 import { writeSystemLog } from "./services/systemLogService.js";
@@ -301,6 +302,44 @@ describe("JARVIS Home AI API", () => {
     expect(reply).toContain("modo seguro local");
     expect(openAiService.status().status).toBe("quota_exceeded");
     openAiService.setClientForTests(null);
+  });
+
+  it("classifies OpenAI model and key failures without exposing details", async () => {
+    openAiService.setClientForTests({
+      chat: {
+        completions: {
+          create: vi.fn().mockRejectedValueOnce(new Error("404 model_not_found"))
+        }
+      }
+    } as never);
+    await openAiService.complete([{ role: "user", content: "teste modelo" }]);
+    expect(openAiService.status()).toMatchObject({ status: "model_not_found", lastError: "[REDACTED_DETAIL]" });
+
+    openAiService.setClientForTests({
+      chat: {
+        completions: {
+          create: vi.fn().mockRejectedValueOnce(Object.assign(new Error("invalid api key"), { status: 401 }))
+        }
+      }
+    } as never);
+    await openAiService.complete([{ role: "user", content: "teste chave" }]);
+    expect(openAiService.status()).toMatchObject({ status: "invalid_key", lastError: "[REDACTED_DETAIL]" });
+    openAiService.setClientForTests(null);
+  });
+
+  it("classifies Gemini quota, model and key failures while keeping local fallback", async () => {
+    vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 429, data: { error: { status: "RESOURCE_EXHAUSTED" } } } });
+    const quotaReply = await geminiService.complete([{ role: "user", content: "teste quota gemini" }]);
+    expect(quotaReply).toBeNull();
+    expect(geminiService.status().status).toBe("quota_exceeded");
+
+    vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 404, data: { error: { message: "model not found" } } } });
+    await geminiService.complete([{ role: "user", content: "teste modelo gemini" }]);
+    expect(geminiService.status().status).toBe("model_not_found");
+
+    vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 403, data: { error: { status: "API_KEY_INVALID" } } } });
+    await geminiService.complete([{ role: "user", content: "teste chave gemini" }]);
+    expect(geminiService.status().status).toBe("invalid_key");
   });
 
   it("uses Gemini when OpenAI fails and Gemini is configured", async () => {

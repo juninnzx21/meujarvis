@@ -227,10 +227,13 @@ export const whatsappService = {
       });
       buffer = Buffer.from(response.data);
     }
-    if (!buffer || buffer.length === 0) return { status: "audio_unavailable", text: "", message: "Audio recebido, mas a midia nao veio disponivel para transcricao." };
+    if (!buffer || buffer.length === 0) return { status: "audio_unavailable", text: "", message: "Recebi o audio, mas nao consegui baixar/transcrever. Envie em texto ou reenvie o audio." };
     const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" });
     if (transcribed.text) {
       await writeSystemLog({ userId, module: "whatsapp", action: "audio_transcribed", message: "Audio WhatsApp transcrito com sucesso", metadata: { phone: inbound.cleanPhone, bytes: buffer.length } });
+    }
+    if (!transcribed.text && transcribed.message) {
+      return { ...transcribed, message: "Recebi o audio, mas nao consegui baixar/transcrever. Envie em texto ou reenvie o audio." };
     }
     return transcribed;
   },

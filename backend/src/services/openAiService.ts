@@ -3,7 +3,7 @@ import { env } from "../config/env.js";
 import { geminiService } from "./geminiService.js";
 import { writeSystemLog } from "./systemLogService.js";
 
-type OpenAiStatus = "configured" | "missing_key" | "quota_exceeded" | "network_error" | "api_error";
+type OpenAiStatus = "configured" | "missing_key" | "invalid_key" | "quota_exceeded" | "model_not_found" | "network_error" | "api_error";
 type OpenAiClient = Pick<OpenAI, "chat" | "audio">;
 let client: OpenAiClient | null = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 let runtimeStatus: OpenAiStatus = client ? "configured" : "missing_key";
@@ -11,9 +11,13 @@ let lastErrorMessage = "";
 const fallbackReply = "Estou operando em modo seguro local porque a OpenAI nao respondeu agora. As funcoes internas de tarefas, memorias, status e automacoes seguras continuam disponiveis.";
 
 function classifyOpenAiError(error: unknown): OpenAiStatus {
+  const candidate = error as { status?: number; code?: string; type?: string; message?: string };
   const message = error instanceof Error ? error.message : String(error);
-  if (/429|quota|billing|exceeded/i.test(message)) return "quota_exceeded";
-  if (/network|timeout|ECONN|ENOTFOUND|fetch failed/i.test(message)) return "network_error";
+  const combined = `${candidate.status ?? ""} ${candidate.code ?? ""} ${candidate.type ?? ""} ${message}`;
+  if (/401|403|invalid.?api.?key|incorrect.?api.?key|unauthorized|forbidden|authentication/i.test(combined)) return "invalid_key";
+  if (/429|quota|billing|exceeded/i.test(combined)) return "quota_exceeded";
+  if (/404|model.?not.?found|does not exist|invalid.?model/i.test(combined)) return "model_not_found";
+  if (/network|timeout|ECONN|ENOTFOUND|fetch failed/i.test(combined)) return "network_error";
   return "api_error";
 }
 

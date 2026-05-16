@@ -2,13 +2,18 @@ import axios from "axios";
 import { env } from "../config/env.js";
 import { writeSystemLog } from "./systemLogService.js";
 
-type GeminiStatus = "configured" | "missing_key" | "quota_exceeded" | "network_error" | "api_error";
+type GeminiStatus = "configured" | "missing_key" | "invalid_key" | "quota_exceeded" | "model_not_found" | "network_error" | "api_error";
 let runtimeStatus: GeminiStatus = env.GEMINI_API_KEY ? "configured" : "missing_key";
 
 function classifyGeminiError(error: unknown): GeminiStatus {
+  const axiosLike = error as { response?: { status?: number; data?: unknown }; code?: string; message?: string };
   const message = error instanceof Error ? error.message : String(error);
-  if (/429|quota|billing|exceeded|RESOURCE_EXHAUSTED/i.test(message)) return "quota_exceeded";
-  if (/network|timeout|ECONN|ENOTFOUND|fetch failed/i.test(message)) return "network_error";
+  const responseData = typeof axiosLike.response?.data === "string" ? axiosLike.response.data : JSON.stringify(axiosLike.response?.data ?? {});
+  const combined = `${axiosLike.response?.status ?? ""} ${axiosLike.code ?? ""} ${message} ${responseData}`;
+  if (/401|403|API_KEY_INVALID|invalid.?api.?key|permission.?denied|unauthorized|forbidden/i.test(combined)) return "invalid_key";
+  if (/429|quota|billing|exceeded|RESOURCE_EXHAUSTED/i.test(combined)) return "quota_exceeded";
+  if (/404|model.?not.?found|not found|invalid.?model/i.test(combined)) return "model_not_found";
+  if (/network|timeout|ECONN|ENOTFOUND|fetch failed/i.test(combined)) return "network_error";
   return "api_error";
 }
 

@@ -1,5 +1,17 @@
 # Deploy de producao
 
+## API publica oficial
+
+Frontend: `https://jarvis.juninnzxtec.com.br`
+
+API: `https://apijarvis.juninnzxtec.com.br/api`
+
+Decisao operacional: enquanto o frontend estiver servido fora do mesmo roteamento Caddy da API, o dominio principal `jarvis.juninnzxtec.com.br/api/*` pode retornar HTML do frontend. Use `apijarvis` no `VITE_API_URL` de producao.
+
+Webhook WhatsApp/Evolution:
+
+`https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`
+
 ## Dominio
 
 - Aplicacao: `https://jarvis.juninnzxtec.com.br`

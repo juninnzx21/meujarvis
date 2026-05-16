@@ -1,5 +1,21 @@
 # JARVIS Home AI Assistant
 
+## Nota operacional de producao
+
+Frontend publico: `https://jarvis.juninnzxtec.com.br`.
+
+API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.
+
+Configure builds de producao do frontend com:
+
+```env
+VITE_API_URL=https://apijarvis.juninnzxtec.com.br/api
+```
+
+Webhook WhatsApp/Evolution: `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
+
+No WhatsApp, o JARVIS so deve responder/executar quando a mensagem tiver `ei jarvis`. Arquivos OFX/CSV enviados pelo WhatsApp geram previa de importacao financeira e nunca sao importados diretamente.
+
 Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs e integracoes preparadas com OpenAI, n8n, Evolution API/WhatsApp, Home Assistant e Controle Financeiro.
 
 ## Stack

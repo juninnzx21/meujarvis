@@ -1,119 +1,119 @@
-# Capacidades Atuais do JARVIS Home AI
+﻿# Capacidades Atuais do JARVIS Home AI
 
-Data: 2026-05-16  
+Data: 2026-05-16
+
 Diretorio: `E:\jarvis-home-assistant`
+
+Status: **APROVADO COM RESSALVAS**
+
+Atualizacao operacional: API publica oficial `https://apijarvis.juninnzxtec.com.br/api`; frontend publico `https://jarvis.juninnzxtec.com.br`.
+
+WhatsApp/Evolution deve usar `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook` e a frase obrigatoria `ei jarvis`.
+
+OFX/CSV enviados pelo WhatsApp devem criar previa em `/finance/import/:id/review`; importacao direta sem revisao permanece bloqueada.
 
 ## URLs
 
 - Frontend producao: `https://jarvis.juninnzxtec.com.br`
-- API dedicada: `https://apijarvis.juninnzxtec.com.br/api`
-- API pelo dominio principal: atualmente nao roteada; `https://jarvis.juninnzxtec.com.br/api` retorna o frontend.
-- Local frontend, quando iniciado: `http://localhost:5173`
-- Local backend, quando iniciado: `http://localhost:3001/api`
+- API publica operacional: `https://apijarvis.juninnzxtec.com.br/api`
+- Health dedicado: `https://apijarvis.juninnzxtec.com.br/api/health`
+- Health full dedicado: `https://apijarvis.juninnzxtec.com.br/api/health/full`
 
-## Login demo
+Observacao: `https://jarvis.juninnzxtec.com.br/api/*` retornou HTML do frontend durante a auditoria. Use `apijarvis` como API publica ate corrigir ou oficializar o roteamento.
 
-- Email: `admin@jarvis.local`
-- Senha: `12345678`
+## O que o sistema possui hoje
 
-Para producao real, trocar/desativar credenciais demo.
-
-## O que o sistema faz hoje
-
-- Login JWT com senha hash bcrypt.
-- Dashboard com status do sistema.
-- Chat com historico persistido.
-- IA com OpenAI, fallback Gemini e fallback local seguro.
-- Memorias CRUD e criacao por frase como "lembre que".
-- Tarefas CRUD, status, prioridade, prazos, lembretes e vencidas.
-- Automacoes manuais com logs e bloqueio de acoes perigosas.
+- Autenticacao com JWT, bcrypt e usuario admin/demo em ambiente local.
+- Dashboard premium dark.
+- Chat com historico, memoria, tarefas, intencoes e fallback seguro.
+- Voz via navegador e estrutura de voice no backend.
+- Memorias estruturadas, incluindo base pessoal importavel.
+- Tarefas com prioridade, status, vencimento, lembrete e filtros.
+- Automacoes seguras com logs.
 - Central de comandos.
-- Rotinas manuais e agendadas.
-- Scheduler interno para rotinas, lembretes e notificacoes.
-- Relatorios: resumo diario, tarefas, sistema e atividade.
+- Rotinas manuais/agendadas.
+- Scheduler seguro.
+- Relatorios operacionais.
 - Notificacoes internas.
-- Logs estruturados com filtros.
-- Configuracoes por usuario.
-- Voz basica no navegador via Web Speech API quando disponivel.
-- WhatsApp/Evolution configuravel pelo painel.
-- Webhook WhatsApp para texto/audio quando a Evolution entrega midia.
-- Controle financeiro por painel e comandos de WhatsApp.
-- n8n configuravel pelo painel com teste de webhook.
-- Home Assistant preparado com status, entidades e acoes seguras.
-- Scripts PowerShell para start, stop, status, backup, restore e validacao.
-- Backup PostgreSQL via `backup-jarvis.ps1`.
+- Logs estruturados e redaction.
+- Settings com suporte a integracoes.
+- Health e status full.
+- n8n preparado.
+- WhatsApp/Evolution preparado.
+- Home Assistant preparado.
+- Modulo financeiro com contas, categorias, lancamentos, assistente guiado e importacao de extratos.
+- Importacao OFX/CSV com revisao obrigatoria.
+- Webhook WhatsApp com exigencia da frase `ei jarvis`.
+- Scripts PowerShell de start, stop, status, backup, restore e validate.
+- Docker Compose com PostgreSQL.
+- Documentacao operacional e de seguranca.
 
-## Exemplos de uso
+## Exemplos de uso no painel
 
-Chat:
+- Entrar no sistema.
+- Ver status geral no Dashboard.
+- Conversar no Chat.
+- Criar memoria manual.
+- Criar tarefa com prazo/lembrete.
+- Rodar automacao segura.
+- Ver logs por modulo/nivel.
+- Configurar integracoes.
+- Ver notificacoes.
+- Rodar rotina.
+- Importar extrato financeiro e revisar linhas antes de gravar.
 
-- "Qual o status do sistema?"
-- "Lembre que eu gosto de automacoes com n8n."
-- "Crie uma tarefa para testar o sistema amanha as 9h."
-- "Liste minhas tarefas."
-- "Testar n8n."
+## Exemplos de uso no chat
 
-WhatsApp financeiro:
+- `status do sistema`
+- `crie uma tarefa para revisar o financeiro amanha`
+- `lembre que eu prefiro validar tudo antes de publicar`
+- `quais tarefas tenho hoje?`
+- `o que esta atrasado?`
+- `quanto entrou esse mes?`
+- `qual meu saldo total?`
+- `registre entrada de R$ 120,00 na conta PJ DO INTER`
 
-- "entrada pix recebido R$ 120,00 cliente Joao"
-- "saida pix enviado R$ 80,00 fornecedor X"
-- "atualizar saldo"
-- "resumo financeiro do mes"
+## WhatsApp
 
-Tarefas:
+Quando Evolution API estiver configurada, o webhook deve aceitar mensagens e arquivos. A partir do commit atual, o JARVIS so deve responder/executar quando a mensagem, legenda ou transcricao tiver a frase:
 
-- Criar, editar, concluir e cancelar tarefas.
-- Ver tarefas vencidas e tarefas de hoje.
+`ei jarvis`
 
-n8n:
+Exemplos:
 
-- Acessar `/n8n`.
-- Colar a Production URL do webhook.
-- Salvar configuracao.
-- Testar webhook seguro.
+- `ei jarvis status do sistema`
+- `ei jarvis entrada pix recebido R$ 120,00 cliente Joao`
+- `ei jarvis importar esse extrato do Inter`
 
-WhatsApp:
+Sem a frase, a mensagem deve ser registrada/ignorada sem resposta automatica.
 
-- Acessar `/whatsapp`.
-- Configurar URL da Evolution, instancia, API key e auto reply.
-- Copiar webhook do JARVIS para Evolution.
-- Testar conexao e envio individual com confirmacao.
+## Financeiro
 
-Financeiro:
+O modulo financeiro permite:
 
-- Acessar `/finance`.
-- Vincular conta do controle financeiro.
-- Testar conexao.
-- Parsear texto financeiro.
-- Consultar resumo mensal.
+- Cadastrar contas bancarias.
+- Cadastrar categorias.
+- Criar lancamentos manuais.
+- Usar fluxo guiado pelo assistente.
+- Atualizar saldo por entrada/saida.
+- Importar OFX/CSV.
+- Criar `StatementImport` e `StatementImportRow`.
+- Revisar linhas antes de importar.
+- Detectar duplicatas.
+- Ver relatorios financeiros.
 
-Home Assistant:
+Melhor formato de extrato: OFX.
 
-- Acessar `/smart-home`.
-- Ver status.
-- Listar entidades quando configurado.
-- Executar acoes seguras de luz/switch.
+CSV e fallback confiavel.
 
-## Limitacoes atuais
-
-- Wake word "Ei Jarvis" ainda nao existe.
-- Sem escuta continua, por seguranca.
-- Voz depende do navegador.
-- Sem app mobile nativo.
-- Sem push notification real fora do painel.
-- Sem pgvector/memoria semantica real.
-- Streaming do chat ainda e fallback SSE simples, nao token a token real.
-- Health global nao reflete totalmente configuracoes por usuario.
-- Integracoes reais dependem de credenciais externas.
-- Controle financeiro depende de conta existente no sistema externo para vinculo perfeito.
-- API no dominio principal `/api` nao esta roteada para backend.
+PDF e apenas conferencia/fallback, nao fonte principal de importacao em massa.
 
 ## Comandos uteis
 
-Raiz:
+Na raiz:
 
 ```powershell
-.\start-jarvis.ps1
+Set-Location E:\jarvis-home-assistant
 .\status-jarvis.ps1
 .\validate-jarvis.ps1
 .\backup-jarvis.ps1
@@ -122,82 +122,41 @@ Raiz:
 Backend:
 
 ```powershell
-cd E:\jarvis-home-assistant\backend
+Set-Location E:\jarvis-home-assistant\backend
+npm install
+npm run test
 npm run validate
 ```
 
 Frontend:
 
 ```powershell
-cd E:\jarvis-home-assistant\frontend
+Set-Location E:\jarvis-home-assistant\frontend
+npm install
+npm run test
 npm run validate
 ```
 
-Docker:
+Subir localmente:
 
 ```powershell
-cd E:\jarvis-home-assistant
-docker compose ps
-docker compose up -d
+Set-Location E:\jarvis-home-assistant
+powershell -ExecutionPolicy Bypass -File .\start-jarvis.ps1
 ```
-# Atualizacao hardening Fase 7
 
-- API publica oficial: `https://apijarvis.juninnzxtec.com.br/api`.
-- Frontend publico: `https://jarvis.juninnzxtec.com.br`.
-- Health publico minimo: `/api/health/public`.
-- Tokens de integracoes salvos por usuario em `Setting` sao criptografados no backend.
-- Login demo pode ser bloqueado em producao por `ALLOW_DEMO_LOGIN=false`.
-- Admin real pode ser criado por `npm run create:admin`.
-## Capacidades reais auditadas - 2026-05-16
+## Limitacoes atuais
 
-### O sistema possui hoje
+- API do dominio principal `/api/*` retornou frontend; API real operacional e `apijarvis`.
+- IA externa em producao retornou status `configured` para OpenAI e Gemini na validacao atual.
+- n8n, WhatsApp/Evolution e Home Assistant aparecem `not_configured` em producao.
+- Sem wake word de audio continuo.
+- Sem app mobile nativo.
+- Sem push notification real.
+- Sem pgvector/memoria semantica vetorial.
+- Sem E2E completo com navegador real.
+- Hardening final de VPS/SSH/firewall/offsite backup ainda exige execucao operacional.
 
-- Autenticação JWT com bcrypt, usuário admin/local e bloqueio configurável do login demo em produção.
-- Dashboard, status operacional, health simples/full/public.
-- Chat com histórico, memória, detecção simples de intenções, fallback OpenAI/Gemini/local.
-- Voz via navegador com Web Speech API/SpeechSynthesis quando disponível.
-- Memórias estruturadas, base pessoal, busca textual e criação via chat.
-- Tarefas, lembretes, status, prioridade, vencidas e scheduler.
-- Automações seguras com allowlist, logs e bloqueio de ações perigosas.
-- Comandos, rotinas manuais/agendadas, relatórios e notificações.
-- Logs estruturados com redaction.
-- Configurações com criptografia de tokens sensíveis em `Setting`.
-- Integrações preparadas: n8n, WhatsApp/Evolution API, Home Assistant.
-- Módulo financeiro com contas, categorias, lançamentos, importação/revisão de extrato, relatórios e assistente guiado.
-- Scripts PowerShell: start, stop, status, validate, backup, restore e backup offsite planejado.
-- Documentação operacional, segurança, deploy, monitoramento e roadmap.
+## Login demo
 
-### O que dá para fazer hoje
+O login demo existe para ambiente local/desenvolvimento quando permitido por configuracao. Em producao, recomenda-se manter `ALLOW_DEMO_LOGIN=false`, criar admin real e rotacionar qualquer senha compartilhada.
 
-- Entrar no painel, navegar pelas telas e usar os módulos principais.
-- Conversar com o JARVIS e criar tarefas/memórias via chat.
-- Gerenciar tarefas, lembretes, notificações, rotinas, automações e logs.
-- Configurar integrações pelo painel quando houver credenciais.
-- Preparar WhatsApp/Evolution e n8n com testes seguros.
-- Consultar status da aplicação e da API dedicada.
-- Criar contas financeiras, lançar entradas/saídas, importar CSV simulado/revisar/importar e consultar relatórios.
-- Fazer backup local do PostgreSQL via script.
-
-### Limitações atuais
-
-- A API oficial pública é `https://apijarvis.juninnzxtec.com.br/api`; `https://jarvis.juninnzxtec.com.br/api/*` ainda retorna frontend.
-- Sem credenciais reais, n8n, WhatsApp/Evolution e Home Assistant ficam em `not_configured`.
-- Não há wake word real nem escuta contínua.
-- Não há push notification externo.
-- Não há app mobile nativo.
-- Memória semântica/pgvector ainda é planejada.
-- Testes E2E com navegador real ainda são plano, não suíte ativa.
-- Hardening SSH/firewall e backup offsite real dependem de ação manual na VPS.
-
-### URLs úteis
-
-- Frontend produção: `https://jarvis.juninnzxtec.com.br`
-- API dedicada produção: `https://apijarvis.juninnzxtec.com.br/api`
-- Health API dedicada: `https://apijarvis.juninnzxtec.com.br/api/health`
-- Health full API dedicada: `https://apijarvis.juninnzxtec.com.br/api/health/full`
-- Local frontend, quando iniciado: `http://localhost:5173`
-- Local backend, quando iniciado: `http://localhost:3001/api`
-
-### Login demo
-
-O login demo existe para desenvolvimento/local, mas deve ficar bloqueado em produção com `ALLOW_DEMO_LOGIN=false`. Para produção real, usar `npm run create:admin` e criar um admin próprio.

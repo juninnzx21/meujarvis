@@ -1,182 +1,133 @@
-# Roadmap de Melhorias do JARVIS Home AI
+﻿# Roadmap de Melhorias do JARVIS Home AI
 
-Data: 2026-05-16  
-Status base: aprovado com ressalvas
+Data: 2026-05-16
 
-## Prioridade 0 - Seguranca imediata
+Status atual: **APROVADO COM RESSALVAS**
 
-1. Rotacionar credenciais compartilhadas anteriormente.
-   - Impacto: critico.
-   - Inclui VPS/root, DirectAdmin/FTP, banco, JWT_SECRET, OpenAI, Gemini, Evolution, webhooks.
+Decisao atual: oficializar `https://apijarvis.juninnzxtec.com.br/api` como API publica. Corrigir `/api/*` no dominio principal vira opcional, nao bloqueante, enquanto o frontend estiver servido separadamente.
 
-2. Remover/desativar login demo em producao.
+Diagnosticos de IA foram refinados para separar chave ausente, chave invalida, quota, modelo inexistente, erro de rede e erro generico. Pendencias de OpenAI/Gemini em producao continuam dependentes de ajuste externo quando o health indicar quota/chave/modelo.
+
+## Prioridade critica
+
+1. Rotacionar todos os segredos ja compartilhados fora do repositorio.
+   - Impacto: altissimo.
+   - Pre-requisito: acesso aos provedores.
+   - Inclui VPS, DirectAdmin, banco, OpenAI, Gemini, Evolution, Home Assistant, n8n, GitHub e webhooks.
+
+2. Oficializar/corrigir roteamento de API.
    - Impacto: alto.
-   - Criar usuario administrador real e exigir troca de senha.
+   - Opcao A: documentar `https://apijarvis.juninnzxtec.com.br/api` como API publica definitiva.
+   - Opcao B: corrigir Caddy para `https://jarvis.juninnzxtec.com.br/api/*` apontar para backend.
 
-3. Criptografar tokens salvos em `Setting`.
+3. Monitorar IA externa em producao.
    - Impacto: alto.
-   - Usar chave de criptografia no `.env`, nunca no frontend.
+   - OpenAI e Gemini retornaram `configured` na validacao atual.
+   - Manter alertas para `invalid_key`, `quota_exceeded`, `model_not_found`, `network_error` e `api_error`.
 
-4. Corrigir roteamento `jarvis.juninnzxtec.com.br/api`.
+4. Configurar WhatsApp/Evolution em producao.
+   - Impacto: alto para uso diario.
+   - Necessario para receber mensagens, audios e extratos via WhatsApp.
+   - Manter `WHATSAPP_AUTO_REPLY=false` por padrao e frase obrigatoria `ei jarvis`.
+
+5. Revisar exposicao do PostgreSQL.
    - Impacto: alto.
-   - Opcao: manter API dedicada como oficial ou configurar proxy do dominio principal.
+   - Ambiente local mostrou `0.0.0.0:5432`.
+   - Em VPS/producao, manter banco apenas em rede Docker/local, nunca publico.
 
-## Prioridade 1 - Estabilidade operacional
+## Prioridade importante
 
-1. Monitoramento externo.
-   - Health check periodico para frontend, API, banco, scheduler e Evolution.
-   - Alertas por email/WhatsApp/Telegram.
+6. Configurar n8n real.
+   - Criar webhook seguro.
+   - Testar payloads `task.created`, `routine.run`, `backup.completed`, `system.alert`.
+   - Registrar logs redigidos.
 
-2. Backup offsite com retencao.
-   - Guardar backup fora da VPS/local.
-   - Definir retencao diaria/semanal/mensal.
-   - Testar restore em ambiente separado.
+7. Configurar Home Assistant real.
+   - Validar URL/token.
+   - Listar entidades.
+   - Liberar apenas acoes seguras sem confirmacao.
+   - Exigir confirmacao para lock/alarm/cover/garage/portao.
 
-3. Ajustar health por usuario/admin.
-   - Mostrar integracoes configuradas via painel, nao apenas env global.
+8. Tratar warnings de transcricao de audio WhatsApp.
+   - Health full mostrou warnings recentes.
+   - Validar formato de midia recebido, download da Evolution API e provedor de transcricao.
 
-4. Recriar container local do Postgres para garantir bind em `127.0.0.1`.
-   - O compose atual ja esta correto; container antigo ainda mostrou `0.0.0.0`.
+9. Investigar historico de `scheduler tick_error`.
+   - Health atual mostra scheduler rodando sem `lastError`, mas logs recentes mostram erros anteriores.
+   - Melhorar alerta e painel de diagnostico.
 
-5. Investigar erros recentes do scheduler.
-   - Health atual esta OK, mas logs mostram tick_error recente.
+10. Criar E2E real com Playwright.
+   - Cobrir login, dashboard, chat, tarefas, financeiro, notificacoes, WhatsApp mock e responsividade.
 
-## Prioridade 2 - Produto para uso diario
+## Prioridade futura
 
-1. Melhorar fluxo financeiro.
-   - Criar/selecionar conta `PJ DO INTER` diretamente pelo painel.
-   - Sincronizar contas do controle financeiro.
-   - Mostrar ultimos lancamentos.
-   - Confirmar lancamentos ambiguos antes de salvar.
+11. Implementar pgvector/memoria semantica real.
+    - Melhorar busca de memorias e contexto do chat.
 
-2. Melhorar WhatsApp.
-   - Tela com QR/status da instancia Evolution se API permitir.
-   - Historico mais claro de mensagens.
-   - Reprocessamento manual seguro de mensagens com erro.
+12. Streaming token a token real.
+    - Melhorar UX do chat.
 
-3. Melhorar n8n.
-   - Templates prontos de workflow.
-   - Historico de chamadas.
-   - Reenvio manual seguro.
+13. Push notifications.
+    - Alertas reais para tarefas vencidas, backup, falha de integracao e scheduler.
 
-4. Melhorar Home Assistant.
-   - Mapeamento amigavel de comodos.
-   - Permissoes por tipo de dispositivo.
-   - Confirmacao forte para locks, alarmes, portoes e garagem.
+14. App mobile/PWA avancado.
+    - Facilitar uso diario por celular.
 
-5. Memoria semantica.
-   - pgvector.
-   - embeddings.
-   - busca por relevancia real.
+15. Multiusuario e permissoes comerciais.
+    - Roles refinadas, auditoria por usuario, trilhas de acesso e politicas de privacidade.
 
-## Prioridade 3 - Producao comercial
+16. Backup offsite automatizado.
+    - S3/Drive/outro VPS com criptografia, retencao e teste de restore em ambiente separado.
 
-1. Multi-tenant real.
-   - Organizacoes/contas.
-   - Isolamento de dados.
-   - RBAC completo.
+17. Monitoramento externo.
+    - Uptime, health, certificado HTTPS, scheduler, banco e alertas.
 
-2. Auditoria e compliance.
-   - Logs imutaveis para acoes sensiveis.
-   - Exportacao LGPD.
-   - Politica de retencao.
+18. Observabilidade avancada.
+    - Metricas, dashboards, tracing simples e alertas por severidade.
 
-3. Pipeline CI/CD.
-   - GitHub Actions.
-   - Testes automáticos em PR.
-   - Deploy automatizado com rollback.
+19. Politica LGPD/privacidade.
+    - Essencial para uso comercial.
 
-4. Testes e2e.
-   - Playwright para login, dashboard, chat, financeiro, WhatsApp mockado e responsividade.
-
-5. Observabilidade profissional.
-   - Metricas.
-   - Traces.
-   - Dashboard externo.
-   - Sentry/OpenTelemetry ou equivalente.
-
-6. Hardening da VPS.
-   - Usuario deploy sem root.
-   - SSH por chave.
-   - Root password desabilitado.
-   - Firewall com 22/80/443 apenas.
-   - Atualizacoes automatizadas de seguranca.
+20. CI/CD.
+    - GitHub Actions com test/validate/build e varredura de segredos.
 
 ## Ordem recomendada por fase
 
-Fase 7:
+### Fase 8.1 - Correcao operacional imediata
 
 - Rotacionar segredos.
-- Corrigir roteamento `/api`.
-- Criptografar tokens no banco.
-- Remover demo em producao.
-- Monitoramento externo basico.
+- Definir API oficial.
+- Monitorar OpenAI/Gemini e validar modelos/quota.
+- Confirmar CORS e dominios.
+- Revalidar producao.
 
-Fase 8:
+### Fase 8.2 - WhatsApp real
 
-- Financeiro robusto: contas, categorias, reprocessamento e confirmacao.
-- WhatsApp com QR/status e historico melhor.
-- n8n com templates reais.
+- Configurar Evolution.
+- Validar instancia.
+- Testar texto com `ei jarvis`.
+- Testar audio.
+- Testar extrato OFX/CSV.
+- Garantir logs redigidos.
 
-Fase 9:
+### Fase 8.3 - Financeiro real
 
-- pgvector e memoria semantica.
-- Streaming real token a token.
-- e2e com navegador.
+- Validar conta PJ DO INTER.
+- Importar extratos reais em ambiente controlado.
+- Revisar duplicatas.
+- Criar regras de categorias.
+- Conectar, se necessario, ao sistema `controlefinanceiro`.
 
-Fase 10:
+### Fase 8.4 - Producao comercial
 
-- Multi-tenant, CI/CD, RBAC, auditoria comercial e observabilidade avancada.
-# Roadmap atualizado apos hardening Fase 7
+- SSH por chave.
+- Firewall.
+- Backup offsite.
+- Monitoramento externo.
+- E2E Playwright.
+- Politicas de privacidade e retencao.
 
-## Critico
+## Resultado esperado
 
-- Rotacionar todos os segredos compartilhados.
-- Definir `SETTINGS_ENCRYPTION_KEY` dedicado em producao.
-- Manter `ALLOW_DEMO_LOGIN=false` em producao.
-- Criar usuario `deploy` com chave SSH e desabilitar root por senha apos validar acesso.
+Com essas melhorias, o JARVIS passa de assistente pessoal funcional para uma base mais confiavel para uso diario real. Para uso comercial, ainda precisa hardening operacional, privacidade, E2E, monitoramento, backups externos e governanca de usuarios.
 
-## Importante
-
-- Conectar monitor externo nas URLs de health.
-- Implementar backup offsite criptografado.
-- Criar testes E2E Playwright em ambiente isolado.
-
-## Futuro
-
-- Parser financeiro PDF/XLSX confiavel.
-- Alertas reais por n8n/WhatsApp/Telegram.
-- Rotacao automatizada de tokens por integracao.
-## Roadmap recomendado após auditoria - 2026-05-16
-
-### Crítico
-
-1. **Rotacionar segredos compartilhados**: todas as chaves, senhas e tokens que já foram expostos em conversa ou documentação operacional devem ser trocados.
-2. **Aplicar hardening na VPS**: usuário deploy com chave SSH, desabilitar root por senha, revisar sudo e UFW.
-3. **Corrigir ou oficializar roteamento de API**: manter `apijarvis` como API oficial ou ajustar Caddy para `jarvis/api/*`.
-4. **Garantir `ALLOW_DEMO_LOGIN=false` em produção** e criar admin real com `npm run create:admin`.
-5. **Configurar `SETTINGS_ENCRYPTION_KEY` forte em produção** e manter fora do Git.
-6. **Recriar/validar containers com portas internas presas em 127.0.0.1**, especialmente PostgreSQL.
-
-### Importante
-
-7. Configurar monitoramento externo para frontend, health, health/full, scheduler e certificado HTTPS.
-8. Implementar backup offsite criptografado com retenção definida.
-9. Configurar n8n real, Evolution API real e Home Assistant real por etapas, com testes de cada integração.
-10. Criar suíte E2E Playwright para login, dashboard, chat, tarefas, financeiro, notificações e responsividade.
-11. Melhorar logs de erros esperados para não registrar 400 de validação como `Unhandled application error`.
-12. Melhorar observabilidade de IA, incluindo motivo de fallback OpenAI/Gemini/local.
-
-### Futuro
-
-13. Implementar pgvector/memória semântica real.
-14. Implementar streaming token a token real no chat.
-15. Criar PWA avançado/push notification.
-16. Criar perfis de usuário/permissões para uso comercial.
-17. Criar auditoria LGPD/privacidade para dados financeiros e WhatsApp.
-18. Criar deploy automatizado CI/CD com checks de segredos.
-
-### Prontidão
-
-- Uso pessoal diário: alto, desde que as credenciais reais e hardening básico sejam aplicados.
-- Produção comercial: médio; precisa de E2E, monitoramento, backup offsite, RBAC, hardening VPS e política de privacidade.

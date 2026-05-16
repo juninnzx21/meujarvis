@@ -1,5 +1,16 @@
 # Security checklist
 
+- [ ] Rotacionar segredos compartilhados fora do repositorio.
+- [x] `.env`, backups, node_modules, dist e imports ignorados no Git.
+- [x] API key da Evolution salva em `Setting` com criptografia.
+- [x] Frontend mostra apenas configurado/mascara, nunca segredo real.
+- [x] WhatsApp exige `ei jarvis` para responder/executar.
+- [x] OFX/CSV via WhatsApp cria previa/revisao, sem importacao direta.
+- [x] Scheduler registra erros redigidos.
+- [ ] Recriar container local do Postgres para aplicar bind `127.0.0.1:5432:5432` se ele ainda aparecer como `0.0.0.0`.
+- [ ] Configurar firewall/SSH hardening em producao.
+- [ ] Configurar monitoramento externo.
+
 - [x] Memorias pessoais nao devem salvar senhas reais, tokens reais, API keys reais, chaves privadas, credenciais, dados bancarios ou dumps.
 - [x] A base pessoal deve usar apenas fatos duradouros, preferencias, contexto tecnico e roadmap seguros.
 - [x] Segredos reais devem ficar em vault/gerenciador de senhas, nunca em `Memory`.
