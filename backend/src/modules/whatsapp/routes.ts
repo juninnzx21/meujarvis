@@ -5,12 +5,44 @@ import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../prisma/client.js";
 import { aiOrchestratorService } from "../../services/aiOrchestratorService.js";
 import { financeIntegrationService } from "../../services/financeIntegrationService.js";
+import { getHealth } from "../../services/healthService.js";
 import { statementImportService } from "../../services/statementImportService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { redactSensitive } from "../../utils/redact.js";
 
 const router = Router();
+
+async function getLocalWhatsAppReply(content: string) {
+  if (/status|sa[uú]de|sistema|health/i.test(content)) {
+    const health = await getHealth(false);
+    return [
+      "Status do JARVIS:",
+      `App: ${health.app}`,
+      `Banco: ${health.database}`,
+      `Scheduler: ${health.scheduler.running ? "rodando" : "parado"}`,
+      `OpenAI: ${health.openaiConfigured ? "configurado" : "ausente"}`,
+      `Gemini: ${health.geminiConfigured ? "configurado" : "ausente"}`,
+      `n8n: ${health.n8nConfigured ? "configurado" : "pendente"}`,
+      `WhatsApp: ${health.whatsappConfigured ? "configurado" : "pendente"}`
+    ].join("\n");
+  }
+  return "";
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  let timeout: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeout = setTimeout(() => resolve(fallback), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 
 const configSchema = z.object({
   apiUrl: z.string().url("Informe a URL da Evolution API.").transform((value) => value.replace(/\/+$/, "")),
@@ -95,7 +127,14 @@ router.post("/webhook", asyncHandler(async (req, res) => {
       if (financeReply) {
         await whatsappService.send(inbound.cleanPhone || inbound.phone, financeReply, admin.id);
       } else {
-        const response = await aiOrchestratorService.process(admin.id, content);
+        const localReply = await getLocalWhatsAppReply(content);
+        const response: { reply: string } = localReply
+          ? { reply: localReply }
+          : await withTimeout<{ reply: string }>(
+            aiOrchestratorService.process(admin.id, content).then((response) => ({ reply: response.reply })),
+            8000,
+            { reply: "Recebi seu comando, mas a IA demorou para responder. Tente de novo em instantes ou use um comando direto como status do sistema." }
+          );
         await whatsappService.send(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
       }
     } else if (inbound.hasAudio && !content) {
