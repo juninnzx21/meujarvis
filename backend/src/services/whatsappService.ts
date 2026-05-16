@@ -49,6 +49,15 @@ function normalizePhone(phone: string) {
   return phone.replace(/@s\.whatsapp\.net|@c\.us|@g\.us/g, "").replace(/\D/g, "");
 }
 
+function normalizeWakeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function detectAttachment(message: any, body: Record<string, any>) {
   const document = message?.documentMessage ?? message?.document ?? body?.documentMessage ?? body?.document ?? null;
   const file = message?.fileMessage ?? body?.fileMessage ?? body?.file ?? null;
@@ -150,6 +159,9 @@ export const whatsappService = {
     const text = String(
       message?.conversation ??
       message?.extendedTextMessage?.text ??
+      message?.documentMessage?.caption ??
+      message?.imageMessage?.caption ??
+      body?.caption ??
       body?.content ??
       body?.text ??
       ""
@@ -162,6 +174,12 @@ export const whatsappService = {
     const isGroup = phone.includes("@g.us");
     const attachment = detectAttachment(message, body);
     return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio: Boolean(audio || mimeType.startsWith("audio/")), attachment };
+  },
+  hasWakePhrase(text: string) {
+    return normalizeWakeText(text).includes("ei jarvis");
+  },
+  stripWakePhrase(text: string) {
+    return text.replace(/(^|\b)ei\s+jarvis[,\s:;-]*/i, "").trim();
   },
   async downloadInboundAttachment(payload: unknown, userId?: string) {
     const inbound = this.extractInbound(payload);

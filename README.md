@@ -254,6 +254,8 @@ Guia completo: [PERSONAL_PROFILE_MEMORY.md](./PERSONAL_PROFILE_MEMORY.md).
 
 O JARVIS aceita extratos OFX/CSV enviados pelo painel financeiro ou pelo webhook WhatsApp/Evolution. O melhor formato para Banco Inter PJ e **OFX**; CSV e fallback confiavel; PDF e apenas conferencia.
 
+No WhatsApp, toda acao exige a frase **"ei jarvis"** no texto, audio transcrito ou legenda do arquivo. Sem essa frase, o JARVIS registra a entrada como ignorada e nao responde nem executa tarefas.
+
 Fluxo seguro:
 
 1. Receber arquivo `.ofx` ou `.csv`.

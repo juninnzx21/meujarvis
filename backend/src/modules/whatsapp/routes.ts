@@ -38,7 +38,33 @@ router.post("/webhook", asyncHandler(async (req, res) => {
   let content = inbound.text;
   let transcriptionStatus = "";
   let statementImportId = "";
-  if (admin && inbound.attachment.hasAttachment && !inbound.fromJarvis && !inbound.isGroup) {
+  let wakePhraseDetected = whatsappService.hasWakePhrase(content);
+
+  if (!content && inbound.hasAudio && admin) {
+    const transcription = await whatsappService.transcribeInboundAudio(req.body, admin.id);
+    content = transcription.text;
+    transcriptionStatus = transcription.status;
+    wakePhraseDetected = whatsappService.hasWakePhrase(content);
+  }
+
+  await prisma.whatsAppMessage.create({
+    data: {
+      phone: inbound.phone,
+      content: content || (inbound.hasAudio ? "[audio recebido sem transcricao]" : inbound.attachment.hasAttachment ? "[arquivo recebido sem wake phrase]" : ""),
+      direction: "inbound",
+      status: wakePhraseDetected ? "received" : "ignored_wake_phrase_required",
+      rawPayload: req.body
+    }
+  });
+
+  if (!wakePhraseDetected || inbound.fromJarvis || inbound.isGroup) {
+    res.json({ received: true, ignored: "wake_phrase_required", processedText: false, transcriptionStatus: transcriptionStatus || undefined });
+    return;
+  }
+
+  content = whatsappService.stripWakePhrase(content);
+
+  if (admin && inbound.attachment.hasAttachment) {
     const file = await whatsappService.downloadInboundAttachment(req.body, admin.id);
     if (file.status === "success") {
       const statement = await statementImportService.uploadFromWhatsApp(admin.id, {
@@ -57,23 +83,9 @@ router.post("/webhook", asyncHandler(async (req, res) => {
       await whatsappService.send(inbound.cleanPhone || inbound.phone, file.message ?? "Recebi o arquivo, mas nao consegui ler com seguranca. Envie OFX ou CSV.", admin.id);
     }
   }
-  if (!content && inbound.hasAudio && admin) {
-    const transcription = await whatsappService.transcribeInboundAudio(req.body, admin.id);
-    content = transcription.text;
-    transcriptionStatus = transcription.status;
-  }
-  await prisma.whatsAppMessage.create({
-    data: {
-      phone: inbound.phone,
-      content: content || (inbound.hasAudio ? "[audio recebido sem transcricao]" : ""),
-      direction: "inbound",
-      status: content ? "received" : "received_unprocessed",
-      rawPayload: req.body
-    }
-  });
   if (admin) {
     const config = await whatsappService.runtimeConfig(admin.id);
-    if (config.autoReply && content && !inbound.fromJarvis && !inbound.isGroup) {
+    if (config.autoReply && content) {
       const financeReply = await financeIntegrationService.handleWhatsAppText(admin.id, content);
       if (financeReply) {
         await whatsappService.send(inbound.cleanPhone || inbound.phone, financeReply, admin.id);

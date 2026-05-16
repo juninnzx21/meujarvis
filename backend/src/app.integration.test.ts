@@ -746,6 +746,7 @@ describe("JARVIS Home AI API", () => {
             documentMessage: {
               fileName: "Extrato-17-10-2024-a-16-05-2026-CSV.csv",
               mimetype: "text/csv",
+              caption: "ei jarvis importar extrato",
               base64: Buffer.from(generateInterCsv(3), "utf8").toString("base64")
             }
           }
@@ -754,5 +755,38 @@ describe("JARVIS Home AI API", () => {
       .expect(200);
     expect(webhook.body.statementImportId).toEqual(expect.any(String));
     await prisma.statementImport.deleteMany({ where: { id: { in: [importId, webhook.body.statementImportId] } } });
+  });
+
+  it("ignores WhatsApp messages and files without the required wake phrase", async () => {
+    const text = await request(app)
+      .post("/api/whatsapp/webhook")
+      .send({
+        data: {
+          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          message: { conversation: "entrada pix recebido R$ 120,00 cliente Joao" }
+        }
+      })
+      .expect(200);
+    expect(text.body.ignored).toBe("wake_phrase_required");
+    expect(text.body.processedText).toBe(false);
+
+    const file = await request(app)
+      .post("/api/whatsapp/webhook")
+      .send({
+        data: {
+          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          message: {
+            documentMessage: {
+              fileName: "extrato.csv",
+              mimetype: "text/csv",
+              caption: "importar extrato",
+              base64: Buffer.from(generateInterCsv(1), "utf8").toString("base64")
+            }
+          }
+        }
+      })
+      .expect(200);
+    expect(file.body.ignored).toBe("wake_phrase_required");
+    expect(file.body.statementImportId).toBeUndefined();
   });
 });
