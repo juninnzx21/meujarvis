@@ -78,6 +78,23 @@ docker compose ps
 2. O teste TCP em `localhost` mostrou aviso para IPv6 `::1`, mas passou em IPv4 `127.0.0.1`.
 3. A validacao foi exclusivamente local; producao nao foi testada nesta rodada por solicitacao expressa.
 
+## Atualizacao Fase Suprema - 2026-05-17
+
+Nova rodada local completa executada em `E:\jarvis-home-assistant`.
+
+- Backend `npm audit --omit=dev`: 0 vulnerabilidades.
+- Prisma generate/validate/migrate status: OK, schema em sincronia.
+- `npm run seed:personal`: OK, `created=0 updated=0 skipped=0 total=47`.
+- Backend testes: **41 passed**.
+- Backend validate/build: OK.
+- Frontend `npm audit --omit=dev`: 0 vulnerabilidades.
+- Frontend testes: **15 passed**.
+- Frontend validate/build: OK.
+- `validate-jarvis.ps1`: OK.
+- `backup-jarvis.ps1`: OK, backup criado em `backups\jarvis_db_20260517_190207.sql`.
+- `status-n8n.ps1`: OK, n8n HTTP 200 em `127.0.0.1:15678`.
+- Ressalva: build frontend emitiu apenas aviso de chunk acima de 500 kB, sem falhar.
+
 ## Proximos passos
 
 1. Quando quiser validar a interface local, iniciar backend/frontend dev e rodar `status-jarvis.ps1` novamente.

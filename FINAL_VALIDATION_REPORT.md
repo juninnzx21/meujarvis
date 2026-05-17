@@ -269,3 +269,25 @@ Ressalva: a qualidade final depende das vozes disponiveis no navegador/sistema. 
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase Suprema - consolidacao 2026-05-17
+
+Status final: **APROVADO COM RESSALVAS**.
+
+Validacao executada:
+
+- Docker/PostgreSQL: `jarvis-postgres` healthy em `127.0.0.1:5432`.
+- n8n local: `jarvis-n8n` ativo em `127.0.0.1:15678`, HTTP 200.
+- Backend: audit sem vulnerabilidades, Prisma OK, seed pessoal OK, **41 testes passaram**, validate OK, build OK.
+- Frontend: audit sem vulnerabilidades, **15 testes passaram**, validate OK, build OK.
+- Scripts: `status-jarvis.ps1`, `validate-jarvis.ps1`, `backup-jarvis.ps1`, `status-n8n.ps1` executados; backup local criado em pasta ignorada pelo Git.
+- Smoke visual local: `/tasks`, `/n8n`, `/whatsapp`, `/documents`, `/finance/import`, `/smart-home`, `/integrations/setup-wizard`, `/brain` e `/voice` carregaram sem crash.
+
+Ressalvas reais:
+
+1. Evolution API/WhatsApp real depende de credenciais e pareamento QR real.
+2. Home Assistant real depende de URL/token.
+3. n8n producao depende de `.env`, Basic Auth, Caddy/DNS e importacao real de workflows.
+4. E2E Playwright completo segue planejado.
+5. pgvector/embeddings externos seguem preparados, mas nao ativados por padrao.
+6. Deploy remoto deve ser feito somente por canal seguro, sem imprimir credenciais.

@@ -155,3 +155,17 @@ Prioridade seguinte:
 - Automatizar importacao real dos workflows via API do n8n quando a API key estiver disponivel.
 - Adicionar Playwright para o wizard completo.
 - Monitoramento externo com alertas via n8n.
+## Roadmap apos Fase Suprema - 2026-05-17
+
+Prioridade imediata:
+
+1. Fazer deploy seguro do commit atual na VPS e publicar `frontend/dist` na hospedagem.
+2. Validar producao em `https://jarvis.juninnzxtec.com.br` e `https://apijarvis.juninnzxtec.com.br/api/health/full`.
+3. Configurar n8n producao com Basic Auth, `N8N_ENCRYPTION_KEY`, Caddy e workflows reais.
+4. Configurar Evolution API pelo painel, gerar QR no JARVIS e validar `ei jarvis status do sistema`.
+5. Configurar Home Assistant real com token e validar somente acoes seguras.
+6. Ativar monitoramento externo e alertas.
+7. Configurar backup offsite criptografado.
+8. Implantar E2E Playwright completo com dados fake.
+9. Avaliar pgvector/embeddings externos com consentimento explicito.
+10. Revisar chunk splitting do frontend para reduzir aviso de bundle acima de 500 kB.

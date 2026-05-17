@@ -50,3 +50,11 @@ npm run build
 - Nenhum bug critico ou alto identificado nesta revisao funcional.
 - Pendencia de melhoria: ampliar testes automatizados de estado de erro/empty para as telas alteradas.
 - Pendencia de conteudo: revisar outros textos antigos com caracteres quebrados em uma rodada dedicada.
+
+## Atualizacao Fase Suprema - 2026-05-17
+
+- Nenhuma nova correcao de codigo foi necessaria durante a consolidacao.
+- Brain Core, voz premium, n8n local, financeiro com revisao e WhatsApp com `ei jarvis` continuaram cobertos por testes automatizados.
+- Backend: 41 testes OK.
+- Frontend: 15 testes OK.
+- Bugs pendentes reais: E2E Playwright completo ainda planejado; deploy remoto/credenciais reais de Evolution, Home Assistant e n8n API dependem de configuracao operacional segura.

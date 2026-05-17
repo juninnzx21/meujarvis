@@ -325,3 +325,19 @@ Status: implementado localmente.
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase Suprema - status 2026-05-17
+
+Status operacional: **APROVADO COM RESSALVAS**.
+
+- Backend local validado: 41 testes, validate e build OK.
+- Frontend local validado: 15 testes, validate e build OK.
+- PostgreSQL local: healthy.
+- n8n local: ativo e HTTP 200.
+- Backup local: OK.
+- Brain Core: ativo e integrado ao chat/voz/WhatsApp.
+- Voz premium original: implementada com SpeechSynthesis local e microfone apenas por clique.
+- Financeiro: importacao OFX/CSV continua exigindo revisao.
+- Documentos/RAG: upload/chunks/busca textual preparados.
+- Monitoramento/offsite/E2E: documentados e preparados; dependem de ativacao operacional.
+- Producao real de Evolution, Home Assistant e n8n API: depende de credenciais reais.

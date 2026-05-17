@@ -36,3 +36,16 @@ As URLs publicas principais responderam HTTP 200. A API oficial `apijarvis` resp
 - Rotas privadas.
 - Pentest/fuzzing/teste ofensivo.
 - Alteracao de credenciais.
+# Atualizacao Fase Suprema - 2026-05-17
+
+Escopo: checagem HTTP publica basica, sem login, sem webhook, sem payloads e sem credenciais.
+
+| URL | HTTP | Tipo | Resultado |
+| --- | --- | --- | --- |
+| `https://jarvis.juninnzxtec.com.br` | 200 | HTML | Frontend publico respondeu. |
+| `https://apijarvis.juninnzxtec.com.br/api/health` | 200 | JSON | API oficial respondeu. |
+| `https://apijarvis.juninnzxtec.com.br/api/health/public` | 200 | JSON | Health publico respondeu. |
+| `https://apijarvis.juninnzxtec.com.br/api/health/full` | 200 | JSON | Health completo respondeu sem expor segredos no cabecalho. |
+| `https://n8njarvis.juninnzxtec.com.br` | 200 | HTML | Subdominio respondeu; operacao real do n8n depende de autenticacao/configuracao de producao. |
+
+Ressalva operacional: a checagem foi apenas HTTP basica; nao validou login, dados privados, webhook real ou a configuracao interna do n8n.

@@ -96,3 +96,13 @@ Resultado:
 1. Em outra rodada, testar visualmente as telas alteradas em navegador local ou ambiente de staging.
 2. Adicionar testes frontend especificos para estados de erro/empty em n8n, WhatsApp, Tasks, Documents e Smart Home.
 3. Revisar textos com caracteres quebrados em outras telas antigas, sem misturar com mudancas funcionais maiores.
+
+## Atualizacao Fase Suprema - 2026-05-17
+
+As validacoes foram reexecutadas apos a consolidacao do Brain Core e do modo de voz premium.
+
+- Backend: **41 testes passaram**, validate OK, build OK.
+- Frontend: **15 testes passaram**, validate OK, build OK.
+- Telas revisadas no smoke visual: `/tasks`, `/n8n`, `/whatsapp`, `/documents`, `/finance/import`, `/smart-home`, `/integrations/setup-wizard`, `/brain`, `/voice`.
+- Nenhum bug critico ou alto foi identificado.
+- Ressalva visual: `/jarvis-mode` e `/settings/voice` foram cobertas por testes automatizados, mas o navegador interno retornou para login antes da validacao visual dessas duas rotas.

@@ -33,10 +33,16 @@ cd /opt/jarvis-home-assistant
 git pull origin main
 git log --oneline -n 5
 docker compose ps
-docker compose up -d --build backend
+docker compose up -d --build backend n8n n8n-postgres
+docker compose exec backend npx prisma migrate deploy
+docker compose exec backend npx prisma generate
+docker compose ps
 docker compose logs --tail=100 backend
+docker compose logs --tail=100 n8n
 curl -fsS https://apijarvis.juninnzxtec.com.br/api/health
+curl -fsS https://apijarvis.juninnzxtec.com.br/api/health/public
 curl -fsS https://apijarvis.juninnzxtec.com.br/api/health/full
+curl -I https://n8njarvis.juninnzxtec.com.br
 ```
 
 Se houver migrations novas em uma fase futura, validar antes de aplicar:
@@ -172,3 +178,36 @@ No painel:
 - Confirmar webhook `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
 - Confirmar n8n publico `https://n8njarvis.juninnzxtec.com.br`.
 - Testar providers sem expor credenciais.
+
+## Caddy esperado para n8n
+
+```caddy
+n8njarvis.juninnzxtec.com.br {
+    reverse_proxy 127.0.0.1:15678
+}
+```
+
+Validar e recarregar:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+## Deploy Fase Suprema
+
+Depois de publicar o commit da Fase Suprema, validar no painel:
+
+- `/brain`
+- `/brain/agents`
+- `/brain/tools`
+- `/brain/feedback`
+- `/voice`
+- `/jarvis-mode`
+- `/settings/voice`
+- `/integrations/setup-wizard`
+- `/whatsapp`
+- `/n8n`
+- `/finance/import`
+
+Ressalva: nao publicar n8n sem `N8N_ENCRYPTION_KEY`, Basic Auth e HTTPS funcionando.
