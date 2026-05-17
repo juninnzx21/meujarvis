@@ -50,3 +50,28 @@ echo | openssl s_client -servername apijarvis.juninnzxtec.com.br -connect apijar
 ## n8n monitor
 
 Importe `n8n/workflows/jarvis-health-monitor.json` no n8n para checar `https://apijarvis.juninnzxtec.com.br/api/health/full` periodicamente. Configure alertas somente com credenciais reais dentro do n8n, nunca nos JSON versionados.
+
+## Fase 3.0 - monitoramento externo preparado
+
+Status: **preparado / manual_action_required**.
+
+Servicos recomendados:
+
+- Uptime Kuma;
+- Better Stack;
+- Healthchecks.io;
+- workflow `jarvis-health-monitor` no n8n.
+
+Alertas recomendados:
+
+- API caiu;
+- frontend caiu;
+- scheduler parou;
+- banco caiu;
+- n8n caiu;
+- WhatsApp desconectou;
+- backup falhou;
+- certificado SSL perto de vencer;
+- OpenAI/Gemini com erro.
+
+`/api/health/public` deve continuar retornando apenas `app`, `database`, `scheduler` e `timestamp`, sem segredos.

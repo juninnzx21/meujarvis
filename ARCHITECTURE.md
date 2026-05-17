@@ -202,3 +202,16 @@ Credenciais sensiveis sao persistidas em `Setting` usando AES-256-GCM via `encry
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase 3.0 - operacao real
+
+A arquitetura de producao fica dividida em:
+
+- Frontend estatico na Fabweb/DirectAdmin em `jarvis.juninnzxtec.com.br`.
+- API oficial em `apijarvis.juninnzxtec.com.br/api`.
+- n8n via Docker/Caddy em `n8njarvis.juninnzxtec.com.br`, proxy para `127.0.0.1:15678`.
+- PostgreSQL local da aplicacao em porta interna.
+- n8n-postgres separado em porta interna.
+- Integracoes reais configuradas pela Central, com segredos criptografados em `Setting` ou `.env`.
+
+Deploy remoto, monitoramento externo, Evolution API, Home Assistant e backup offsite permanecem etapas operacionais com `manual_action_required` enquanto nao houver credenciais reais seguras.

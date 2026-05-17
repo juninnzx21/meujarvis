@@ -169,3 +169,18 @@ Prioridade imediata:
 8. Implantar E2E Playwright completo com dados fake.
 9. Avaliar pgvector/embeddings externos com consentimento explicito.
 10. Revisar chunk splitting do frontend para reduzir aviso de bundle acima de 500 kB.
+
+## Roadmap Fase 3.0
+
+Prioridade exata:
+
+1. Executar deploy na VPS usando `DEPLOY_REAL_PRODUCTION_PHASE.md`.
+2. Publicar `frontend/dist` na Fabweb/DirectAdmin.
+3. Configurar n8n producao com Caddy, Basic Auth e chave de criptografia.
+4. Importar workflows via painel `/n8n`.
+5. Configurar Evolution API, gerar QR no JARVIS e testar `ei jarvis status do sistema`.
+6. Enviar OFX/CSV real controlado e confirmar previa em `/finance/import/:id/review`.
+7. Configurar Home Assistant se houver token real.
+8. Ativar monitoramento externo.
+9. Configurar backup offsite criptografado.
+10. Implementar `npm run e2e` com Playwright e dados fake.

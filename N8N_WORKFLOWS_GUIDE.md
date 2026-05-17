@@ -68,3 +68,20 @@ Endpoints relacionados:
 - `POST /api/n8n/workflows/test/:name`
 
 Quando a API key do n8n nao estiver configurada, o JARVIS retorna `manual_action_required` e orienta importacao manual pelo editor do n8n.
+
+## Fase 3.0 - workflows obrigatorios
+
+Workflows esperados em `n8n/workflows/`:
+
+- `jarvis-system-alert.json`
+- `jarvis-daily-summary.json`
+- `jarvis-task-created.json`
+- `jarvis-task-overdue.json`
+- `jarvis-backup-completed.json`
+- `jarvis-finance-transaction.json`
+- `jarvis-statement-import.json`
+- `jarvis-whatsapp-command.json`
+- `jarvis-health-monitor.json`
+- `jarvis-evolution-test.json`
+
+No painel `/n8n`, use listar workflows, importar individual, importar todos e testar workflow quando API key estiver configurada. Sem API key real, o comportamento correto e `manual_action_required`.

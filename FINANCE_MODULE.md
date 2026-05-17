@@ -79,3 +79,16 @@ Se a conta nao existir, o JARVIS pergunta se deve criar e solicita saldo inicial
 - PDF e XLSX ainda nao tem parser confiavel nesta fase.
 - Regras automaticas existem no backend, mas a criacao guiada ao corrigir categoria na UI deve ser refinada em fase futura.
 - Sem OCR e sem envio automatico para IA externa.
+
+## Fase 3.0 - uso real pelo Brain
+
+Comandos esperados no chat/Brain:
+
+- `Jarvis, quanto entrou esse mes?`
+- `Jarvis, quanto saiu esse mes?`
+- `Jarvis, qual meu saldo total?`
+- `Jarvis, o que esta sem categoria?`
+- `Jarvis, conferir duplicatas`
+- `Jarvis, resumo financeiro do mes`
+
+O FinanceAgent deve consultar dados internos antes de responder, manter ressalvas quando faltarem dados e nunca enviar extratos sensiveis para IA externa sem consentimento explicito.

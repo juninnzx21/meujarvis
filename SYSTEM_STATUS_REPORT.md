@@ -341,3 +341,16 @@ Status operacional: **APROVADO COM RESSALVAS**.
 - Documentos/RAG: upload/chunks/busca textual preparados.
 - Monitoramento/offsite/E2E: documentados e preparados; dependem de ativacao operacional.
 - Producao real de Evolution, Home Assistant e n8n API: depende de credenciais reais.
+
+## Fase 3.0 - readiness de producao
+
+Status: **APROVADO COM RESSALVAS**.
+
+- Deploy remoto: preparado por `DEPLOY_REAL_PRODUCTION_PHASE.md`; execucao depende de acesso seguro.
+- n8n producao: checklist pronto para Caddy, Basic Auth, `N8N_ENCRYPTION_KEY`, `WEBHOOK_URL` e workflows.
+- WhatsApp/Evolution: QR e webhook prontos no painel; validacao real depende de API key/instancia.
+- Financeiro real: revisao obrigatoria mantida para OFX/CSV.
+- Home Assistant: preparado em `HOME_ASSISTANT_SETUP.md`; token real pendente.
+- Monitoramento: health endpoints e checklist externo preparados.
+- Backup offsite: plano criptografado preparado; destino externo pendente.
+- E2E: plano atualizado; Playwright completo ainda pendente.

@@ -291,3 +291,24 @@ Ressalvas reais:
 4. E2E Playwright completo segue planejado.
 5. pgvector/embeddings externos seguem preparados, mas nao ativados por padrao.
 6. Deploy remoto deve ser feito somente por canal seguro, sem imprimir credenciais.
+
+## Fase 3.0 - producao real, integracoes reais, E2E e uso diario
+
+Status: **APROVADO COM RESSALVAS**.
+
+Validado/preparado:
+
+- Backend: audit, Prisma, seed pessoal, testes, validate e build.
+- Frontend: audit, testes, validate e build.
+- PostgreSQL local: healthy.
+- n8n local: ativo em `127.0.0.1:15678`.
+- Backup local: executado em pasta ignorada pelo Git.
+- Deploy real: documentado em `DEPLOY_REAL_PRODUCTION_PHASE.md`.
+- n8n producao: checklist de Caddy, Basic Auth, `N8N_ENCRYPTION_KEY`, `WEBHOOK_URL` e workflows.
+- WhatsApp/Evolution: fluxo QR/webhook preparado, depende de credencial real para pareamento.
+- Financeiro: OFX/CSV continuam exigindo revisao.
+- Home Assistant: documentado em `HOME_ASSISTANT_SETUP.md`, depende de token real.
+- Monitoramento e backup offsite: preparados, dependem de servicos externos.
+- E2E Playwright: plano atualizado; script ainda nao ativo.
+
+Ressalvas: credenciais reais, deploy remoto, Caddy/DNS, Home Assistant, backup offsite e monitoramento externo exigem acao manual segura.

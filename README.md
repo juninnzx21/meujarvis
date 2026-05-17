@@ -368,3 +368,20 @@ O JARVIS agora possui um assistente universal em `/integrations/setup-wizard` e 
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase 3.0 - producao real e uso diario
+
+Status: **APROVADO COM RESSALVAS**.
+
+Esta fase adiciona os guias operacionais para deploy real, n8n em producao, Evolution/WhatsApp real, Home Assistant, monitoramento externo, backup offsite e E2E planejado.
+
+Arquivos principais:
+
+- `DEPLOY_REAL_PRODUCTION_PHASE.md`
+- `QA_PRODUCTION_READINESS_REPORT.md`
+- `HOME_ASSISTANT_SETUP.md`
+- `MONITORING_SETUP.md`
+- `OFFSITE_BACKUP_PLAN.md`
+- `E2E_TEST_PLAN.md`
+
+Ressalvas: credenciais reais, Caddy/DNS, Home Assistant, Evolution API, monitoramento externo e backup offsite dependem de acao manual segura.

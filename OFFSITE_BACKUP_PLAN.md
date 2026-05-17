@@ -48,3 +48,21 @@ psql jarvis_restore_test < backup.sql
 ```
 
 Em producao, use `restore-jarvis.ps1` apenas com confirmacao manual e backup recente.
+
+## Fase 3.0 - preparo offsite criptografado
+
+Status: **preparado / manual_action_required**.
+
+O script `backup-offsite-jarvis.ps1` existe como base operacional. Ele nao deve enviar nada para fora sem destino externo e credencial explicitamente configurados pelo usuario.
+
+Checklist para ativacao:
+
+- escolher destino: S3 compativel, Google Drive/rclone, outro VPS ou cofre gerenciado;
+- criar chave de criptografia fora do repositorio;
+- gerar backup local com `backup-jarvis.ps1`;
+- criptografar antes de transferir;
+- registrar data, tamanho e checksum;
+- testar restore somente em ambiente separado;
+- manter retencao: diario 7 dias, semanal 4 semanas, mensal 6 meses.
+
+Ressalva: offsite real depende de credencial/destino externo e deve permanecer `manual_action_required` ate configuracao segura.

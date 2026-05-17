@@ -61,3 +61,26 @@ Fluxos prioritarios para a proxima fase:
 
 Critério de aceite futuro: `npm run e2e` deve rodar contra ambiente local isolado, com dados fake, sem credenciais reais, sem chamadas destrutivas e sem extratos reais.
 - Nao rodar restore.
+
+## Status Fase 3.0 - producao e uso diario
+
+Status: **planejado / pendencia nao bloqueante**.
+
+O projeto ainda nao possui `npm run e2e` no `frontend/package.json`. A decisao desta fase foi manter Playwright como plano claro em vez de instalar dependencia pesada durante a rodada de producao, porque os testes existentes ja cobrem backend e frontend por Vitest e as integracoes reais dependem de credenciais.
+
+Fluxos que o E2E deve cobrir quando ativado:
+
+- login e erro de login;
+- dashboard e status;
+- chat com modo Brain;
+- `/brain`, `/brain/agents`, `/brain/tools`, `/brain/feedback`;
+- voz sem iniciar microfone automaticamente;
+- tarefas;
+- central de integracoes e setup wizard;
+- n8n com `manual_action_required` sem API key;
+- WhatsApp com webhook oficial, QR mockado e regra `ei jarvis`;
+- financeiro, importacao mock OFX/CSV e pagina de revisao;
+- documentos/RAG com arquivo fake;
+- mobile viewport e PWA basico.
+
+Regra operacional: os E2E devem usar dados fake, ambiente local isolado, nenhum extrato real e nenhuma credencial real.

@@ -82,3 +82,25 @@ Segredos ficam criptografados em `Setting` e o frontend exibe apenas flags/masca
 - O n8n local depende de `.env` com credenciais fortes.
 - Producao depende de DNS/Caddy/SSL.
 - Workflows JSON nao possuem credenciais reais; configure credenciais dentro do n8n.
+
+## Fase 3.0 - readiness de producao
+
+Status: **local OK / producao manual_action_required**.
+
+Validado localmente:
+
+- `jarvis-n8n` ativo em `127.0.0.1:15678`;
+- `jarvis-n8n-postgres` healthy em `127.0.0.1:15433`;
+- HTTP local do n8n retorna 200;
+- workflows JSON existem em `n8n/workflows/`;
+- exports versionados nao devem conter credenciais reais.
+
+Para producao, confirmar antes de liberar uso diario:
+
+- Basic Auth forte;
+- `N8N_ENCRYPTION_KEY` forte e persistente;
+- `N8N_EDITOR_BASE_URL=https://n8njarvis.juninnzxtec.com.br`;
+- `WEBHOOK_URL=https://n8njarvis.juninnzxtec.com.br`;
+- Caddy apontando para `127.0.0.1:15678`;
+- porta 5678 sem exposicao publica direta;
+- credenciais configuradas somente dentro do n8n.

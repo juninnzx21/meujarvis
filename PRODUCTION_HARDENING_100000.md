@@ -54,3 +54,18 @@
 - Backup local em `backups/`.
 - Backup offsite criptografado.
 - Restore somente com confirmacao explicita e ambiente separado.
+
+## Fase 3.0 - checklist operacional final
+
+- Rotacionar segredos compartilhados fora de vault/gerenciador.
+- Usar SSH com chave.
+- Desabilitar login root por senha.
+- Ativar firewall UFW.
+- Manter Caddy como unico ponto publico HTTP/HTTPS.
+- Fechar portas internas de PostgreSQL, n8n e servicos auxiliares.
+- Garantir `ALLOW_DEMO_LOGIN=false` em producao.
+- Manter logs redigidos.
+- Manter tokens de integracao criptografados em `Setting`.
+- Ativar backup offsite criptografado.
+- Ativar monitoramento externo.
+- Documentar politica de privacidade e uso de dados.

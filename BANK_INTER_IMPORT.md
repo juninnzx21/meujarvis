@@ -78,3 +78,7 @@ Nada e importado automaticamente. Use a tela de revisao para:
 ## Limites
 
 Nao envie extratos completos para provedores externos sem consentimento explicito. A categorizacao padrao e local e baseada em regras/palavras-chave.
+
+## Fase 3.0 - validacao real
+
+Para um extrato real do Inter, o proximo passo seguro e enviar OFX/CSV pelo painel ou WhatsApp com `ei jarvis importar esse extrato do Inter`, confirmar que o JARVIS criou uma previa e revisar tudo em `/finance/import/:id/review` antes de importar aprovadas.

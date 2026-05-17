@@ -41,3 +41,11 @@
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase 3.0
+
+- Para producao real, seguir `DEPLOY_REAL_PRODUCTION_PHASE.md`.
+- Nao executar deploy remoto sem canal seguro.
+- n8n, Evolution, Home Assistant, monitoramento externo e backup offsite devem retornar `manual_action_required` quando faltarem credenciais reais.
+- Playwright E2E completo ainda e pendencia planejada em `E2E_TEST_PLAN.md`.
+- Ao final de mudancas seguras, validar Git para garantir que arquivos sensiveis nao entraram no versionamento.

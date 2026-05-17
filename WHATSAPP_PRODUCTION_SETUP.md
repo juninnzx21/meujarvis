@@ -171,3 +171,31 @@ Se audio falhar, a midia pode nao ter vindo em base64, a URL pode estar expirada
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase 3.0 - operacao real pelo painel
+
+Status: **preparado / depende de credenciais reais**.
+
+Fluxo esperado em `/whatsapp` e `/integrations/setup-wizard`:
+
+1. Configurar Evolution API URL.
+2. Configurar instancia.
+3. Salvar API key criptografada.
+4. Testar conexao.
+5. Criar/listar instancia se a API permitir.
+6. Gerar QR Code ou pairing code dentro do JARVIS.
+7. Fazer polling de `connectionState`.
+8. Confirmar estado `connected/open`.
+9. Configurar webhook oficial automaticamente quando a versao da Evolution permitir.
+10. Se a API nao permitir, exibir `manual_action_required` com checklist manual.
+
+Webhook oficial: `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
+
+Testes reais apos pareamento:
+
+- `ei jarvis status do sistema`
+- `ei jarvis quais tarefas tenho hoje?`
+- `ei jarvis quanto entrou esse mes?`
+- `ei jarvis importar esse extrato do Inter`
+
+Sem `ei jarvis`, o JARVIS nao deve executar comando.

@@ -40,3 +40,15 @@ Mensagem esperada do JARVIS:
 - Logs registram apenas `fileType`, `rowCount`, `importId`, `bankName` e status.
 - Conteudo completo de linhas bancarias nao deve ser logado.
 - Arquivos ficam fora do Git.
+
+## Fase 3.0 - teste real recomendado
+
+Depois que Evolution estiver conectado por QR:
+
+1. Enviar mensagem: `ei jarvis importar esse extrato do Inter`.
+2. Anexar OFX ou CSV real.
+3. Confirmar que o JARVIS responde com link/indicacao de previa.
+4. Abrir `/finance/import/:id/review`.
+5. Revisar e aprovar linhas.
+
+Se a mensagem nao tiver `ei jarvis`, o arquivo deve ser ignorado para comando automatico.

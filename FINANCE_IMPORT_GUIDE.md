@@ -38,3 +38,19 @@ Quando o extrato indicar Banco Inter, codigo `077` e conta `439443873`, o JARVIS
 - O conteudo bruto do extrato nao deve aparecer em logs.
 - Backups, uploads e extratos ficam fora do Git.
 - Dados sensiveis devem permanecer apenas em armazenamento local/seguro.
+
+## Fase 3.0 - validacao real controlada
+
+Status: **preparado / requer arquivo real revisado pelo usuario**.
+
+Fluxo obrigatorio para uso diario:
+
+1. Enviar OFX como formato principal ou CSV como fallback.
+2. Criar `StatementImport` e `StatementImportRow`.
+3. Detectar duplicatas antes de importar.
+4. Abrir `/finance/import/:id/review`.
+5. Revisar conta, categoria e descricao.
+6. Aprovar somente linhas confiaveis.
+7. Importar aprovadas.
+
+Nenhum caminho deve criar transacao financeira diretamente a partir de OFX/CSV sem revisao.

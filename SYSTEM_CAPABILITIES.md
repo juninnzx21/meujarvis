@@ -206,3 +206,18 @@ Ainda exigem acao manual externa: DNS/Caddy do n8n, credenciais reais da Evoluti
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase 3.0 - capacidades operacionais
+
+Agora o projeto possui guias e readiness para:
+
+- deploy real na VPS/Fabweb;
+- n8n producao com Caddy, Basic Auth e workflows;
+- WhatsApp/Evolution real com QR pelo JARVIS;
+- Home Assistant com token mascarado e acoes sensiveis confirmadas;
+- monitoramento externo;
+- backup offsite criptografado;
+- plano E2E Playwright;
+- validacao de producao publica basica.
+
+Capacidades que ainda dependem de credenciais reais devem aparecer como `not_configured` ou `manual_action_required`.

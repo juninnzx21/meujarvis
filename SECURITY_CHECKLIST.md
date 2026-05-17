@@ -104,3 +104,16 @@
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+## Fase 3.0 - producao real
+
+- [x] Deploy real documentado sem expor credenciais.
+- [x] Caddy/n8n documentado com proxy para `127.0.0.1:15678`.
+- [x] Health publico deve permanecer sem segredos.
+- [x] Backup offsite exige criptografia e destino explicito.
+- [x] Home Assistant sensivel exige confirmacao.
+- [x] WhatsApp real continua exigindo `ei jarvis`.
+- [x] OFX/CSV continuam exigindo revisao.
+- [ ] Ativar monitoramento externo com credenciais reais.
+- [ ] Configurar backup offsite criptografado real.
+- [ ] Executar rotacao de credenciais compartilhadas fora de vault.

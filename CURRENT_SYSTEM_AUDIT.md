@@ -483,3 +483,16 @@ Ressalvas:
 - Integracoes reais dependem de credenciais externas.
 - E2E Playwright completo segue planejado.
 - Deploy remoto exige canal seguro e validacao pos-deploy.
+
+## Atualizacao Fase 3.0 - producao real
+
+Status: **APROVADO COM RESSALVAS**.
+
+O sistema esta pronto para a rodada de operacao real, com deploy documentado, n8n local validado, workflows versionados, WhatsApp/Evolution preparado para QR pelo painel, financeiro mantendo revisao obrigatoria, Home Assistant em modo seguro sem token real, monitoramento externo preparado e backup offsite planejado.
+
+Riscos/ressalvas:
+
+- Deploy remoto ainda nao foi executado nesta auditoria local.
+- Credenciais reais devem ser preenchidas pelo painel ou `.env` seguro.
+- Playwright E2E completo ainda precisa ser implementado.
+- Backup offsite so deve enviar arquivos apos criptografia e destino externo configurado.
