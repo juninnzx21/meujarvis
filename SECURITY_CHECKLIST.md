@@ -88,3 +88,5 @@
 - [ ] Criar usuario `deploy` com chave SSH.
 - [ ] Desabilitar login root por senha depois de validar chave.
 - [ ] Revisar portas UFW extras antes de remover.
+
+- [x] Assistente Universal retorna somente status, mascara, URLs publicas e checklists; nenhum provider deve devolver segredo real ao frontend.

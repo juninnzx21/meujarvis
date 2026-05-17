@@ -287,3 +287,7 @@ Ressalvas:
 - Evolution pode exigir configuracao manual do webhook no manager.
 - OpenAI/Gemini seguem via ambiente/secret manager para evitar expor chaves no painel.
 
+
+## Assistente Universal - 2026-05-17
+
+Implementado em `/integrations/setup-wizard` com backend `/api/integrations/setup/*`, status padronizado, checklists manuais e resumo final em `/integrations/setup-summary`. Segredos continuam fora do frontend.

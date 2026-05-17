@@ -955,7 +955,24 @@ describe("JARVIS Home AI API", () => {
     expect(["not_configured", "success", "error"]).toContain(test.body.status);
 
     const wizard = await request(app).get("/api/integrations/setup-wizard").set(auth()).expect(200);
-    expect(wizard.body.steps.map((step: { id: string }) => step.id)).toContain("n8n");
+    expect(wizard.body.steps.map((step: { provider: string }) => step.provider)).toContain("n8n");
+
+    const setup = await request(app).get("/api/integrations/setup").set(auth()).expect(200);
+    expect(setup.body.steps.map((step: { provider: string }) => step.provider)).toEqual(expect.arrayContaining(["api_public", "openai", "gemini", "n8n", "whatsapp", "evolution", "home_assistant", "finance", "documents", "monitoring", "backup", "mobile_pwa", "security"]));
+    expect(JSON.stringify(setup.body)).not.toContain("super-secret-ha-token");
+
+    const setupSummary = await request(app).get("/api/integrations/setup/summary").set(auth()).expect(200);
+    expect(setupSummary.body.providers.some((item: { provider: string }) => item.provider === "security")).toBe(true);
+
+    const n8nSetupTest = await request(app).post("/api/integrations/setup/n8n/test").set(auth()).expect(200);
+    expect(["not_configured", "success", "error"]).toContain(n8nSetupTest.body.status);
+
+    const evolutionWebhook = await request(app).post("/api/integrations/setup/evolution/configure-webhook").set(auth()).expect(200);
+    expect(["not_configured", "manual_action_required", "success"]).toContain(evolutionWebhook.body.status);
+    expect(JSON.stringify(evolutionWebhook.body)).not.toMatch(/super-secret|apikey/i);
+
+    const safeReset = await request(app).post("/api/integrations/setup/n8n/reset-safe").set(auth()).send({ confirm: "NO" }).expect(200);
+    expect(safeReset.body.status).toBe("confirmation_required");
 
     await prisma.setting.deleteMany({ where: { userId, key: { startsWith: "home_assistant" } } });
   });

@@ -45,7 +45,7 @@ export const integrationProviders = [
   "api_public"
 ] as const;
 
-type IntegrationProvider = typeof integrationProviders[number];
+export type IntegrationProvider = typeof integrationProviders[number];
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";

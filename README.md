@@ -358,3 +358,7 @@ Documentacao relacionada:
 - `FINANCE_IMPORT_GUIDE.md`
 - `WHATSAPP_FILE_IMPORT.md`
 - `BANK_INTER_IMPORT.md`
+
+## Assistente Universal de Configuracao
+
+O JARVIS agora possui um assistente universal em `/integrations/setup-wizard` e um resumo final em `/integrations/setup-summary`. Ele cobre API publica, OpenAI/Gemini, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. O frontend recebe apenas status, mascaras, URLs publicas e checklists; segredos reais permanecem criptografados no backend ou em ambiente seguro.

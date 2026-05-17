@@ -34,3 +34,4 @@
 - Documentos/RAG ficam em `backend/storage/documents/`, ignorado no Git; nao enviar documentos sensiveis para IA externa sem consentimento explicito.
 - O fluxo de QR Code da Evolution em `/whatsapp` deve continuar sem expor API key real; se endpoint da Evolution variar, retornar `manual_action_required` com checklist.
 - QR Code/pairing code da Evolution deve ser temporario e nao deve ser persistido como dado permanente.
+- O assistente universal em `/integrations/setup-wizard` deve centralizar configuracoes sem retornar segredos reais; se automacao externa nao for suportada, retornar `manual_action_required`.

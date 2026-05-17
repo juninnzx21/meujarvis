@@ -116,3 +116,9 @@ O wizard valida:
 - Credenciais reais do Home Assistant.
 - Chaves OpenAI/Gemini no secret manager.
 - Rotacao de segredos compartilhados anteriormente.
+
+## Assistente universal
+
+`/integrations/setup-wizard` centraliza configuracao e validacao de API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Documentos/RAG, Monitoramento, Backup, Mobile/PWA e Seguranca.
+
+`/integrations/setup-summary` mostra uma tabela final com Provider, Status, Configurado, Ultimo teste, Pendencia e Acao recomendada.

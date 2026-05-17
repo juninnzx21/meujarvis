@@ -16,6 +16,7 @@ import { FinanceTransactionsPage } from "./Finance/FinanceTransactionsPage";
 import { MobileAssistantPage } from "./MobileAssistant/MobileAssistantPage";
 import { IntegrationsPage } from "./Integrations/IntegrationsPage";
 import { IntegrationSettingsPage } from "./Integrations/IntegrationSettingsPage";
+import { IntegrationSetupSummaryPage } from "./Integrations/IntegrationSetupSummaryPage";
 import { IntegrationWizardPage } from "./Integrations/IntegrationWizardPage";
 import { WhatsAppPage } from "./WhatsApp/WhatsAppPage";
 
@@ -40,7 +41,8 @@ vi.mock("../services/api", () => ({
       if (url === "/whatsapp/status" || url === "/whatsapp/config") return Promise.resolve({ data: { status: "configured", source: "settings", apiUrl: "https://evolution.test", apiUrlConfigured: true, apiKeyConfigured: true, apiKeyMasked: "sec...key", instanceConfigured: true, instance: "jarvis", autoReply: false } });
       if (url === "/whatsapp/evolution/status") return Promise.resolve({ data: { status: "configured", configured: true, instance: "jarvis", connectionState: "disconnected", apiUrlConfigured: true, apiKeyConfigured: true, instanceConfigured: true } });
       if (url.startsWith("/whatsapp/evolution/connection-state")) return Promise.resolve({ data: { status: "success", instance: "jarvis", connectionState: "connected", message: "WhatsApp conectado." } });
-      if (url.startsWith("/integrations/setup-wizard")) return Promise.resolve({ data: { steps: [{ id: "api", title: "API publica", status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, { id: "n8n", title: "n8n", status: "not_configured", url: "https://n8njarvis.juninnzxtec.com.br" }] } });
+      if (url === "/integrations/setup" || url.startsWith("/integrations/setup-wizard")) return Promise.resolve({ data: { steps: [{ provider: "api_public", title: "API publica", description: "URLs oficiais", status: "configured", configured: true, publicUrls: { api: "https://apijarvis.juninnzxtec.com.br/api" }, manualSteps: [] }, { provider: "n8n", title: "n8n", description: "Workflows", status: "manual_action_required", configured: false, publicUrls: { n8n: "https://n8njarvis.juninnzxtec.com.br" }, manualSteps: ["Importar workflows manualmente."] }] } });
+      if (url === "/integrations/setup/summary") return Promise.resolve({ data: { status: "degraded", providers: [{ provider: "api_public", title: "API publica", status: "configured", configured: true, manualSteps: [] }, { provider: "n8n", title: "n8n", status: "manual_action_required", configured: false, manualSteps: ["Importar workflows manualmente."] }] } });
       if (url.startsWith("/integrations")) return Promise.resolve({ data: { urls: { frontendPublicUrl: "https://jarvis.juninnzxtec.com.br", apiPublicUrl: "https://apijarvis.juninnzxtec.com.br/api", whatsappWebhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", n8nPublicUrl: "https://n8njarvis.juninnzxtec.com.br" }, providers: { api_public: { configured: true, status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, openai: { configured: true, status: "configured" }, gemini: { configured: true, status: "configured" }, n8n: { configured: false, status: "not_configured", apiKeyConfigured: false, webhookSecretConfigured: false }, whatsapp: { configured: false, status: "not_configured", webhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", apiKeyConfigured: false, autoReply: false }, evolution: { configured: false, status: "not_configured" }, home_assistant: { configured: false, status: "not_configured", tokenConfigured: false }, finance: { configured: false, status: "not_configured", tokenConfigured: false, defaultAccountName: "PJ DO INTER" }, monitoring: { configured: true, status: "configured" }, backup: { configured: true, status: "configured" } } } });
       return Promise.resolve({ data: { recommendations: ["ok"], open: [], overdue: [], logs: [] } });
     }),
@@ -48,6 +50,7 @@ vi.mock("../services/api", () => ({
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
       if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
       if (url.startsWith("/integrations/test")) return Promise.resolve({ data: { status: "not_configured", message: "not_configured" } });
+      if (url.startsWith("/integrations/setup")) return Promise.resolve({ data: { status: "manual_action_required", message: "manual_action_required" } });
       if (url === "/whatsapp/evolution/connect") return Promise.resolve({ data: { status: "success", connectionState: "connecting", qrCodeDataUrl: "data:image/png;base64,AAAA", canRenderQr: true, message: "QR Code gerado." } });
       if (url === "/whatsapp/evolution/configure-webhook") return Promise.resolve({ data: { status: "manual_action_required", manualActionRequired: true, checklist: ["Abrir manager da Evolution."], message: "manual_action_required" } });
       return Promise.resolve({ data: { ok: true } });
@@ -98,8 +101,13 @@ describe("Phase 5 and 6 pages", () => {
     cleanup();
 
     render(<MemoryRouter><IntegrationWizardPage /></MemoryRouter>);
-    expect(await screen.findByText("Setup Wizard")).toBeInTheDocument();
-    expect(await screen.findByText("API publica")).toBeInTheDocument();
+    expect(await screen.findByText("Assistente Universal de Configuracao")).toBeInTheDocument();
+    expect((await screen.findAllByText("API publica")).length).toBeGreaterThan(0);
+    cleanup();
+
+    render(<MemoryRouter><IntegrationSetupSummaryPage /></MemoryRouter>);
+    expect(await screen.findByText("Resumo de Configuracao")).toBeInTheDocument();
+    expect(await screen.findByText("Exportar Markdown")).toBeInTheDocument();
   });
 
   it("renders WhatsApp QR wizard without exposing secrets", async () => {

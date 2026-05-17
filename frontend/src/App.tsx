@@ -8,6 +8,7 @@ import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { DocumentsPage } from "./pages/Documents/DocumentsPage";
 import { IntegrationEventsPage } from "./pages/Integrations/IntegrationEventsPage";
 import { IntegrationSettingsPage } from "./pages/Integrations/IntegrationSettingsPage";
+import { IntegrationSetupSummaryPage } from "./pages/Integrations/IntegrationSetupSummaryPage";
 import { IntegrationWizardPage } from "./pages/Integrations/IntegrationWizardPage";
 import { IntegrationsPage } from "./pages/Integrations/IntegrationsPage";
 import { FinancePage } from "./pages/Finance/FinancePage";
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="integrations/setup-wizard" element={<IntegrationWizardPage />} />
+        <Route path="integrations/setup-summary" element={<IntegrationSetupSummaryPage />} />
         <Route path="integrations/events" element={<IntegrationEventsPage />} />
         <Route path="settings/integrations" element={<IntegrationSettingsPage />} />
         <Route path="finance" element={<FinancePage />} />

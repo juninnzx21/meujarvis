@@ -188,3 +188,7 @@ O JARVIS agora possui:
 - Endpoints unificados em `/api/integrations`.
 
 Ainda exigem acao manual externa: DNS/Caddy do n8n, credenciais reais da Evolution, credenciais do Home Assistant e chaves de IA em ambiente seguro.
+
+## Assistente Universal de Configuracao
+
+`/integrations/setup-wizard` centraliza configuracao e validacao de API publica, OpenAI/Gemini, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. `/integrations/setup-summary` mostra o status final por provider, pendencia e acao recomendada.

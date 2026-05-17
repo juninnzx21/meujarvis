@@ -192,3 +192,7 @@ Ressalvas tecnicas da Fase 10: pgvector real, embeddings externos, deploy do sub
 `IntegrationConfigService` centraliza status, configuracao segura, testes, bootstrap, logs e eventos das integracoes. A rota `/api/integrations` agrega n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Monitoramento, Backup, OpenAI, Gemini e URLs publicas.
 
 Credenciais sensiveis sao persistidas em `Setting` usando AES-256-GCM via `encryptSettingValue` e sao expostas ao frontend apenas como `configured` e mascara. O painel usa `/integrations`, `/settings/integrations`, `/integrations/setup-wizard` e `/integrations/events`.
+
+## Assistente Universal de Configuracao
+
+`IntegrationSetupService` alimenta `/api/integrations/setup/*`, `/integrations/setup-wizard` e `/integrations/setup-summary`. O servico padroniza provider, status, campos mascarados, URLs publicas, acoes disponiveis e checklist manual para API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca.

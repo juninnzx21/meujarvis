@@ -64,6 +64,7 @@ export function IntegrationsPage() {
         <div className="flex flex-wrap gap-2">
           <Link to="/settings/integrations" className="btn btn-primary"><Settings size={18} /> Configurar</Link>
           <Link to="/integrations/setup-wizard" className="btn btn-ghost"><Workflow size={18} /> Wizard</Link>
+          <Link to="/integrations/setup-summary" className="btn btn-ghost"><ShieldCheck size={18} /> Resumo</Link>
           <Link to="/integrations/events" className="btn btn-ghost"><Activity size={18} /> Eventos</Link>
         </div>
       </div>

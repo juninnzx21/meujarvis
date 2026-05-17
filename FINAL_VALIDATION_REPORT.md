@@ -234,3 +234,7 @@ Validado por testes:
 - Configure webhook retorna status seguro.
 - Frontend renderiza central, settings e wizard.
 
+
+## Assistente Universal - validacao
+
+Adicionado assistente universal para configurar e validar API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. O resumo final fica em `/integrations/setup-summary`.
