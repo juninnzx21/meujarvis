@@ -78,3 +78,9 @@ Pelo painel, abra `Memória`, busque pelo título e edite ou exclua. Pela API, u
 ## Endpoint Administrativo
 
 Nesta fase o caminho oficial segue sendo `npm run seed:personal`. O endpoint `POST /api/memories/import-personal-profile` permanece documentado como opcional para fase futura, porque os arquivos `prisma/` ficam fora do build TypeScript de produção e acoplar o backend compilado a eles aumentaria risco operacional.
+
+## Fase 14 - JARVIS Super Intelligence Core
+
+O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
+
+Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.

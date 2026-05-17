@@ -196,3 +196,9 @@ Credenciais sensiveis sao persistidas em `Setting` usando AES-256-GCM via `encry
 ## Assistente Universal de Configuracao
 
 `IntegrationSetupService` alimenta `/api/integrations/setup/*`, `/integrations/setup-wizard` e `/integrations/setup-summary`. O servico padroniza provider, status, campos mascarados, URLs publicas, acoes disponiveis e checklist manual para API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca.
+
+## Fase 14 - JARVIS Super Intelligence Core
+
+O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
+
+Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.

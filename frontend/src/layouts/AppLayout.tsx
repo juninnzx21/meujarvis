@@ -9,6 +9,7 @@ const items = [
   { to: "/", label: "Dashboard", icon: Gauge },
   { to: "/mobile-assistant", label: "Assistente Mobile", icon: Smartphone },
   { to: "/jarvis-mode", label: "Modo JARVIS", icon: Bot },
+  { to: "/brain", label: "Cerebro IA", icon: Brain },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/voice", label: "Voz", icon: Mic },
   { to: "/commands", label: "Comandos", icon: PlaySquare },

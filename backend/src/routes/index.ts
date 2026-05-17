@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authRoutes from "../modules/auth/routes.js";
 import automationRoutes from "../modules/automations/routes.js";
+import brainRoutes from "../modules/brain/brain.routes.js";
 import chatRoutes from "../modules/chat/routes.js";
 import commandRoutes from "../modules/commands/routes.js";
 import documentRoutes from "../modules/documents/routes.js";
@@ -23,6 +24,7 @@ const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/automations", automationRoutes);
+router.use("/brain", brainRoutes);
 router.use("/chat", chatRoutes);
 router.use("/commands", commandRoutes);
 router.use("/documents", documentRoutes);

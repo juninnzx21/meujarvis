@@ -263,3 +263,9 @@ Complemento aplicado: o painel agora mostra informativos de orientacao para cada
 Implementado o modo `JARVIS BR Premium`, uma voz original do projeto, sem clonagem de ator/personagem e sem uso de amostras protegidas. A experiencia usa SpeechSynthesis local, configuracoes em `/settings/voice`, modo conversa em `/voice`, central `/jarvis-mode` e integracao com `/mobile-assistant`.
 
 Ressalva: a qualidade final depende das vozes disponiveis no navegador/sistema. Para resultado mais grave/elegante, usar rate `0.90` a `0.95`, pitch `0.75` a `0.88`, volume `1` e selecionar voz masculina/neutra pt-BR ou en-GB quando disponivel.
+
+## Fase 14 - JARVIS Super Intelligence Core
+
+O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
+
+Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.

@@ -165,3 +165,9 @@ Passos para resolver `not_configured`:
 Se OFX/CSV for tratado como audio, atualize a producao para o commit `b229550` ou posterior.
 
 Se audio falhar, a midia pode nao ter vindo em base64, a URL pode estar expirada/inacessivel ou OpenAI audio pode estar indisponivel. A resposta segura deve orientar envio em texto ou reenvio do audio.
+
+## Fase 14 - JARVIS Super Intelligence Core
+
+O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
+
+Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.

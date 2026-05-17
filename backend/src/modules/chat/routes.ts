@@ -2,8 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
+import { brainService } from "../brain/brain.service.js";
 import { prisma } from "../../prisma/client.js";
-import { aiOrchestratorService } from "../../services/aiOrchestratorService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const router = Router();
@@ -33,8 +33,8 @@ router.delete("/conversations/:id", asyncHandler(async (req, res) => {
   res.status(204).send();
 }));
 
-router.post("/send", validate(z.object({ content: z.string().min(1), conversationId: z.string().optional() })), asyncHandler(async (req, res) => {
-  const { content, conversationId } = req.body;
+router.post("/send", validate(z.object({ content: z.string().min(1), conversationId: z.string().optional(), mode: z.enum(["quick", "normal", "deep"]).optional() })), asyncHandler(async (req, res) => {
+  const { content, conversationId, mode } = req.body;
   let conversation = conversationId
     ? await prisma.conversation.findFirst({ where: { id: conversationId, userId: req.user!.id } })
     : null;
@@ -46,15 +46,15 @@ router.post("/send", validate(z.object({ content: z.string().min(1), conversatio
   }
 
   const userMessage = await prisma.message.create({ data: { conversationId: conversation.id, role: "user", content } });
-  const result = await aiOrchestratorService.process(req.user!.id, content);
+  const result = await brainService.ask({ userId: req.user!.id, message: content, source: "chat", mode: mode ?? "normal", allowExternalAI: true, allowTools: true });
   const assistantMessage = await prisma.message.create({
-    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent } }
+    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, agent: result.agent, confidence: result.confidence, needsConfirmation: result.needsConfirmation } }
   });
-  res.json({ conversation, userMessage, assistantMessage, reply: result.reply, intent: result.intent, data: result.data });
+  res.json({ conversation, userMessage, assistantMessage, reply: result.reply, intent: result.intent, agent: result.agent, confidence: result.confidence, usedSources: result.usedSources, usedTools: result.usedTools, needsConfirmation: result.needsConfirmation, draftAction: result.draftAction, suggestedNextActions: result.suggestedNextActions });
 }));
 
-router.post("/stream", validate(z.object({ content: z.string().min(1), conversationId: z.string().optional() })), asyncHandler(async (req, res) => {
-  const { content, conversationId } = req.body;
+router.post("/stream", validate(z.object({ content: z.string().min(1), conversationId: z.string().optional(), mode: z.enum(["quick", "normal", "deep"]).optional() })), asyncHandler(async (req, res) => {
+  const { content, conversationId, mode } = req.body;
   let conversation = conversationId
     ? await prisma.conversation.findFirst({ where: { id: conversationId, userId: req.user!.id } })
     : null;
@@ -66,15 +66,15 @@ router.post("/stream", validate(z.object({ content: z.string().min(1), conversat
   }
 
   await prisma.message.create({ data: { conversationId: conversation.id, role: "user", content } });
-  const result = await aiOrchestratorService.process(req.user!.id, content);
+  const result = await brainService.ask({ userId: req.user!.id, message: content, source: "chat", mode: mode ?? "normal", allowExternalAI: true, allowTools: true });
   const assistantMessage = await prisma.message.create({
-    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, streamingFallback: true } }
+    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, agent: result.agent, streamingFallback: true } }
   });
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-  res.write(`event: metadata\ndata: ${JSON.stringify({ conversationId: conversation.id, messageId: assistantMessage.id, intent: result.intent })}\n\n`);
+  res.write(`event: metadata\ndata: ${JSON.stringify({ conversationId: conversation.id, messageId: assistantMessage.id, intent: result.intent, agent: result.agent })}\n\n`);
   res.write(`event: token\ndata: ${JSON.stringify({ content: result.reply })}\n\n`);
   res.write(`event: done\ndata: ${JSON.stringify({ ok: true })}\n\n`);
   res.end();

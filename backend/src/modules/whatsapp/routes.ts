@@ -2,8 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
+import { brainService } from "../brain/brain.service.js";
 import { prisma } from "../../prisma/client.js";
-import { aiOrchestratorService } from "../../services/aiOrchestratorService.js";
 import { financeIntegrationService } from "../../services/financeIntegrationService.js";
 import { getHealth } from "../../services/healthService.js";
 import { statementImportService } from "../../services/statementImportService.js";
@@ -206,7 +206,7 @@ router.post("/webhook", asyncHandler(async (req, res) => {
         const response: { reply: string } = localReply
           ? { reply: localReply }
           : await withTimeout<{ reply: string }>(
-            aiOrchestratorService.process(admin.id, content).then((response) => ({ reply: response.reply })),
+            brainService.ask({ userId: admin.id, message: content, source: "whatsapp", mode: "quick", allowExternalAI: true, allowTools: true }).then((response) => ({ reply: response.reply })),
             8000,
             { reply: "Recebi seu comando, mas a IA demorou para responder. Tente de novo em instantes ou use um comando direto como status do sistema." }
           );

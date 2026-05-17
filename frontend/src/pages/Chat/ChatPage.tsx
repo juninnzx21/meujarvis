@@ -1,12 +1,20 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { Send, ThumbsDown, ThumbsUp } from "lucide-react";
 import { api } from "../../services/api";
 import type { Message } from "../../types";
 
+type BrainMeta = {
+  agent?: string;
+  intent?: string;
+  confidence?: number;
+  needsConfirmation?: boolean;
+};
+
 export function ChatPage() {
   const [conversationId, setConversationId] = useState<string>();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Array<Message & { metadata?: BrainMeta }>>([]);
   const [content, setContent] = useState("");
+  const [mode, setMode] = useState<"quick" | "normal" | "deep">("normal");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,12 +36,19 @@ export function ChatPage() {
     const text = content;
     setContent("");
     try {
-      const res = await api.post("/chat/send", { content: text, conversationId });
+      const res = await api.post("/chat/send", { content: text, conversationId, mode });
       setConversationId(res.data.conversation.id);
       setMessages((current) => [...current, res.data.assistantMessage]);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function sendFeedback(kind: "good" | "bad") {
+    await api.post("/brain/feedback", {
+      message: kind === "good" ? "resposta boa no chat" : "resposta ruim no chat; revisar clareza, contexto e proximo passo",
+      savePreference: false
+    });
   }
 
   return (
@@ -44,11 +59,25 @@ export function ChatPage() {
           {messages.map((message) => (
             <div key={message.id} className={`max-w-3xl rounded-2xl p-4 ${message.role === "user" ? "ml-auto bg-cyan-400/15 text-cyan-50" : "bg-white/5 text-slate-100"}`}>
               <p className="whitespace-pre-wrap">{message.content}</p>
+              {message.role === "assistant" && message.metadata?.agent && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                  <span className="rounded-full bg-white/5 px-2 py-1">{message.metadata.agent}</span>
+                  <span className="rounded-full bg-white/5 px-2 py-1">{message.metadata.intent}</span>
+                  {message.metadata.needsConfirmation && <span className="rounded-full bg-yellow-400/10 px-2 py-1 text-yellow-100">confirmacao</span>}
+                  <button type="button" onClick={() => sendFeedback("good")} className="rounded-full bg-white/5 px-2 py-1 hover:bg-white/10"><ThumbsUp size={12} /></button>
+                  <button type="button" onClick={() => sendFeedback("bad")} className="rounded-full bg-white/5 px-2 py-1 hover:bg-white/10"><ThumbsDown size={12} /></button>
+                </div>
+              )}
             </div>
           ))}
           {loading && <p className="text-sm text-cyan-200">JARVIS está processando...</p>}
         </div>
         <form onSubmit={send} className="flex gap-3 border-t border-white/10 p-4">
+          <select className="input max-w-32" value={mode} onChange={(event) => setMode(event.target.value as "quick" | "normal" | "deep")}>
+            <option value="quick">Quick</option>
+            <option value="normal">Normal</option>
+            <option value="deep">Deep</option>
+          </select>
           <input className="input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Digite um comando ou mensagem..." />
           <button className="btn btn-primary"><Send size={18} /></button>
         </form>

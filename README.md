@@ -362,3 +362,9 @@ Documentacao relacionada:
 ## Assistente Universal de Configuracao
 
 O JARVIS agora possui um assistente universal em `/integrations/setup-wizard` e um resumo final em `/integrations/setup-summary`. Ele cobre API publica, OpenAI/Gemini, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. O frontend recebe apenas status, mascaras, URLs publicas e checklists; segredos reais permanecem criptografados no backend ou em ambiente seguro.
+
+## Fase 14 - JARVIS Super Intelligence Core
+
+O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
+
+Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.

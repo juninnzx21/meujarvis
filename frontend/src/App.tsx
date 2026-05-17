@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./layouts/AppLayout";
 import { useAuth } from "./contexts/AuthContext";
 import { AutomationsPage } from "./pages/Automations/AutomationsPage";
+import { BrainAgentsPage, BrainFeedbackPage, BrainMemoryPage, BrainPage, BrainToolsPage } from "./pages/Brain/BrainPages";
 import { ChatPage } from "./pages/Chat/ChatPage";
 import { CommandsPage } from "./pages/Commands/CommandsPage";
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
@@ -50,6 +51,11 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="mobile-assistant" element={<MobileAssistantPage />} />
         <Route path="jarvis-mode" element={<JarvisModePage />} />
+        <Route path="brain" element={<BrainPage />} />
+        <Route path="brain/agents" element={<BrainAgentsPage />} />
+        <Route path="brain/tools" element={<BrainToolsPage />} />
+        <Route path="brain/memory" element={<BrainMemoryPage />} />
+        <Route path="brain/feedback" element={<BrainFeedbackPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="voice" element={<VoicePage />} />
         <Route path="commands" element={<CommandsPage />} />

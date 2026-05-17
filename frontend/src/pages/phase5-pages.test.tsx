@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppLayout } from "../layouts/AppLayout";
+import { BrainAgentsPage, BrainFeedbackPage, BrainPage, BrainToolsPage } from "./Brain/BrainPages";
 import { CommandsPage } from "./Commands/CommandsPage";
 import { FinancePage } from "./Finance/FinancePage";
 import { DocumentsPage } from "./Documents/DocumentsPage";
@@ -62,6 +63,10 @@ vi.mock("../services/api", () => ({
       if (url === "/documents") return Promise.resolve({ data: { documents: [{ id: "d1", title: "Documento teste", fileType: "md" }] } });
       if (url.startsWith("/documents/search")) return Promise.resolve({ data: { chunks: [{ id: "ch1", content: "Trecho redigido do JARVIS" }] } });
       if (url === "/health/full") return Promise.resolve({ data: { app: "ok", database: "ok", scheduler: { enabled: true } } });
+      if (url === "/brain/status") return Promise.resolve({ data: { status: "ready", agents: 12, tools: 25, modes: ["quick", "normal", "deep"], safety: "enabled", externalAI: "fallback_local" } });
+      if (url === "/brain/agents") return Promise.resolve({ data: { agents: [{ name: "FinanceAgent", description: "Financeiro seguro", domains: ["financeiro"], allowedTools: [], safetyRules: [] }] } });
+      if (url === "/brain/tools") return Promise.resolve({ data: { tools: [{ name: "summarizeFinance", description: "Resumo financeiro", safety: "safe", category: "Financeiro" }] } });
+      if (url === "/brain/feedback") return Promise.resolve({ data: { feedback: [{ id: "f1", message: "Feedback seguro" }] } });
       if (url === "/whatsapp/status" || url === "/whatsapp/config") return Promise.resolve({ data: { status: "configured", source: "settings", apiUrl: "https://evolution.test", apiUrlConfigured: true, apiKeyConfigured: true, apiKeyMasked: "sec...key", instanceConfigured: true, instance: "jarvis", autoReply: false } });
       if (url === "/whatsapp/evolution/status") return Promise.resolve({ data: { status: "configured", configured: true, instance: "jarvis", connectionState: "disconnected", apiUrlConfigured: true, apiKeyConfigured: true, instanceConfigured: true } });
       if (url.startsWith("/whatsapp/evolution/connection-state")) return Promise.resolve({ data: { status: "success", instance: "jarvis", connectionState: "connected", message: "WhatsApp conectado." } });
@@ -73,6 +78,8 @@ vi.mock("../services/api", () => ({
     post: vi.fn((url: string) => {
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
       if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
+      if (url === "/brain/ask") return Promise.resolve({ data: { answer: "Com base nas memorias, Junior trabalha com JARVIS.", agent: "PersonalMemoryAgent", intent: "memory.query", confidence: 0.9, usedSources: [{ type: "memory", title: "Projeto JARVIS", excerpt: "JARVIS Home AI" }], usedTools: [{ tool: "searchMemories", status: "success" }], needsConfirmation: false, suggestedNextActions: ["Continuar"] } });
+      if (url === "/brain/feedback") return Promise.resolve({ data: { status: "success" } });
       if (url === "/voice/process") return Promise.resolve({ data: { reply: "Certo. Verifiquei o sistema e esta tudo operacional.", voicePersona: "JARVIS BR Premium" } });
       if (url.startsWith("/integrations/test")) return Promise.resolve({ data: { status: "not_configured", message: "not_configured" } });
       if (url.startsWith("/integrations/setup")) return Promise.resolve({ data: { status: "manual_action_required", message: "manual_action_required" } });
@@ -133,6 +140,30 @@ describe("Phase 5 and 6 pages", () => {
     render(<MemoryRouter><IntegrationSetupSummaryPage /></MemoryRouter>);
     expect(await screen.findByText("Resumo de Configuracao")).toBeInTheDocument();
     expect(await screen.findByText("Exportar Markdown")).toBeInTheDocument();
+  });
+
+  it("renders brain pages, modes and feedback controls", async () => {
+    render(<MemoryRouter><BrainPage /></MemoryRouter>);
+    expect(await screen.findByText("Cerebro IA")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("deep"));
+    fireEvent.click(screen.getByText("Perguntar ao Brain"));
+    expect(await screen.findByText("PersonalMemoryAgent")).toBeInTheDocument();
+    expect(await screen.findByText(/JARVIS Home AI/)).toBeInTheDocument();
+    cleanup();
+
+    render(<MemoryRouter><BrainAgentsPage /></MemoryRouter>);
+    expect(await screen.findByText("Agentes do Brain")).toBeInTheDocument();
+    expect(await screen.findByText("FinanceAgent")).toBeInTheDocument();
+    cleanup();
+
+    render(<MemoryRouter><BrainToolsPage /></MemoryRouter>);
+    expect(await screen.findByText("Ferramentas do Brain")).toBeInTheDocument();
+    expect(await screen.findByText("summarizeFinance")).toBeInTheDocument();
+    cleanup();
+
+    render(<MemoryRouter><BrainFeedbackPage /></MemoryRouter>);
+    expect(await screen.findByText("Feedback e Aprendizado")).toBeInTheDocument();
+    expect(await screen.findByText("Feedback seguro")).toBeInTheDocument();
   });
 
   it("renders WhatsApp QR wizard without exposing secrets", async () => {

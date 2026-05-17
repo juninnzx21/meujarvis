@@ -170,6 +170,56 @@ describe("JARVIS Home AI API", () => {
     expect(JSON.stringify(voice.body)).not.toMatch(/audio|base64|blob/i);
   });
 
+  it("routes complex questions through the Super Intelligence Brain safely", async () => {
+    const status = await request(app).get("/api/brain/status").set(auth()).expect(200);
+    expect(status.body.status).toBe("ready");
+    expect(status.body.agents).toBeGreaterThanOrEqual(12);
+
+    const agents = await request(app).get("/api/brain/agents").set(auth()).expect(200);
+    expect(agents.body.agents.some((agent: { name: string }) => agent.name === "FinanceAgent")).toBe(true);
+
+    const tools = await request(app).get("/api/brain/tools").set(auth()).expect(200);
+    expect(tools.body.tools.some((tool: { name: string }) => tool.name === "summarizeFinance")).toBe(true);
+
+    const memory = await prisma.memory.create({
+      data: {
+        userId,
+        type: "fact",
+        title: "Teste automatizado Brain memoria",
+        content: "Junior trabalha no JARVIS Home AI e gosta de respostas objetivas.",
+        tags: ["brain", "jarvis"],
+        importance: 5
+      }
+    });
+
+    const ask = await request(app)
+      .post("/api/brain/ask")
+      .set(auth())
+      .send({ message: "Jarvis, o que voce sabe sobre mim?", mode: "deep", allowExternalAI: false, allowTools: true })
+      .expect(200);
+    expect(ask.body.agent).toBe("PersonalMemoryAgent");
+    expect(ask.body.intent).toBe("memory.query");
+    expect(ask.body.answer).toContain("Teste automatizado Brain memoria");
+    expect(JSON.stringify(ask.body)).not.toMatch(/sk-|AIza|Bearer\s+|password/i);
+
+    const plan = await request(app)
+      .post("/api/brain/plan")
+      .set(auth())
+      .send({ message: "quanto entrou esse mes?", mode: "normal", allowExternalAI: false, allowTools: true })
+      .expect(200);
+    expect(plan.body.agent).toBe("FinanceAgent");
+    expect(plan.body.plannedTools).toContain("summarizeFinance");
+
+    const draft = await request(app).post("/api/brain/execute-draft").set(auth()).send({ draftAction: { type: "home.action", entity: "lock.front_door" } }).expect(200);
+    expect(draft.body.status).toBe("confirmation_required");
+
+    const feedback = await request(app).post("/api/brain/feedback").set(auth()).send({ message: "prefiro respostas curtas e praticas", savePreference: true }).expect(201);
+    expect(feedback.body.status).toBe("success");
+
+    await prisma.memory.deleteMany({ where: { id: memory.id } });
+    if (feedback.body.memoryId) await prisma.memory.deleteMany({ where: { id: feedback.body.memoryId } });
+  });
+
   it("supports memory CRUD and memory creation through chat intent", async () => {
     const created = await request(app)
       .post("/api/memories")

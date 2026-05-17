@@ -35,3 +35,9 @@
 - O fluxo de QR Code da Evolution em `/whatsapp` deve continuar sem expor API key real; se endpoint da Evolution variar, retornar `manual_action_required` com checklist.
 - QR Code/pairing code da Evolution deve ser temporario e nao deve ser persistido como dado permanente.
 - O assistente universal em `/integrations/setup-wizard` deve centralizar configuracoes sem retornar segredos reais; se automacao externa nao for suportada, retornar `manual_action_required`.
+
+## Fase 14 - JARVIS Super Intelligence Core
+
+O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
+
+Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
