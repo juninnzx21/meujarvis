@@ -159,6 +159,17 @@ describe("JARVIS Home AI API", () => {
     expect(detail.body.conversation.messages.length).toBeGreaterThanOrEqual(2);
   });
 
+  it("processes voice commands with the original JARVIS BR Premium persona", async () => {
+    const empty = await request(app).post("/api/voice/process").set(auth()).send({ text: "   " }).expect(400);
+    expect(empty.body.message).toContain("Informe uma fala");
+
+    const voice = await request(app).post("/api/voice/process").set(auth()).send({ text: "status do sistema" }).expect(200);
+    expect(voice.body.voicePersona).toBe("JARVIS BR Premium");
+    expect(voice.body.reply).toEqual(expect.any(String));
+    expect(voice.body.reply.length).toBeGreaterThan(10);
+    expect(JSON.stringify(voice.body)).not.toMatch(/audio|base64|blob/i);
+  });
+
   it("supports memory CRUD and memory creation through chat intent", async () => {
     const created = await request(app)
       .post("/api/memories")

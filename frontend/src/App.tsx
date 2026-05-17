@@ -11,6 +11,7 @@ import { IntegrationSettingsPage } from "./pages/Integrations/IntegrationSetting
 import { IntegrationSetupSummaryPage } from "./pages/Integrations/IntegrationSetupSummaryPage";
 import { IntegrationWizardPage } from "./pages/Integrations/IntegrationWizardPage";
 import { IntegrationsPage } from "./pages/Integrations/IntegrationsPage";
+import { JarvisModePage } from "./pages/JarvisMode/JarvisModePage";
 import { FinancePage } from "./pages/Finance/FinancePage";
 import { FinanceAccountsPage } from "./pages/Finance/FinanceAccountsPage";
 import { FinanceCategoriesPage } from "./pages/Finance/FinanceCategoriesPage";
@@ -27,6 +28,7 @@ import { NotificationsPage } from "./pages/Notifications/NotificationsPage";
 import { ReportsPage } from "./pages/Reports/ReportsPage";
 import { RoutinesPage } from "./pages/Routines/RoutinesPage";
 import { SettingsPage } from "./pages/Settings/SettingsPage";
+import { VoiceSettingsPage } from "./pages/Settings/VoiceSettingsPage";
 import { SmartHomePage } from "./pages/SmartHome/SmartHomePage";
 import { StatusPage } from "./pages/Status/StatusPage";
 import { TasksPage } from "./pages/Tasks/TasksPage";
@@ -47,6 +49,7 @@ export default function App() {
       <Route element={<Private><AppLayout /></Private>}>
         <Route index element={<DashboardPage />} />
         <Route path="mobile-assistant" element={<MobileAssistantPage />} />
+        <Route path="jarvis-mode" element={<JarvisModePage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="voice" element={<VoicePage />} />
         <Route path="commands" element={<CommandsPage />} />
@@ -74,6 +77,7 @@ export default function App() {
         <Route path="whatsapp" element={<WhatsAppPage />} />
         <Route path="smart-home" element={<SmartHomePage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/voice" element={<VoiceSettingsPage />} />
         <Route path="logs" element={<LogsPage />} />
         <Route path="status" element={<StatusPage />} />
       </Route>

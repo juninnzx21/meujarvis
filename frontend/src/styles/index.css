@@ -66,3 +66,32 @@ button, input, textarea, select {
   background: rgba(15, 23, 42, 0.7);
   color: #dbeafe;
 }
+
+.voice-orb {
+  position: relative;
+}
+
+.voice-orb::before,
+.voice-orb::after {
+  content: "";
+  position: absolute;
+  inset: -0.85rem;
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  border-radius: 999px;
+  animation: voice-pulse 2.4s ease-out infinite;
+}
+
+.voice-orb::after {
+  animation-delay: 1.2s;
+}
+
+@keyframes voice-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+}

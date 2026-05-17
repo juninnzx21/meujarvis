@@ -18,10 +18,33 @@ import { IntegrationsPage } from "./Integrations/IntegrationsPage";
 import { IntegrationSettingsPage } from "./Integrations/IntegrationSettingsPage";
 import { IntegrationSetupSummaryPage } from "./Integrations/IntegrationSetupSummaryPage";
 import { IntegrationWizardPage } from "./Integrations/IntegrationWizardPage";
+import { JarvisModePage } from "./JarvisMode/JarvisModePage";
 import { WhatsAppPage } from "./WhatsApp/WhatsAppPage";
+import { VoicePage } from "./Voice/VoicePage";
+import { VoiceSettingsPage } from "./Settings/VoiceSettingsPage";
+import { stopSpeaking, testVoice } from "../services/textToSpeechService";
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { name: "Junior Rodrigues" }, logout: vi.fn() })
+}));
+
+vi.mock("../services/textToSpeechService", () => ({
+  jarvisVoicePreset: { preset: "jarvis-br-premium", voiceURI: "", lang: "pt-BR", rate: 0.92, pitch: 0.82, volume: 1, spokenRepliesEnabled: true },
+  getAvailableVoices: vi.fn(() => [{ voiceURI: "voice-1", name: "Brasil Neutral", lang: "pt-BR" }]),
+  selectBestJarvisVoice: vi.fn(() => ({ voiceURI: "voice-1", name: "Brasil Neutral", lang: "pt-BR" })),
+  loadVoiceSettings: vi.fn(() => ({ preset: "jarvis-br-premium", voiceURI: "voice-1", lang: "pt-BR", rate: 0.92, pitch: 0.82, volume: 1, spokenRepliesEnabled: true })),
+  saveVoiceSettings: vi.fn((settings) => settings),
+  speakJarvis: vi.fn(() => true),
+  stopSpeaking: vi.fn(),
+  testVoice: vi.fn(() => true)
+}));
+
+vi.mock("../services/speechRecognitionService", () => ({
+  isSpeechRecognitionSupported: vi.fn(() => true),
+  startListening: vi.fn(() => true),
+  stopListening: vi.fn(),
+  onTranscript: vi.fn(),
+  onError: vi.fn()
 }));
 
 vi.mock("../services/api", () => ({
@@ -38,6 +61,7 @@ vi.mock("../services/api", () => ({
       if (url.startsWith("/notifications")) return Promise.resolve({ data: { unreadCount: 1, notifications: [{ id: "n1", title: "Aviso", message: "Mensagem", type: "warning", createdAt: new Date().toISOString() }] } });
       if (url === "/documents") return Promise.resolve({ data: { documents: [{ id: "d1", title: "Documento teste", fileType: "md" }] } });
       if (url.startsWith("/documents/search")) return Promise.resolve({ data: { chunks: [{ id: "ch1", content: "Trecho redigido do JARVIS" }] } });
+      if (url === "/health/full") return Promise.resolve({ data: { app: "ok", database: "ok", scheduler: { enabled: true } } });
       if (url === "/whatsapp/status" || url === "/whatsapp/config") return Promise.resolve({ data: { status: "configured", source: "settings", apiUrl: "https://evolution.test", apiUrlConfigured: true, apiKeyConfigured: true, apiKeyMasked: "sec...key", instanceConfigured: true, instance: "jarvis", autoReply: false } });
       if (url === "/whatsapp/evolution/status") return Promise.resolve({ data: { status: "configured", configured: true, instance: "jarvis", connectionState: "disconnected", apiUrlConfigured: true, apiKeyConfigured: true, instanceConfigured: true } });
       if (url.startsWith("/whatsapp/evolution/connection-state")) return Promise.resolve({ data: { status: "success", instance: "jarvis", connectionState: "connected", message: "WhatsApp conectado." } });
@@ -49,6 +73,7 @@ vi.mock("../services/api", () => ({
     post: vi.fn((url: string) => {
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
       if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
+      if (url === "/voice/process") return Promise.resolve({ data: { reply: "Certo. Verifiquei o sistema e esta tudo operacional.", voicePersona: "JARVIS BR Premium" } });
       if (url.startsWith("/integrations/test")) return Promise.resolve({ data: { status: "not_configured", message: "not_configured" } });
       if (url.startsWith("/integrations/setup")) return Promise.resolve({ data: { status: "manual_action_required", message: "manual_action_required" } });
       if (url === "/whatsapp/evolution/connect") return Promise.resolve({ data: { status: "success", connectionState: "connecting", qrCodeDataUrl: "data:image/png;base64,AAAA", canRenderQr: true, message: "QR Code gerado." } });
@@ -178,6 +203,25 @@ describe("Phase 5 and 6 pages", () => {
     expect(screen.getByText(/O microfone so e ativado/)).toBeInTheDocument();
     fireEvent.click(screen.getByText("Status do sistema"));
     expect(await screen.findByText("Status operacional.")).toBeInTheDocument();
+  });
+
+  it("renders premium voice pages and keeps microphone explicit", async () => {
+    render(<MemoryRouter><VoicePage /></MemoryRouter>);
+    expect(await screen.findByText("Modo Voz")).toBeInTheDocument();
+    expect(screen.getByText(/microfone so liga quando voce clica/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Testar voz"));
+    expect(testVoice).toHaveBeenCalled();
+    cleanup();
+
+    render(<MemoryRouter><JarvisModePage /></MemoryRouter>);
+    expect((await screen.findAllByText("JARVIS BR Premium")).length).toBeGreaterThan(0);
+    expect(screen.getByText("Central de comando pronta.")).toBeInTheDocument();
+    cleanup();
+
+    render(<VoiceSettingsPage />);
+    expect(await screen.findByText("JARVIS BR Premium")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Parar fala"));
+    expect(stopSpeaking).toHaveBeenCalled();
   });
 
 });

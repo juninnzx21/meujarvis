@@ -2,13 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell, FileText, MessageSquare, Mic, Send, ShieldCheck, WalletCards } from "lucide-react";
 import { api, friendlyError } from "../../services/api";
-
-declare global {
-  interface Window {
-    webkitSpeechRecognition?: any;
-    SpeechRecognition?: any;
-  }
-}
+import { isSpeechRecognitionSupported, onError, onTranscript, startListening } from "../../services/speechRecognitionService";
+import { speakJarvis } from "../../services/textToSpeechService";
 
 type HistoryItem = {
   text: string;
@@ -32,7 +27,7 @@ export function MobileAssistantPage() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [whatsappLink, setWhatsappLink] = useState("/whatsapp");
-  const available = typeof window !== "undefined" && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const available = isSpeechRecognitionSupported();
 
   useEffect(() => {
     api.get("/whatsapp/status")
@@ -41,6 +36,14 @@ export function MobileAssistantPage() {
         if (instance.length >= 10) setWhatsappLink(`https://wa.me/${instance}`);
       })
       .catch(() => setWhatsappLink("/whatsapp"));
+    onTranscript((transcript) => {
+      setText(transcript);
+      void sendCommand(transcript);
+    });
+    onError((message) => {
+      setError(message);
+      setStatus("erro");
+    });
   }, []);
 
   async function sendCommand(value: string) {
@@ -54,7 +57,7 @@ export function MobileAssistantPage() {
       setHistory((items) => [{ text: command, reply, at: new Date().toLocaleTimeString("pt-BR") }, ...items].slice(0, 5));
       setText("");
       setStatus("pronto");
-      window.speechSynthesis?.speak(new SpeechSynthesisUtterance(reply));
+      speakJarvis(reply);
     } catch (err) {
       setError(friendlyError(err));
       setStatus("erro");
@@ -71,20 +74,7 @@ export function MobileAssistantPage() {
       setError("Reconhecimento de voz indisponivel neste navegador. Use o campo de texto.");
       return;
     }
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new Recognition();
-    recognition.lang = "pt-BR";
-    recognition.onstart = () => setStatus("escutando");
-    recognition.onerror = () => {
-      setError("Nao foi possivel capturar o audio. Verifique a permissao do navegador.");
-      setStatus("erro");
-    };
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setText(transcript);
-      void sendCommand(transcript);
-    };
-    recognition.start();
+    startListening({ lang: "pt-BR", onStart: () => setStatus("escutando"), onEnd: () => setStatus("pronto") });
   }
 
   return (
@@ -94,7 +84,7 @@ export function MobileAssistantPage() {
           <Mic size={34} />
         </div>
         <h2 className="mt-4 text-3xl font-black text-white">JARVIS Mobile</h2>
-        <p className="mt-2 text-sm text-slate-400">Tela focada para usar o JARVIS no celular como assistente pessoal.</p>
+        <p className="mt-2 text-sm text-slate-400">Tela focada para usar o JARVIS no celular com a voz original JARVIS BR Premium.</p>
         <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-left text-sm text-cyan-50">
           <div className="flex gap-2">
             <ShieldCheck className="mt-0.5 shrink-0 text-cyanx" size={18} />

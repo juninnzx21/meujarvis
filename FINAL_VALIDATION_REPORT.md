@@ -257,3 +257,9 @@ Adicionado assistente universal para configurar e validar API publica, IA, n8n, 
 
 Complemento aplicado: o painel agora mostra informativos de orientacao para cada pendencia operacional real, explicando o que cada etapa faz, como configurar e como validar sem expor credenciais.
 
+
+## Voz premium original 2026-05-17
+
+Implementado o modo `JARVIS BR Premium`, uma voz original do projeto, sem clonagem de ator/personagem e sem uso de amostras protegidas. A experiencia usa SpeechSynthesis local, configuracoes em `/settings/voice`, modo conversa em `/voice`, central `/jarvis-mode` e integracao com `/mobile-assistant`.
+
+Ressalva: a qualidade final depende das vozes disponiveis no navegador/sistema. Para resultado mais grave/elegante, usar rate `0.90` a `0.95`, pitch `0.75` a `0.88`, volume `1` e selecionar voz masculina/neutra pt-BR ou en-GB quando disponivel.

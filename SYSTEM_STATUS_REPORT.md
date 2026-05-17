@@ -308,3 +308,14 @@ Implementado em `/integrations/setup-wizard` com backend `/api/integrations/setu
 
 Atualizado para exibir informativos operacionais dos proximos passos reais: preencher n8n, preencher Evolution API, gerar QR do WhatsApp, configurar webhook, testar `ei jarvis status do sistema`, configurar Home Assistant, configurar backup offsite, revisar erros antigos do scheduler, rotacionar credenciais compartilhadas e validar importacao OFX/CSV criando previa.
 
+
+## Voz premium original 2026-05-17
+
+Status: implementado localmente.
+
+- Voz/preset: `JARVIS BR Premium`, original do projeto.
+- Rotas: `/voice`, `/jarvis-mode`, `/settings/voice`, `/mobile-assistant`.
+- TTS: SpeechSynthesis local do navegador.
+- Reconhecimento: SpeechRecognition quando disponivel, sempre por clique explicito.
+- Privacidade: sem escuta continua oculta e sem audio bruto em logs.
+- Ressalva: qualidade da voz depende das vozes instaladas no navegador/sistema.

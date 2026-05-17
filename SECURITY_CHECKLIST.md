@@ -90,3 +90,11 @@
 - [ ] Revisar portas UFW extras antes de remover.
 
 - [x] Assistente Universal retorna somente status, mascara, URLs publicas e checklists; nenhum provider deve devolver segredo real ao frontend.
+
+## Voz e microfone
+
+- A voz `JARVIS BR Premium` e original do projeto e nao clona voz de ator/personagem.
+- Microfone deve iniciar apenas por clique/toque explicito.
+- Nao implementar escuta continua oculta.
+- Nao salvar audio bruto em logs, banco, storage ou relatorios.
+- Respostas faladas devem respeitar confirmacao para acoes sensiveis.

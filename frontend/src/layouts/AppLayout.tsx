@@ -8,6 +8,7 @@ import { api } from "../services/api";
 const items = [
   { to: "/", label: "Dashboard", icon: Gauge },
   { to: "/mobile-assistant", label: "Assistente Mobile", icon: Smartphone },
+  { to: "/jarvis-mode", label: "Modo JARVIS", icon: Bot },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/voice", label: "Voz", icon: Mic },
   { to: "/commands", label: "Comandos", icon: PlaySquare },
@@ -29,6 +30,7 @@ const items = [
   { to: "/whatsapp", label: "WhatsApp", icon: Smartphone },
   { to: "/smart-home", label: "Casa Inteligente", icon: Home },
   { to: "/settings", label: "Configuracoes", icon: Settings },
+  { to: "/settings/voice", label: "Voz Premium", icon: Mic },
   { to: "/logs", label: "Logs", icon: ScrollText },
   { to: "/status", label: "Status", icon: Activity }
 ];

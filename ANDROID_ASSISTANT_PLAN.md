@@ -44,3 +44,9 @@ npx cap sync android
 ## Politica de microfone
 
 O microfone so deve ligar por acao explicita do usuario. Qualquer modo persistente futuro deve exibir aviso claro, consentimento e indicador visual permanente.
+
+## Plano de voz Android
+
+O JARVIS pode ser instalado como PWA e usar `JARVIS BR Premium` com SpeechSynthesis do navegador. No Android, a qualidade depende das vozes instaladas no sistema/Chrome. O projeto nao implementa escuta continua oculta e nao substitui wake word nativa do Android nesta fase.
+
+Futuro seguro: avaliar TTS premium licenciado, share intent, widgets e atalhos rapidos sem gravar audio bruto nem enviar documentos sensiveis para IA externa sem consentimento.

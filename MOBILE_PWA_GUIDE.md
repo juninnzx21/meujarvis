@@ -62,3 +62,9 @@ Arquivos OFX/CSV enviados pelo WhatsApp criam previa para revisao. O JARVIS nao 
 - Wake word sempre ouvindo depende do Android/fabricante/permissoes e nao foi implementada.
 - Push notifications reais ainda sao fase futura.
 - App Android nativo ainda nao foi criado; a base esta preparada para Capacitor futuramente.
+
+## Voz premium no mobile
+
+O `/mobile-assistant` usa a voz original `JARVIS BR Premium` via SpeechSynthesis local do navegador. O microfone so e ativado por toque/click explicito, nao existe escuta continua oculta e audio bruto nao deve ser salvo em logs.
+
+Para ajustar a voz no celular, abra `/settings/voice`, aplique o preset e teste rate entre `0.90` e `0.95`, pitch entre `0.75` e `0.88` e volume `1`.

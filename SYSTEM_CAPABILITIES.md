@@ -192,3 +192,11 @@ Ainda exigem acao manual externa: DNS/Caddy do n8n, credenciais reais da Evoluti
 ## Assistente Universal de Configuracao
 
 `/integrations/setup-wizard` centraliza configuracao e validacao de API publica, OpenAI/Gemini, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. `/integrations/setup-summary` mostra o status final por provider, pendencia e acao recomendada.
+
+## Voz premium original
+
+- Preset `JARVIS BR Premium` com SpeechSynthesis local do navegador.
+- Configuracao em `/settings/voice` para voz, idioma, rate, pitch e volume.
+- Experiencia em `/voice`, `/jarvis-mode` e `/mobile-assistant`.
+- Reconhecimento de voz somente por acionamento explicito.
+- Fallback textual quando o navegador nao suporta SpeechRecognition.
