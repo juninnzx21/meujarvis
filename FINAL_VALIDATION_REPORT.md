@@ -1,5 +1,21 @@
 ﻿# FINAL_VALIDATION_REPORT
 
+## Checagem publica de URLs 2026-05-17
+
+Resultado: **APROVADO**.
+
+Escopo restrito: apenas status HTTP basico das URLs publicas, sem login, webhook, payload, rotas privadas, pentest, fuzzing, teste ofensivo ou credenciais.
+
+| URL | HTTP | Tipo | Observacao |
+| --- | ---: | --- | --- |
+| `https://jarvis.juninnzxtec.com.br` | 200 | HTML | Frontend publico respondeu. |
+| `https://apijarvis.juninnzxtec.com.br/api/health` | 200 | JSON | API oficial respondeu. |
+| `https://apijarvis.juninnzxtec.com.br/api/health/public` | 200 | JSON | Health publico respondeu. |
+| `https://apijarvis.juninnzxtec.com.br/api/health/full` | 200 | JSON | Health full respondeu. |
+| `https://n8njarvis.juninnzxtec.com.br` | 200 | HTML | n8n online; resposta HTML contem estrutura do app n8n. |
+
+Ressalva operacional: esta checagem confirma disponibilidade publica basica, mas nao valida autenticacao, workflows, webhooks, Evolution, Home Assistant ou fluxos internos.
+
 Data/hora: 2026-05-16 16:29:54 -03:00
 
 Diretorio: `E:\jarvis-home-assistant`
@@ -240,3 +256,4 @@ Validado por testes:
 Adicionado assistente universal para configurar e validar API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. O resumo final fica em `/integrations/setup-summary`.
 
 Complemento aplicado: o painel agora mostra informativos de orientacao para cada pendencia operacional real, explicando o que cada etapa faz, como configurar e como validar sem expor credenciais.
+

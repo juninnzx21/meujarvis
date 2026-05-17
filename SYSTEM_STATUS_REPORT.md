@@ -1,5 +1,19 @@
 ﻿# SYSTEM_STATUS_REPORT
 
+## Checagem publica de URLs 2026-05-17
+
+Status: **APROVADO** para disponibilidade HTTP basica.
+
+| URL | HTTP | Tipo | Status operacional |
+| --- | ---: | --- | --- |
+| `https://jarvis.juninnzxtec.com.br` | 200 | HTML | Frontend publico online. |
+| `https://apijarvis.juninnzxtec.com.br/api/health` | 200 | JSON | API oficial online. |
+| `https://apijarvis.juninnzxtec.com.br/api/health/public` | 200 | JSON | Health publico online. |
+| `https://apijarvis.juninnzxtec.com.br/api/health/full` | 200 | JSON | Health full online. |
+| `https://n8njarvis.juninnzxtec.com.br` | 200 | HTML | n8n online; nao aparenta placeholder simples. |
+
+Ressalva: nao foram testados login, webhook, rotas privadas, payloads, credenciais ou integracoes reais nesta rodada.
+
 Data/hora da auditoria: 2026-05-16 16:29:54 -03:00
 
 Diretorio usado: `E:\jarvis-home-assistant`
@@ -293,3 +307,4 @@ Ressalvas:
 Implementado em `/integrations/setup-wizard` com backend `/api/integrations/setup/*`, status padronizado, checklists manuais e resumo final em `/integrations/setup-summary`. Segredos continuam fora do frontend.
 
 Atualizado para exibir informativos operacionais dos proximos passos reais: preencher n8n, preencher Evolution API, gerar QR do WhatsApp, configurar webhook, testar `ei jarvis status do sistema`, configurar Home Assistant, configurar backup offsite, revisar erros antigos do scheduler, rotacionar credenciais compartilhadas e validar importacao OFX/CSV criando previa.
+

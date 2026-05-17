@@ -17,7 +17,7 @@ export function N8nPage() {
     setWorkflows(workflowsRes.data.workflows || []);
   }
 
-  useEffect(() => { load().catch(() => undefined); }, []);
+  useEffect(() => { load().catch((error) => setResult(friendlyError(error))); }, []);
 
   async function saveConfig(event: FormEvent) {
     event.preventDefault();
@@ -36,10 +36,14 @@ export function N8nPage() {
   }
 
   async function clearConfig() {
-    const res = await api.delete("/n8n/config");
-    setStatus(res.data);
-    setConfig({ webhookUrl: "", apiKey: "", webhookSecret: "", enabled: true });
-    setResult("Configuracao n8n removida.");
+    try {
+      const res = await api.delete("/n8n/config");
+      setStatus(res.data);
+      setConfig({ webhookUrl: "", apiKey: "", webhookSecret: "", enabled: true });
+      setResult("Configuracao n8n removida.");
+    } catch (error) {
+      setResult(friendlyError(error));
+    }
   }
 
   async function testWebhook() {
@@ -70,13 +74,21 @@ export function N8nPage() {
   }
 
   async function bootstrapWorkflows() {
-    const res = await api.post("/n8n/workflows/bootstrap");
-    setResult(res.data.message || "Workflows padrao preparados para importacao manual.");
+    try {
+      const res = await api.post("/n8n/workflows/bootstrap");
+      setResult(res.data.message || "Workflows padrao preparados para importacao manual.");
+    } catch (error) {
+      setResult(friendlyError(error));
+    }
   }
 
   async function importAllWorkflows() {
-    const res = await api.post("/n8n/workflows/import-all");
-    setResult(res.data.message || `Importacao: ${res.data.status}`);
+    try {
+      const res = await api.post("/n8n/workflows/import-all");
+      setResult(res.data.message || `Importacao: ${res.data.status}`);
+    } catch (error) {
+      setResult(friendlyError(error));
+    }
   }
 
   return (
@@ -153,6 +165,7 @@ export function N8nPage() {
                 {template}
               </button>
             ))}
+            {!(status.templates || []).length && <p className="text-xs text-slate-500">Nenhum template carregado ainda.</p>}
           </div>
         </div>
         <div className="rounded-xl bg-white/5 p-3 text-sm text-slate-400">
@@ -163,6 +176,7 @@ export function N8nPage() {
                 {workflow.name}
               </button>
             ))}
+            {!workflows.length && <p className="text-xs text-slate-500">Nenhum workflow local encontrado.</p>}
           </div>
         </div>
         <div className="rounded-xl bg-white/5 p-3 text-sm text-slate-400">

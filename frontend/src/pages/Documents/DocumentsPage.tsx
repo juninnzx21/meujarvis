@@ -14,7 +14,7 @@ export function DocumentsPage() {
     setDocuments(res.data.documents || []);
   }
 
-  useEffect(() => { load().catch(() => undefined); }, []);
+  useEffect(() => { load().catch((error) => setResult(friendlyError(error))); }, []);
 
   async function upload(event: FormEvent) {
     event.preventDefault();
@@ -30,8 +30,13 @@ export function DocumentsPage() {
 
   async function runSearch(event: FormEvent) {
     event.preventDefault();
-    const res = await api.get(`/documents/search?q=${encodeURIComponent(search)}`);
-    setChunks(res.data.chunks || []);
+    try {
+      const res = await api.get(`/documents/search?q=${encodeURIComponent(search)}`);
+      setChunks(res.data.chunks || []);
+      setResult(res.data.chunks?.length ? "" : "Nenhum trecho encontrado para esta busca.");
+    } catch (error) {
+      setResult(friendlyError(error));
+    }
   }
 
   return (

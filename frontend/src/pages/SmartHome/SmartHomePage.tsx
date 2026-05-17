@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FlaskConical, Home, ShieldAlert } from "lucide-react";
 import { StatusPill } from "../../components/StatusPill";
-import { api } from "../../services/api";
+import { api, friendlyError } from "../../services/api";
 
 const domains = ["light", "switch", "sensor", "climate", "scene"];
 
@@ -19,18 +19,26 @@ export function SmartHomePage() {
     setGrouped(entitiesRes.data.grouped || {});
   }
 
-  useEffect(() => { load().catch(() => undefined); }, []);
+  useEffect(() => { load().catch((error) => setReply(friendlyError(error))); }, []);
 
   async function send(event: FormEvent) {
     event.preventDefault();
-    const res = await api.post("/home-assistant/conversation", { text });
-    setReply(res.data.message || res.data.status);
+    try {
+      const res = await api.post("/home-assistant/conversation", { text });
+      setReply(res.data.message || res.data.status);
+    } catch (error) {
+      setReply(friendlyError(error));
+    }
   }
 
   async function testConnection() {
-    const res = await api.post("/home-assistant/test-connection");
-    setReply(res.data.message || (res.data.status === "success" ? "Home Assistant respondeu com sucesso." : res.data.status));
-    await load();
+    try {
+      const res = await api.post("/home-assistant/test-connection");
+      setReply(res.data.message || (res.data.status === "success" ? "Home Assistant respondeu com sucesso." : res.data.status));
+      await load();
+    } catch (error) {
+      setReply(friendlyError(error));
+    }
   }
 
   const visibleGroups = useMemo(() => {

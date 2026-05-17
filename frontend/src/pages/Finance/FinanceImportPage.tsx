@@ -24,7 +24,7 @@ export function FinanceImportPage() {
       setAccounts(res.data.accounts);
       setBankAccountId(res.data.accounts[0]?.id ?? "");
     }).catch((error) => setMessage(friendlyError(error)));
-    loadImports().catch(() => undefined);
+    loadImports().catch((error) => setMessage(friendlyError(error)));
   }, []);
 
   async function submit(event: FormEvent) {

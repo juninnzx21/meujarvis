@@ -53,7 +53,7 @@ export function WhatsAppPage() {
   }
 
   useEffect(() => {
-    load().catch(() => undefined);
+    load().catch((error) => setMessage(friendlyError(error)));
     return () => {
       if (pollingRef.current) window.clearInterval(pollingRef.current);
     };
@@ -73,11 +73,15 @@ export function WhatsAppPage() {
   }
 
   async function clearConfig() {
-    const res = await api.delete("/whatsapp/config");
-    setStatus(res.data);
-    setEvolution({});
-    setConfig({ apiUrl: "", apiKey: "", instance: "", autoReply: false });
-    setMessage("Configuracao removida.");
+    try {
+      const res = await api.delete("/whatsapp/config");
+      setStatus(res.data);
+      setEvolution({});
+      setConfig({ apiUrl: "", apiKey: "", instance: "", autoReply: false });
+      setMessage("Configuracao removida.");
+    } catch (error) {
+      setMessage(friendlyError(error));
+    }
   }
 
   async function testConnection() {
@@ -106,6 +110,7 @@ export function WhatsAppPage() {
     const params = config.instance ? `?instanceName=${encodeURIComponent(config.instance)}` : "";
     const res = await api.get(`/whatsapp/evolution/connection-state${params}`);
     setEvolution((current) => ({ ...current, ...res.data }));
+    setMessage(res.data.message || `Status da instancia: ${res.data.connectionState || "unknown"}`);
     return res.data;
   }
 
@@ -151,9 +156,13 @@ export function WhatsAppPage() {
   }
 
   async function logoutInstance() {
-    const res = await api.post("/whatsapp/evolution/logout", { instanceName: config.instance || undefined });
-    setEvolution((current) => ({ ...current, ...res.data }));
-    setMessage(res.data.message || "Comando enviado.");
+    try {
+      const res = await api.post("/whatsapp/evolution/logout", { instanceName: config.instance || undefined });
+      setEvolution((current) => ({ ...current, ...res.data }));
+      setMessage(res.data.message || "Comando enviado.");
+    } catch (error) {
+      setMessage(friendlyError(error));
+    }
   }
 
   async function send(event: FormEvent) {
@@ -167,8 +176,12 @@ export function WhatsAppPage() {
       setMessage("Confirme explicitamente antes de enviar uma mensagem de teste.");
       return;
     }
-    const res = await api.post("/whatsapp/send", { phone: cleanPhone, content, confirmed: true });
-    setMessage(res.data.message || "Mensagem processada.");
+    try {
+      const res = await api.post("/whatsapp/send", { phone: cleanPhone, content, confirmed: true });
+      setMessage(res.data.message || "Mensagem processada.");
+    } catch (error) {
+      setMessage(friendlyError(error));
+    }
   }
 
   return (
@@ -222,7 +235,7 @@ export function WhatsAppPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={createInstance} className="btn btn-ghost"><Wifi size={18} /> Criar instancia</button>
-            <button type="button" onClick={() => refreshConnectionState().catch(() => undefined)} className="btn btn-ghost"><RefreshCw size={18} /> Verificar status</button>
+            <button type="button" onClick={() => refreshConnectionState().catch((error) => setMessage(friendlyError(error)))} className="btn btn-ghost"><RefreshCw size={18} /> Verificar status</button>
             <button type="button" onClick={generateQr} className="btn btn-primary"><QrCode size={18} /> Gerar QR Code</button>
             <button type="button" onClick={logoutInstance} className="btn btn-ghost"><LogOut size={18} /> Desconectar</button>
           </div>
