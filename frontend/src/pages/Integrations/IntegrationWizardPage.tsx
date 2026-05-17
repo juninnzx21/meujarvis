@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Copy, ExternalLink, FlaskConical, RefreshCw, Save, ShieldCheck, Workflow } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api, friendlyError } from "../../services/api";
-import { ConnectionStatusBadge, IntegrationTestResult, ManualActionChecklist, SecretInputMasked, SetupProgressSummary, WebhookCopyBox } from "./components";
+import { ConnectionStatusBadge, IntegrationTestResult, ManualActionChecklist, OperationalGuidancePanel, SecretInputMasked, SetupProgressSummary, WebhookCopyBox } from "./components";
 
 type SetupStep = {
   provider: string;
@@ -169,6 +169,7 @@ export function IntegrationWizardPage() {
         <Link to="/integrations/setup-summary" className="btn btn-ghost"><ShieldCheck size={18} /> Resumo final</Link>
       </div>
       <SetupProgressSummary providers={steps} />
+      <OperationalGuidancePanel />
       <IntegrationTestResult result={message} />
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
         <nav className="glass flex gap-2 overflow-x-auto rounded-2xl p-3 xl:flex-col xl:overflow-visible">

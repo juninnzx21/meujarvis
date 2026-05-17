@@ -1,4 +1,4 @@
-import { CheckCircle2, Clipboard, EyeOff, ListChecks, XCircle } from "lucide-react";
+import { CheckCircle2, Clipboard, EyeOff, Info, ListChecks, XCircle } from "lucide-react";
 import { StatusPill } from "../../components/StatusPill";
 
 export function ConnectionStatusBadge({ status }: { status?: string | boolean }) {
@@ -20,11 +20,11 @@ export function SecretInputMasked({ value, onChange, placeholder }: { value: str
 export function ManualActionChecklist({ steps }: { steps?: string[] }) {
   if (!steps?.length) return null;
   return (
-    <div className="rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100">
-      <p className="mb-2 flex items-center gap-2 font-bold"><ListChecks size={16} /> Acao manual quando necessario</p>
-      <ul className="space-y-1">
-        {steps.map((step) => <li key={step}>- {step}</li>)}
-      </ul>
+    <div className="rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm text-amber-100">
+      <p className="mb-3 flex items-center gap-2 font-bold"><ListChecks size={16} /> Como deixar esta etapa funcionando</p>
+      <ol className="space-y-2">
+        {steps.map((step, index) => <li key={step} className="leading-relaxed"><span className="font-bold">{index + 1}.</span> {step}</li>)}
+      </ol>
     </div>
   );
 }
@@ -63,3 +63,67 @@ export function SetupProgressSummary({ providers }: { providers: Array<{ status:
   );
 }
 
+const pendingGuides = [
+  {
+    title: "Preencher n8n no wizard",
+    body: "Conecta o JARVIS aos workflows de automacao. Informe a URL do n8n, token/API key e webhook secret; depois teste e importe os workflows padrao."
+  },
+  {
+    title: "Preencher Evolution API no wizard",
+    body: "Permite que o JARVIS use a Evolution para conectar o WhatsApp. Informe URL, instancia e API key sem expor a chave real no frontend."
+  },
+  {
+    title: "Gerar QR do WhatsApp pelo painel",
+    body: "Cria o QR Code para parear seu numero. Escaneie no celular e acompanhe o status ate ficar conectado/open."
+  },
+  {
+    title: "Configurar webhook automaticamente",
+    body: "Liga a Evolution ao webhook oficial do JARVIS. Se a versao da API nao permitir, o painel mostra o checklist manual."
+  },
+  {
+    title: "Testar WhatsApp com ei jarvis",
+    body: "Confirma que o bot responde apenas com a frase obrigatoria. Envie: ei jarvis status do sistema."
+  },
+  {
+    title: "Configurar Home Assistant",
+    body: "Permite listar entidades e executar acoes seguras de casa inteligente. Use URL e token de longa duracao, sempre mascarado."
+  },
+  {
+    title: "Configurar backup offsite",
+    body: "Garante copia fora da VPS/local. Use S3, rclone, Google Drive ou outra VPS com criptografia e retencao definida."
+  },
+  {
+    title: "Revisar erros antigos do scheduler",
+    body: "Ajuda a entender falhas historicas. Abra Logs, filtre modulo scheduler e procure rotinas_error, overdue_error ou tick_error."
+  },
+  {
+    title: "Rotacionar credenciais compartilhadas",
+    body: "Troque senhas/tokens que ja circularam fora de um vault. Depois salve novas credenciais apenas em .env, painel seguro ou gerenciador."
+  },
+  {
+    title: "Validar OFX/CSV criando previa",
+    body: "Garante que extrato nao entra direto. Envie OFX/CSV e confirme que abriu uma revisao em /finance/import/:id/review."
+  }
+];
+
+export function OperationalGuidancePanel() {
+  return (
+    <div className="glass rounded-2xl p-5">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="rounded-xl bg-cyan-400/15 p-2 text-cyan-100"><Info size={18} /></div>
+        <div>
+          <p className="font-bold text-white">Pendencias orientadas</p>
+          <p className="text-sm text-slate-400">Use esta lista como roteiro para deixar o JARVIS redondinho. Cada item explica o que faz e como validar.</p>
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {pendingGuides.map((item) => (
+          <div key={item.title} className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p className="font-semibold text-white">{item.title}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-400">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -54,3 +54,17 @@ Pendencias externas comuns:
 - Home Assistant: token deve ser criado no Home Assistant e salvo no JARVIS.
 - Backup offsite: exige destino externo e criptografia definidos pelo usuario.
 
+## Pendencias orientadas no painel
+
+O wizard mostra uma area de informativos com os passos que ainda precisam de configuracao real. Cada item explica o que faz, como configurar e como validar:
+
+1. Preencher n8n no wizard: conecta o JARVIS aos workflows de automacao, alertas, tarefas, backups, rotinas e eventos.
+2. Preencher Evolution API no wizard: permite controlar a conexao WhatsApp pela Evolution sem expor API key.
+3. Gerar QR do WhatsApp pelo painel: pareia o numero pelo proprio JARVIS e acompanha o status conectado/open.
+4. Configurar webhook automaticamente: tenta apontar a Evolution para o webhook oficial; se nao der, mostra checklist manual.
+5. Testar WhatsApp com `ei jarvis status do sistema`: confirma a regra de wake phrase obrigatoria.
+6. Configurar Home Assistant: habilita entidades e acoes seguras de casa inteligente com token mascarado.
+7. Configurar backup offsite: prepara copia fora da VPS/local com criptografia e retencao.
+8. Revisar erros antigos do scheduler: orienta filtro em Logs por modulo `scheduler` e acoes `*_error`.
+9. Rotacionar credenciais compartilhadas: reforca troca de senhas/tokens ja expostos fora de vault/gerenciador.
+10. Validar importacao real OFX/CSV: confirma que o arquivo gera previa em `/finance/import/:id/review`, nunca importacao direta.

@@ -3,6 +3,7 @@ import { Clipboard, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { StatusPill } from "../../components/StatusPill";
 import { api } from "../../services/api";
+import { OperationalGuidancePanel } from "./components";
 
 type ProviderSummary = {
   provider: string;
@@ -47,6 +48,7 @@ export function IntegrationSetupSummaryPage() {
         </div>
       </div>
       {message && <p className="rounded-xl bg-white/5 p-3 text-sm text-slate-300">{message}</p>}
+      <OperationalGuidancePanel />
       <div className="glass rounded-2xl p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="font-bold text-white">Status geral</p>
@@ -82,4 +84,3 @@ export function IntegrationSetupSummaryPage() {
     </section>
   );
 }
-

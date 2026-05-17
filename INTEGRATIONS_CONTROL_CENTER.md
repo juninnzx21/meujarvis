@@ -122,3 +122,16 @@ O wizard valida:
 `/integrations/setup-wizard` centraliza configuracao e validacao de API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Documentos/RAG, Monitoramento, Backup, Mobile/PWA e Seguranca.
 
 `/integrations/setup-summary` mostra uma tabela final com Provider, Status, Configurado, Ultimo teste, Pendencia e Acao recomendada.
+
+O wizard tambem mostra uma area de pendencias orientadas com explicacao curta para:
+
+- configurar n8n;
+- configurar Evolution API;
+- gerar QR do WhatsApp;
+- configurar webhook automatico ou manual;
+- testar `ei jarvis status do sistema`;
+- configurar Home Assistant;
+- configurar backup offsite;
+- revisar erros antigos de scheduler;
+- rotacionar credenciais compartilhadas;
+- validar OFX/CSV criando previa obrigatoria.

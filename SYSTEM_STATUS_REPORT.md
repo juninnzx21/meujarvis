@@ -291,3 +291,5 @@ Ressalvas:
 ## Assistente Universal - 2026-05-17
 
 Implementado em `/integrations/setup-wizard` com backend `/api/integrations/setup/*`, status padronizado, checklists manuais e resumo final em `/integrations/setup-summary`. Segredos continuam fora do frontend.
+
+Atualizado para exibir informativos operacionais dos proximos passos reais: preencher n8n, preencher Evolution API, gerar QR do WhatsApp, configurar webhook, testar `ei jarvis status do sistema`, configurar Home Assistant, configurar backup offsite, revisar erros antigos do scheduler, rotacionar credenciais compartilhadas e validar importacao OFX/CSV criando previa.

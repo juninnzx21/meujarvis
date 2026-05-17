@@ -238,3 +238,5 @@ Validado por testes:
 ## Assistente Universal - validacao
 
 Adicionado assistente universal para configurar e validar API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. O resumo final fica em `/integrations/setup-summary`.
+
+Complemento aplicado: o painel agora mostra informativos de orientacao para cada pendencia operacional real, explicando o que cada etapa faz, como configurar e como validar sem expor credenciais.

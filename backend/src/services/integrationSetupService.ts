@@ -144,8 +144,11 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       publicUrls: { n8n: urls.n8nPublicUrl },
       actions: ["save", "test", "bootstrap", "import_workflows", "open_n8n", "copy_caddy"],
       manualSteps: [
-        "Se API key do n8n nao estiver configurada, importe os JSONs de n8n/workflows pelo editor.",
-        "Em producao, Caddy deve apontar n8njarvis.juninnzxtec.com.br para 127.0.0.1:15678."
+        "O que faz: conecta o JARVIS ao n8n para disparar workflows quando houver alerta, tarefa, backup, rotina, financeiro ou WhatsApp.",
+        "Como configurar: informe a URL publica do n8n, API key/token e webhook secret quando existirem; depois clique em Salvar e Testar.",
+        "Workflows: use Configurar auto para importar os workflows padrao; se a API do n8n nao permitir, importe os JSONs de n8n/workflows pelo editor.",
+        "Producao: Caddy deve apontar n8njarvis.juninnzxtec.com.br para 127.0.0.1:15678.",
+        "Como validar: o status deve sair de not_configured e o teste do workflow health-monitor deve responder sem expor segredo."
       ],
       docsPath: "N8N_LOCAL_PRODUCTION.md",
       routePath: "/n8n"
@@ -172,9 +175,12 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       publicUrls: { webhook: urls.whatsappWebhookUrl },
       actions: ["save", "test", "create_instance", "generate_qr", "poll_status", "configure_webhook", "mock_message", "mock_ofx_csv"],
       manualSteps: [
-        "Se configurar webhook automaticamente retornar manual_action_required, cole a URL oficial no manager da Evolution.",
-        "Teste real obrigatorio: ei jarvis status do sistema.",
-        "OFX/CSV enviado por WhatsApp cria previa em /finance/import/:id/review."
+        "O que faz: conecta seu numero ao JARVIS para receber mensagens, arquivos e comandos seguros pelo WhatsApp.",
+        "Como configurar: preencha Evolution API URL, instancia e API key; clique em Salvar, Testar e depois gere o QR Code para escanear.",
+        "Webhook: clique em Configurar auto; se retornar manual_action_required, cole a URL oficial no manager da Evolution.",
+        "Teste real obrigatorio: envie no WhatsApp exatamente 'ei jarvis status do sistema'.",
+        "Seguranca: sem 'ei jarvis' o JARVIS nao deve executar nada; fromMe e grupos sao ignorados por padrao.",
+        "Extratos: OFX/CSV enviado por WhatsApp cria previa em /finance/import/:id/review e nunca importa direto."
       ],
       docsPath: "WHATSAPP_PRODUCTION_SETUP.md",
       routePath: "/whatsapp"
@@ -188,7 +194,12 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       configured: Boolean(data.configured),
       maskedFields: { urlConfigured: Boolean(data.urlConfigured), tokenConfigured: Boolean(data.tokenConfigured) },
       actions: ["save", "test", "list_entities", "safe_light_test"],
-      manualSteps: ["Gere um Long-Lived Access Token no Home Assistant e salve pelo painel; token nunca volta ao frontend."],
+      manualSteps: [
+        "O que faz: permite controlar e consultar dispositivos da casa pelo JARVIS com limites de seguranca.",
+        "Como configurar: gere um Long-Lived Access Token no Home Assistant, informe a URL e salve o token pelo painel.",
+        "Como validar: clique em Testar e depois listar entidades; luzes e switches simples podem ser testados com confirmacao.",
+        "Seguranca: lock, alarm, cover, garagem e portao exigem confirmacao explicita; token nunca volta ao frontend."
+      ],
       docsPath: "INTEGRATIONS_SETUP.md",
       routePath: "/smart-home"
     };
@@ -207,7 +218,13 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
         externalAiCategorization: false
       },
       actions: ["test", "create_default_categories", "open_pending_imports", "test_ofx_mock"],
-      manualSteps: ["Nunca importe extrato direto; aprove linhas em /finance/import/:id/review."],
+      manualSteps: [
+        "O que faz: organiza contas, categorias, entradas, saidas, regras e importacao de extratos.",
+        "Como configurar: defina a conta padrao, categoria fallback e mantenha revisao obrigatoria ligada.",
+        "Como validar OFX/CSV: envie ou suba um arquivo seguro e confira se ele cria uma previa em /finance/import/:id/review.",
+        "Regra obrigatoria: nunca importe extrato direto; aprove as linhas na tela de revisao antes de gravar transacoes.",
+        "Privacidade: extratos financeiros nao sao enviados para IA externa por padrao."
+      ],
       docsPath: "FINANCE_IMPORT_GUIDE.md",
       routePath: "/finance"
     };
@@ -232,7 +249,12 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       configured: true,
       publicUrls: { publicHealth: urls.publicHealthUrl, fullHealth: urls.fullHealthUrl },
       actions: ["test", "copy_health_urls", "bootstrap_n8n_health_monitor"],
-      manualSteps: ["Configure Uptime Kuma/Better Stack/Healthchecks apontando para /api/health/public."],
+      manualSteps: [
+        "O que faz: acompanha app, banco, scheduler e integracoes para descobrir falhas cedo.",
+        "Como configurar: use /api/health/public em Uptime Kuma, Better Stack ou Healthchecks.",
+        "Como validar: health/public deve retornar apenas app, database, scheduler e timestamp, sem detalhes sensiveis.",
+        "Scheduler: erros antigos no historico devem ser revisados em Logs filtrando modulo scheduler e acao *_error."
+      ],
       docsPath: "MONITORING_SETUP.md",
       routePath: "/status"
     };
@@ -245,7 +267,13 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       configured: true,
       maskedFields: { localConfigured: true, offsiteConfigured: false, lastBackupAt: log?.createdAt ?? null },
       actions: ["run_local_backup_manual", "copy_retention_policy"],
-      manualSteps: ["Offsite deve usar rclone/S3/VPS com backup criptografado; restore exige confirmacao RESTORE."],
+      manualSteps: [
+        "O que faz: protege o banco e arquivos operacionais contra perda local.",
+        "Como configurar local: use backup-jarvis.ps1 e confira se o arquivo foi criado em backups/.",
+        "Como configurar offsite: escolha rclone, S3 compativel, Google Drive ou outra VPS com backup criptografado.",
+        "Retencao sugerida: diario por 7 dias, semanal por 4 semanas e mensal por 6 meses.",
+        "Seguranca: restore exige confirmacao RESTORE e nunca deve rodar em producao sem backup validado."
+      ],
       docsPath: "OFFSITE_BACKUP_PLAN.md"
     };
   }
@@ -268,7 +296,13 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
     configured: true,
     maskedFields: { gitIgnoreChecks, whatsappWakePhrase: "ei jarvis", requireImportReview: true },
     actions: ["copy_security_checklist", "run_secret_scan_manual"],
-    manualSteps: ["Rotacione segredos compartilhados, use SSH por chave, revise firewall, mantenha portas internas fechadas."],
+    manualSteps: [
+      "O que faz: reduz risco de vazamento, invasao e automacoes perigosas.",
+      "Rotacao: troque senhas e tokens que ja foram compartilhados fora de vault/gerenciador.",
+      "SSH: use chave SSH, desabilite login por senha quando estiver seguro e revise firewall.",
+      "Portas: mantenha Postgres, n8n e backend presos em 127.0.0.1; Caddy deve ser a entrada publica.",
+      "Git: .env, backups, imports, documents, n8n/data, node_modules e dist devem continuar ignorados."
+    ],
     docsPath: "SECURITY_CHECKLIST.md"
   };
 }
