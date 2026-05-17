@@ -7,6 +7,7 @@ import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { parseInterCsvStatement } from "./modules/finance/parsers/interCsvParser.js";
 import { parseOfxStatement } from "./modules/finance/parsers/ofxParser.js";
+import { normalizeConnectionState, normalizeQrResponse } from "./modules/whatsapp/evolutionManagerService.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
 import { geminiService } from "./services/geminiService.js";
@@ -18,7 +19,8 @@ vi.mock("axios", () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
-    request: vi.fn()
+    request: vi.fn(),
+    isAxiosError: (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
   }
 }));
 
@@ -417,6 +419,53 @@ describe("JARVIS Home AI API", () => {
 
     const cleared = await request(app).delete("/api/whatsapp/config").set(auth()).expect(200);
     expect(cleared.body.status).toBe("not_configured");
+  });
+
+  it("manages Evolution QR connection safely from the WhatsApp panel", async () => {
+    await request(app).delete("/api/whatsapp/config").set(auth()).expect(200);
+
+    const notConfigured = await request(app).post("/api/whatsapp/evolution/connect").set(auth()).send({ instanceName: "jarvis-test" }).expect(200);
+    expect(notConfigured.body.status).toBe("not_configured");
+
+    const saved = await request(app)
+      .put("/api/whatsapp/config")
+      .set(auth())
+      .send({ apiUrl: "https://evolution.test", apiKey: "secret-evolution-key", instance: "jarvis-test", autoReply: false })
+      .expect(200);
+    expect(JSON.stringify(saved.body)).not.toContain("secret-evolution-key");
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 200, data: { qrcode: "data:image/png;base64,AAAA" } });
+    const connect = await request(app).post("/api/whatsapp/evolution/connect").set(auth()).send({ instanceName: "jarvis-test" }).expect(200);
+    expect(connect.body.status).toBe("success");
+    expect(connect.body.qrCodeDataUrl).toContain("data:image/png;base64");
+    expect(JSON.stringify(connect.body)).not.toContain("secret-evolution-key");
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 200, data: { instance: { state: "open" } } });
+    const state = await request(app).get("/api/whatsapp/evolution/connection-state?instanceName=jarvis-test").set(auth()).expect(200);
+    expect(state.body.connectionState).toBe("connected");
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 201, data: { ok: true, apikey: "secret-evolution-key" } });
+    const webhook = await request(app).post("/api/whatsapp/evolution/configure-webhook").set(auth()).send({ instanceName: "jarvis-test" }).expect(200);
+    expect(webhook.body.status).toBe("success");
+    expect(JSON.stringify(webhook.body)).not.toContain("secret-evolution-key");
+
+    vi.mocked(axios.request).mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });
+    vi.mocked(axios.request).mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });
+    vi.mocked(axios.request).mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });
+    const manual = await request(app).post("/api/whatsapp/evolution/configure-webhook").set(auth()).send({ instanceName: "jarvis-test" }).expect(200);
+    expect(manual.body.status).toBe("manual_action_required");
+    expect(manual.body.checklist.length).toBeGreaterThan(0);
+
+    await request(app).delete("/api/whatsapp/config").set(auth()).expect(200);
+  });
+
+  it("normalizes Evolution QR and connection state formats", async () => {
+    await expect(normalizeQrResponse({ qrcode: "data:image/png;base64,AAAA" })).resolves.toMatchObject({ rawType: "data_url", canRenderQr: true });
+    await expect(normalizeQrResponse({ base64: Buffer.from("fake-image").toString("base64").repeat(20) })).resolves.toMatchObject({ rawType: "base64", canRenderQr: true });
+    await expect(normalizeQrResponse({ code: "2@temporary-whatsapp-qr-code" })).resolves.toMatchObject({ rawType: "code", canRenderQr: true });
+    await expect(normalizeQrResponse({ pairingCode: "12345678" })).resolves.toMatchObject({ rawType: "pairing_code", pairingCode: "12345678", canRenderQr: false });
+    expect(normalizeConnectionState({ instance: { state: "open" } }).connectionState).toBe("connected");
+    expect(normalizeConnectionState({ state: "close" }).connectionState).toBe("disconnected");
   });
 
   it("groups mocked Home Assistant entities and blocks sensitive actions without confirmation", async () => {

@@ -76,6 +76,27 @@ A tela `/n8n` lista workflows locais em `n8n/workflows`, permite testar template
 
 A tela `/whatsapp` permite salvar credenciais criptografadas, testar conexao, copiar webhook oficial e tentar configurar o webhook automaticamente. Se a Evolution nao permitir a configuracao via API, o painel retorna instrucao manual.
 
+Fluxo in-app adicionado:
+
+- Configurar URL, instancia e API key sem expor segredo real.
+- Criar/selecionar instancia via Evolution quando a versao suportar.
+- Gerar QR Code ou pairing code dentro do JARVIS.
+- Fazer polling de conexao a cada poucos segundos ate `connected/open` ou timeout.
+- Configurar webhook oficial automaticamente com eventos de mensagens, documentos/anexos e audio quando a Evolution permitir.
+- Exibir `manual_action_required` com checklist quando endpoints variarem por versao.
+
+Endpoints JARVIS:
+
+- `GET /api/whatsapp/evolution/status`
+- `GET /api/whatsapp/evolution/instances`
+- `POST /api/whatsapp/evolution/instances`
+- `POST /api/whatsapp/evolution/connect`
+- `GET /api/whatsapp/evolution/connection-state`
+- `POST /api/whatsapp/evolution/logout`
+- `POST /api/whatsapp/evolution/restart`
+- `POST /api/whatsapp/evolution/configure-webhook`
+- `POST /api/whatsapp/evolution/test-connection`
+
 ## Wizard
 
 O wizard valida:

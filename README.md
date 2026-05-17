@@ -48,6 +48,19 @@ O painel possui uma central para configurar e validar integrações sem expor se
 
 Documentacao: `INTEGRATIONS_CONTROL_CENTER.md`.
 
+## WhatsApp com QR Code pelo painel
+
+A tela `/whatsapp` permite conectar WhatsApp pela Evolution API diretamente no JARVIS:
+
+- salvar URL, instancia e API key com criptografia em `Setting`;
+- criar/selecionar instancia quando a Evolution suportar;
+- gerar QR Code ou pairing code dentro do painel;
+- acompanhar estado `disconnected`, `connecting` e `connected/open`;
+- configurar automaticamente o webhook oficial `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`;
+- exibir `manual_action_required` quando a versao da Evolution exigir etapa manual.
+
+O frontend nunca recebe a API key real. O WhatsApp continua exigindo `ei jarvis` antes de executar comandos, e OFX/CSV continuam gerando previa de importacao com revisao obrigatoria.
+
 ## Fase Mobile/PWA
 
 O frontend possui PWA instalavel com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`.

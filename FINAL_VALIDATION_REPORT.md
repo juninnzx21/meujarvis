@@ -47,6 +47,8 @@ Fase 10: adicionada fundacao JARVIS 100000/10 com n8n proprio em Docker, workflo
 
 Base pessoal: `npm run seed:personal` foi atualizado para importar 47 memorias canonicas sobre Junior Rodrigues / Juninnzx, reconhecer aliases de titulos antigos, remover duplicatas equivalentes, bloquear padroes sensiveis e registrar apenas resumo redigido em `SystemLog`.
 
+WhatsApp QR in-app: a tela `/whatsapp` agora permite configurar Evolution API, criar/selecionar instancia, gerar QR Code ou pairing code, fazer polling de conexao e configurar webhook automaticamente quando a Evolution suportar. API key permanece criptografada/mascarada e o webhook continua exigindo `ei jarvis`.
+
 ## Resumo
 
 A auditoria confirmou que o projeto local esta consistente: dependencias instalam, auditoria npm nao encontrou vulnerabilidades, Prisma valida, migrations estao em sincronia, testes backend/frontend passam e builds passam.

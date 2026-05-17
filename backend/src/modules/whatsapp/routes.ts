@@ -11,8 +11,17 @@ import { writeSystemLog } from "../../services/systemLogService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { redactSensitive } from "../../utils/redact.js";
+import { evolutionManagerService } from "./evolutionManagerService.js";
 
 const router = Router();
+
+function requireAdmin(req: Parameters<typeof authMiddleware>[0], res: Parameters<typeof authMiddleware>[1]) {
+  if (req.user?.role !== "admin") {
+    res.status(403).json({ message: "Apenas administradores podem gerenciar a Evolution API." });
+    return false;
+  }
+  return true;
+}
 
 async function getLocalWhatsAppReply(content: string) {
   if (/status|sa[uú]de|sistema|health/i.test(content)) {
@@ -71,6 +80,14 @@ const configSchema = z.object({
   autoReply: z.boolean().default(false)
 });
 
+const instanceSchema = z.object({
+  instanceName: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/, "Use apenas letras, numeros, hifen ou underline.")
+});
+
+const optionalInstanceSchema = z.object({
+  instanceName: z.string().min(1).max(80).optional()
+});
+
 router.get("/status", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.status(req.user!.id))));
 router.get("/config", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.getConfig(req.user!.id))));
 router.put("/config", authMiddleware, validate(configSchema), asyncHandler(async (req, res) => {
@@ -82,7 +99,45 @@ router.delete("/config", authMiddleware, asyncHandler(async (req, res) => {
 router.post("/test-connection", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.testConnection(req.user!.id))));
 router.post("/configure-webhook", authMiddleware, asyncHandler(async (req, res) => {
   const webhookUrl = typeof req.body?.webhookUrl === "string" ? req.body.webhookUrl : "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook";
-  res.json(await whatsappService.configureWebhook(req.user!.id, webhookUrl));
+  res.json(await evolutionManagerService.configureWebhook(req.user!.id, undefined, webhookUrl));
+}));
+
+router.get("/evolution/status", authMiddleware, asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.getSafeStatus(req.user!.id));
+}));
+router.get("/evolution/instances", authMiddleware, asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.listInstances(req.user!.id));
+}));
+router.post("/evolution/instances", authMiddleware, validate(instanceSchema), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.createInstance(req.user!.id, req.body.instanceName));
+}));
+router.post("/evolution/connect", authMiddleware, validate(optionalInstanceSchema), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.connectInstance(req.user!.id, req.body.instanceName));
+}));
+router.get("/evolution/connection-state", authMiddleware, validate(optionalInstanceSchema, "query"), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const instanceName = typeof req.query.instanceName === "string" ? req.query.instanceName : undefined;
+  res.json(await evolutionManagerService.getConnectionState(req.user!.id, instanceName));
+}));
+router.post("/evolution/logout", authMiddleware, validate(optionalInstanceSchema), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.logoutInstance(req.user!.id, req.body.instanceName));
+}));
+router.post("/evolution/restart", authMiddleware, validate(optionalInstanceSchema), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.restartInstance(req.user!.id, req.body.instanceName));
+}));
+router.post("/evolution/configure-webhook", authMiddleware, validate(optionalInstanceSchema.extend({ webhookUrl: z.string().url().optional() })), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.configureWebhook(req.user!.id, req.body.instanceName, req.body.webhookUrl));
+}));
+router.post("/evolution/test-connection", authMiddleware, asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.testConnection(req.user!.id));
 }));
 router.post("/send", authMiddleware, validate(z.object({ phone: z.string().regex(/^\d{10,15}$/, "Numero deve conter apenas digitos, com DDI."), content: z.string().min(1), confirmed: z.boolean().optional() })), asyncHandler(async (req, res) => {
   if (!req.body.confirmed) return res.status(409).json({ message: "Envio de WhatsApp exige confirmacao." });

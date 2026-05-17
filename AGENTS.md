@@ -32,3 +32,5 @@
 - Workflows versionados em `n8n/workflows/` devem conter apenas exemplos seguros sem credenciais.
 - EventBus deve redigir payloads antes de salvar `IntegrationEvent` ou enviar para n8n.
 - Documentos/RAG ficam em `backend/storage/documents/`, ignorado no Git; nao enviar documentos sensiveis para IA externa sem consentimento explicito.
+- O fluxo de QR Code da Evolution em `/whatsapp` deve continuar sem expor API key real; se endpoint da Evolution variar, retornar `manual_action_required` com checklist.
+- QR Code/pairing code da Evolution deve ser temporario e nao deve ser persistido como dado permanente.

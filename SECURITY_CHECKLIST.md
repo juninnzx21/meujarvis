@@ -78,6 +78,10 @@
 - [x] `/api/integrations/*` retorna somente status, flags e mascaras.
 - [x] Apenas admin pode alterar configuracoes globais de integracao.
 - [x] Reenvio de eventos sensiveis exige confirmacao/manual review.
+- [x] Fluxo QR Code da Evolution API roda por rotas admin protegidas.
+- [x] QR Code/pairing code da Evolution nao e persistido como dado permanente.
+- [x] Respostas do manager Evolution removem payload bruto e nunca retornam API key.
+- [x] Endpoints variaveis da Evolution retornam `manual_action_required` em vez de expor erro sensivel.
 - [ ] Rotacionar DirectAdmin/hospedagem.
 - [ ] Rotacionar senha root da VPS.
 - [ ] Rotacionar todos os segredos compartilhados e gerar `SETTINGS_ENCRYPTION_KEY` dedicado na producao.

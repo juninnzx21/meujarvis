@@ -33,6 +33,7 @@ Atualizacao operacional desta rodada:
 - Proximo passo operacional: estado local confirmado, backend/frontend revalidados, scripts reexecutados, producao validada pela API oficial, guia `DEPLOY_NEXT_STEPS.md` criado e configuracao Evolution/WhatsApp mantida como pendencia de credenciais reais.
 - Fase 10: n8n proprio, scripts n8n, workflows, EventBus, IntegrationEvent, memoria semantica local, documentos/RAG preparado, CI inicial e documentacao 100000 adicionados.
 - Base pessoal enriquecida: 47 memorias canonicas sobre Junior Rodrigues / Juninnzx, projetos, stack, preferencias, JARVIS, n8n, WhatsApp, financeiro, mobile/PWA, deploys e roadmap. O seed atualiza aliases antigos, remove duplicatas equivalentes e bloqueia conteudo sensivel.
+- WhatsApp QR in-app: implementado fluxo local para conectar Evolution API pelo painel `/whatsapp`, com QR Code/pairing code, polling de status, configuracao automatica de webhook e fallback `manual_action_required` para variacoes de versao da Evolution.
 
 ## Ambiente
 

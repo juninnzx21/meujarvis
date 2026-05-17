@@ -18,6 +18,8 @@ Fase Mobile/PWA: app instalavel, atalhos, prompt de instalacao e tela `/mobile-a
 
 WhatsApp/Evolution: painel `/whatsapp` permite salvar URL, instancia e API key com seguranca; webhook oficial exige `ei jarvis`; OFX/CSV pelo WhatsApp cria previa de importacao financeira com revisao obrigatoria.
 
+Atualizacao 2026-05-17: `/whatsapp` agora possui wizard de conexao via Evolution API com criacao/seleção de instancia, QR Code no painel, polling de status, configuracao automatica de webhook quando suportada e fallback `manual_action_required`.
+
 Auditoria final 2026-05-16 16:18: backend/frontend, Prisma, scripts, backup, PWA e API dedicada foram validados. Producao API OK; integracoes externas n8n/WhatsApp/Home Assistant seguem dependentes de credenciais reais.
 
 Operacao 2026-05-16 16:29: deploy proximo documentado em `DEPLOY_NEXT_STEPS.md`; Evolution API/WhatsApp esta pronto para receber URL, instancia e API key no painel, mas a producao segue `not_configured` ate credenciais reais serem salvas.
@@ -72,6 +74,7 @@ Observacao: `https://jarvis.juninnzxtec.com.br/api/*` retornou HTML do frontend 
 - Rodar automacao segura.
 - Ver logs por modulo/nivel.
 - Configurar integracoes.
+- Conectar WhatsApp via QR Code dentro do painel quando a Evolution API suportar os endpoints.
 - Ver notificacoes.
 - Rodar rotina.
 - Importar extrato financeiro e revisar linhas antes de gravar.

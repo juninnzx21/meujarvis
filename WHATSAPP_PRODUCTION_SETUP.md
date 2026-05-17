@@ -6,6 +6,8 @@ Status: preparado para configuracao real e validacao segura.
 
 Atualizacao 2026-05-16 16:29: validacao local e producao pela API oficial foram reexecutadas. A producao segue pronta para configuracao real, mas o status pode aparecer `not_configured` ate URL, instancia e API key da Evolution serem salvas no painel.
 
+Atualizacao 2026-05-17: o painel `/whatsapp` passou a ter fluxo guiado para conectar a Evolution API sem abrir o manager quando a versao da Evolution disponibilizar endpoints compativeis. O JARVIS salva credenciais criptografadas, cria/seleciona instancia, gera QR Code, faz polling do estado de conexao, tenta configurar webhook automaticamente e mostra `manual_action_required` quando a API da Evolution nao suportar alguma etapa.
+
 ## API oficial
 
 Frontend: `https://jarvis.juninnzxtec.com.br`
@@ -36,6 +38,24 @@ Observacao: o dominio principal `jarvis.juninnzxtec.com.br/api/*` pode retornar 
 4. Informe URL da Evolution API, API key e nome da instancia.
 5. Clique em testar conexao.
 6. Configure no manager da Evolution o webhook `https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook`.
+
+## Conectar WhatsApp pelo proprio JARVIS
+
+Na tela `/whatsapp`:
+
+1. Preencha URL da Evolution API, instancia e API key.
+2. Clique em `Salvar configuracao`.
+3. Clique em `Testar conexao`.
+4. Clique em `Criar instancia`, se a instancia ainda nao existir.
+5. Clique em `Gerar QR Code`.
+6. Escaneie o QR Code dentro do proprio JARVIS pelo WhatsApp do celular.
+7. Aguarde o polling mostrar `connected/open`.
+8. Clique em `Configurar webhook automaticamente`.
+9. Teste no WhatsApp: `ei jarvis status do sistema`.
+
+O QR Code nao e persistido como dado permanente no banco. A API key nunca volta para o frontend; a tela mostra apenas mascara/status.
+
+Se a versao da Evolution retornar 404/unsupported para criacao de instancia, QR ou webhook, o JARVIS exibe `manual_action_required` com checklist seguro. Isso nao significa falha do JARVIS; significa que aquela versao exige etapa manual no manager.
 
 Campos no painel JARVIS:
 
@@ -72,6 +92,12 @@ Nao use `https://jarvis.juninnzxtec.com.br/api/...` no webhook. A API oficial em
 - `POST /api/whatsapp/test-connection`: testa a Evolution sem expor credenciais.
 - `POST /api/whatsapp/webhook`: recebe eventos da Evolution. So processa comandos com `ei jarvis`.
 - `POST /api/whatsapp/configure-webhook`: tenta configurar o webhook na Evolution; se a API nao suportar, retorna `manual_action_required` com instrucao.
+- `GET /api/whatsapp/evolution/status`: status seguro da Evolution, sem segredo.
+- `GET /api/whatsapp/evolution/instances`: tenta listar instancias.
+- `POST /api/whatsapp/evolution/instances`: tenta criar/selecionar instancia.
+- `POST /api/whatsapp/evolution/connect`: solicita QR Code ou pairing code.
+- `GET /api/whatsapp/evolution/connection-state`: normaliza `open/close/connecting`.
+- `POST /api/whatsapp/evolution/configure-webhook`: tenta configurar o webhook oficial com eventos de mensagens/anexos/audio.
 
 Tambem e possivel configurar pela Central:
 

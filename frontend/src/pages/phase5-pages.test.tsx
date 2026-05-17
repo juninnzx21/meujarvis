@@ -17,6 +17,7 @@ import { MobileAssistantPage } from "./MobileAssistant/MobileAssistantPage";
 import { IntegrationsPage } from "./Integrations/IntegrationsPage";
 import { IntegrationSettingsPage } from "./Integrations/IntegrationSettingsPage";
 import { IntegrationWizardPage } from "./Integrations/IntegrationWizardPage";
+import { WhatsAppPage } from "./WhatsApp/WhatsAppPage";
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { name: "Junior Rodrigues" }, logout: vi.fn() })
@@ -36,6 +37,9 @@ vi.mock("../services/api", () => ({
       if (url.startsWith("/notifications")) return Promise.resolve({ data: { unreadCount: 1, notifications: [{ id: "n1", title: "Aviso", message: "Mensagem", type: "warning", createdAt: new Date().toISOString() }] } });
       if (url === "/documents") return Promise.resolve({ data: { documents: [{ id: "d1", title: "Documento teste", fileType: "md" }] } });
       if (url.startsWith("/documents/search")) return Promise.resolve({ data: { chunks: [{ id: "ch1", content: "Trecho redigido do JARVIS" }] } });
+      if (url === "/whatsapp/status" || url === "/whatsapp/config") return Promise.resolve({ data: { status: "configured", source: "settings", apiUrl: "https://evolution.test", apiUrlConfigured: true, apiKeyConfigured: true, apiKeyMasked: "sec...key", instanceConfigured: true, instance: "jarvis", autoReply: false } });
+      if (url === "/whatsapp/evolution/status") return Promise.resolve({ data: { status: "configured", configured: true, instance: "jarvis", connectionState: "disconnected", apiUrlConfigured: true, apiKeyConfigured: true, instanceConfigured: true } });
+      if (url.startsWith("/whatsapp/evolution/connection-state")) return Promise.resolve({ data: { status: "success", instance: "jarvis", connectionState: "connected", message: "WhatsApp conectado." } });
       if (url.startsWith("/integrations/setup-wizard")) return Promise.resolve({ data: { steps: [{ id: "api", title: "API publica", status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, { id: "n8n", title: "n8n", status: "not_configured", url: "https://n8njarvis.juninnzxtec.com.br" }] } });
       if (url.startsWith("/integrations")) return Promise.resolve({ data: { urls: { frontendPublicUrl: "https://jarvis.juninnzxtec.com.br", apiPublicUrl: "https://apijarvis.juninnzxtec.com.br/api", whatsappWebhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", n8nPublicUrl: "https://n8njarvis.juninnzxtec.com.br" }, providers: { api_public: { configured: true, status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, openai: { configured: true, status: "configured" }, gemini: { configured: true, status: "configured" }, n8n: { configured: false, status: "not_configured", apiKeyConfigured: false, webhookSecretConfigured: false }, whatsapp: { configured: false, status: "not_configured", webhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", apiKeyConfigured: false, autoReply: false }, evolution: { configured: false, status: "not_configured" }, home_assistant: { configured: false, status: "not_configured", tokenConfigured: false }, finance: { configured: false, status: "not_configured", tokenConfigured: false, defaultAccountName: "PJ DO INTER" }, monitoring: { configured: true, status: "configured" }, backup: { configured: true, status: "configured" } } } });
       return Promise.resolve({ data: { recommendations: ["ok"], open: [], overdue: [], logs: [] } });
@@ -44,6 +48,8 @@ vi.mock("../services/api", () => ({
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
       if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
       if (url.startsWith("/integrations/test")) return Promise.resolve({ data: { status: "not_configured", message: "not_configured" } });
+      if (url === "/whatsapp/evolution/connect") return Promise.resolve({ data: { status: "success", connectionState: "connecting", qrCodeDataUrl: "data:image/png;base64,AAAA", canRenderQr: true, message: "QR Code gerado." } });
+      if (url === "/whatsapp/evolution/configure-webhook") return Promise.resolve({ data: { status: "manual_action_required", manualActionRequired: true, checklist: ["Abrir manager da Evolution."], message: "manual_action_required" } });
       return Promise.resolve({ data: { ok: true } });
     }),
     put: vi.fn(() => Promise.resolve({ data: { ok: true } })),
@@ -94,6 +100,18 @@ describe("Phase 5 and 6 pages", () => {
     render(<MemoryRouter><IntegrationWizardPage /></MemoryRouter>);
     expect(await screen.findByText("Setup Wizard")).toBeInTheDocument();
     expect(await screen.findByText("API publica")).toBeInTheDocument();
+  });
+
+  it("renders WhatsApp QR wizard without exposing secrets", async () => {
+    render(<WhatsAppPage />);
+    expect(await screen.findByText("1. Configurar Evolution")).toBeInTheDocument();
+    expect(await screen.findByText("2. Instancia e QR Code")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook")).toBeInTheDocument();
+    expect(screen.queryByText("secret-evolution-key")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Gerar QR Code"));
+    expect(await screen.findByAltText("QR Code para conectar WhatsApp")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Configurar webhook automaticamente"));
+    expect(await screen.findByText("Acao manual necessaria")).toBeInTheDocument();
   });
 
   it("renders native finance overview", async () => {
