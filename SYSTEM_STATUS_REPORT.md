@@ -1,5 +1,17 @@
 ﻿# SYSTEM_STATUS_REPORT
 
+## Atualizacao 2026-05-18 - Reset seguro da Evolution
+
+Status: **APROVADO** para correcao operacional local.
+
+- O painel `/whatsapp` agora possui reset seguro de instancia Evolution para casos em que o manager falha ao deletar ou a sessao nao sincroniza mensagens.
+- Backend adicionou rotas protegidas para `POST /api/whatsapp/evolution/reset` e `DELETE /api/whatsapp/evolution/instances`, ambas exigindo confirmacao `RESETAR EVOLUTION`.
+- O reset tenta logout e delete por endpoints conhecidos da Evolution e retorna `manual_action_required` se a versao da API nao permitir automacao.
+- API key real continua criptografada em `Setting`; frontend recebe apenas status/mensagem segura.
+- Testes atualizados cobrem reset com sucesso e rejeicao de confirmacao incorreta.
+
+Ressalva real: a limpeza da instancia em producao depende da API key real e das permissoes/versao da Evolution. Se a Evolution bloquear delete via API, seguir checklist manual no painel.
+
 ## Atualizacao 2026-05-18 - CMD online de logs
 
 Status: **APROVADO** para observabilidade local.

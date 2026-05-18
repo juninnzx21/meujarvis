@@ -73,6 +73,8 @@ A tela `/whatsapp` permite conectar WhatsApp pela Evolution API diretamente no J
 
 O frontend nunca recebe a API key real. O WhatsApp continua exigindo `ei jarvis` antes de executar comandos, e OFX/CSV continuam gerando previa de importacao com revisao obrigatoria.
 
+Quando o manager da Evolution travar ao deletar uma instancia ou deixar de sincronizar mensagens, a tela `/whatsapp` possui `Reset seguro da Evolution`. A acao exige digitar `RESETAR EVOLUTION`, tenta logout/delete por endpoints conhecidos da Evolution e mostra `manual_action_required` se a versao da API exigir limpeza manual no manager. Nenhuma API key real volta para o frontend.
+
 ## Fase Mobile/PWA
 
 O frontend possui PWA instalavel com manifest, service worker seguro, icones, atalhos e tela `/mobile-assistant`.

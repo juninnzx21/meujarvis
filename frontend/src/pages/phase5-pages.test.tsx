@@ -88,6 +88,7 @@ vi.mock("../services/api", () => ({
       if (url.startsWith("/integrations/setup")) return Promise.resolve({ data: { status: "manual_action_required", message: "manual_action_required" } });
       if (url === "/whatsapp/evolution/connect") return Promise.resolve({ data: { status: "success", connectionState: "connecting", qrCodeDataUrl: "data:image/png;base64,AAAA", canRenderQr: true, message: "QR Code gerado." } });
       if (url === "/whatsapp/evolution/configure-webhook") return Promise.resolve({ data: { status: "manual_action_required", manualActionRequired: true, checklist: ["Abrir manager da Evolution."], message: "manual_action_required" } });
+      if (url === "/whatsapp/evolution/reset") return Promise.resolve({ data: { status: "success", message: "Instancia desconectada/removida.", steps: [{ action: "delete", status: "success", message: "ok" }] } });
       return Promise.resolve({ data: { ok: true } });
     }),
     put: vi.fn(() => Promise.resolve({ data: { ok: true } })),
@@ -179,6 +180,9 @@ describe("Phase 5 and 6 pages", () => {
     expect(await screen.findByAltText("QR Code para conectar WhatsApp")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Configurar webhook automaticamente"));
     expect(await screen.findByText("Acao manual necessaria")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("Digite RESETAR EVOLUTION para confirmar"), { target: { value: "RESETAR EVOLUTION" } });
+    fireEvent.click(screen.getByText("Resetar instancia"));
+    expect(await screen.findByText("Instancia desconectada/removida.")).toBeInTheDocument();
   });
 
   it("renders native finance overview", async () => {

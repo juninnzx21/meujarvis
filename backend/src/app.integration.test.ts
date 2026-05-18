@@ -510,6 +510,23 @@ describe("JARVIS Home AI API", () => {
     expect(webhook.body.status).toBe("success");
     expect(JSON.stringify(webhook.body)).not.toContain("secret-evolution-key");
 
+    vi.mocked(axios.request)
+      .mockResolvedValueOnce({ status: 200, data: { ok: true } })
+      .mockResolvedValueOnce({ status: 200, data: { ok: true } });
+    const reset = await request(app)
+      .post("/api/whatsapp/evolution/reset")
+      .set(auth())
+      .send({ instanceName: "jarvis-test", confirmation: "RESETAR EVOLUTION" })
+      .expect(200);
+    expect(reset.body.status).toBe("success");
+    expect(JSON.stringify(reset.body)).not.toContain("secret-evolution-key");
+
+    await request(app)
+      .post("/api/whatsapp/evolution/reset")
+      .set(auth())
+      .send({ instanceName: "jarvis-test", confirmation: "resetar" })
+      .expect(400);
+
     vi.mocked(axios.request).mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });
     vi.mocked(axios.request).mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });
     vi.mocked(axios.request).mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });

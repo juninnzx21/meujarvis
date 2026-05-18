@@ -8,6 +8,8 @@ Atualizacao 2026-05-16 16:29: validacao local e producao pela API oficial foram 
 
 Atualizacao 2026-05-17: o painel `/whatsapp` passou a ter fluxo guiado para conectar a Evolution API sem abrir o manager quando a versao da Evolution disponibilizar endpoints compativeis. O JARVIS salva credenciais criptografadas, cria/seleciona instancia, gera QR Code, faz polling do estado de conexao, tenta configurar webhook automaticamente e mostra `manual_action_required` quando a API da Evolution nao suportar alguma etapa.
 
+Atualizacao 2026-05-18: o painel `/whatsapp` ganhou reset seguro de instancia Evolution para casos em que o manager mostra erro ao deletar, nao sincroniza mensagens ou trava em estado conectado. A acao exige confirmacao textual `RESETAR EVOLUTION`, tenta logout e delete por endpoints compativeis da Evolution e retorna `manual_action_required` quando a versao/API nao permitir automacao.
+
 ## API oficial
 
 Frontend: `https://jarvis.juninnzxtec.com.br`
@@ -57,6 +59,20 @@ O QR Code nao e persistido como dado permanente no banco. A API key nunca volta 
 
 Se a versao da Evolution retornar 404/unsupported para criacao de instancia, QR ou webhook, o JARVIS exibe `manual_action_required` com checklist seguro. Isso nao significa falha do JARVIS; significa que aquela versao exige etapa manual no manager.
 
+## Reset seguro quando o Manager da Evolution trava
+
+Use este fluxo quando o botao `Delete` do manager retornar erro como `[object Object]`, a instancia nao sincronizar mensagens ou o WhatsApp ficar preso em uma sessao antiga:
+
+1. Abra `/whatsapp` no JARVIS.
+2. Confirme que URL da Evolution API, instancia e API key estao salvas no painel.
+3. Na secao `Reset seguro da Evolution`, digite exatamente `RESETAR EVOLUTION`.
+4. Clique em `Resetar instancia`.
+5. Se o retorno for `success`, crie uma nova instancia, gere o QR Code e escaneie novamente.
+6. Configure o webhook oficial ou siga o checklist manual mostrado pelo painel.
+7. Teste de outro numero ou conversa: `ei jarvis status do sistema`.
+
+O reset tenta primeiro desconectar a sessao e depois remover a instancia por endpoints conhecidos da Evolution. Se a versao da API bloquear a remocao, o JARVIS nao forca nada: ele exibe `manual_action_required` e registra o erro redigido nos logs. Nenhuma API key real e retornada para o frontend.
+
 Campos no painel JARVIS:
 
 - URL da Evolution API: exemplo `https://evolution.seudominio.com.br`.
@@ -98,6 +114,8 @@ Nao use `https://jarvis.juninnzxtec.com.br/api/...` no webhook. A API oficial em
 - `POST /api/whatsapp/evolution/connect`: solicita QR Code ou pairing code.
 - `GET /api/whatsapp/evolution/connection-state`: normaliza `open/close/connecting`.
 - `POST /api/whatsapp/evolution/configure-webhook`: tenta configurar o webhook oficial com eventos de mensagens/anexos/audio.
+- `POST /api/whatsapp/evolution/reset`: exige `confirmation: "RESETAR EVOLUTION"`, tenta logout/delete da instancia e retorna sucesso ou `manual_action_required`.
+- `DELETE /api/whatsapp/evolution/instances`: exige `confirmation: "RESETAR EVOLUTION"` e tenta remover a instancia sem expor segredos.
 
 Tambem e possivel configurar pela Central:
 

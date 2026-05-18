@@ -44,6 +44,10 @@ function safeMessage(error: unknown) {
   return String(redactSensitive(message));
 }
 
+function safeStepError(error: unknown) {
+  return { statusCode: axiosStatus(error), error: safeMessage(error) };
+}
+
 function isConfigured(config: EvolutionConfig) {
   return Boolean(config.apiUrl && config.apiKey && config.instance);
 }
@@ -267,6 +271,88 @@ export const evolutionManagerService = {
       return { status: "success", instance, message: "Reinicio da instancia solicitado." };
     } catch {
       return manualAction("Nao foi possivel reiniciar automaticamente nesta versao da Evolution.");
+    }
+  },
+
+  async deleteInstance(userId: string, instanceName?: string) {
+    const config = await this.getConfig(userId);
+    const instance = instanceName || config.instance;
+    if (!isConfigured({ ...config, instance })) return { status: "not_configured", message: "Evolution API nao configurada." };
+    try {
+      const response = await firstSupported<unknown>(config, [
+        { method: "delete", path: `/instance/delete/${encodeURIComponent(instance)}` },
+        { method: "delete", path: `/instance/delete`, data: { instanceName: instance } },
+        { method: "post", path: `/instance/delete/${encodeURIComponent(instance)}` },
+        { method: "post", path: `/instance/delete`, data: { instanceName: instance } }
+      ]);
+      await writeSystemLog({
+        userId,
+        module: "whatsapp",
+        action: "evolution_instance_delete",
+        message: "Instancia Evolution removida pela API",
+        metadata: { instance, status: response.status }
+      });
+      return { status: "success", instance, message: "Instancia removida na Evolution API." };
+    } catch (error) {
+      if ([404, 405].includes(axiosStatus(error) ?? 0)) return manualAction("Esta versao da Evolution nao aceitou deletar a instancia por API.");
+      await writeSystemLog({
+        userId,
+        level: "warning",
+        module: "whatsapp",
+        action: "evolution_instance_delete_failed",
+        message: "Falha ao remover instancia Evolution",
+        metadata: { instance, ...safeStepError(error) }
+      });
+      return { status: "error", instance, message: "Nao foi possivel remover a instancia pela API." };
+    }
+  },
+
+  async resetInstance(userId: string, instanceName?: string) {
+    const config = await this.getConfig(userId);
+    const instance = instanceName || config.instance;
+    if (!isConfigured({ ...config, instance })) return { status: "not_configured", message: "Evolution API nao configurada." };
+    const steps: Array<{ action: string; status: string; message: string }> = [];
+
+    try {
+      const logout = await this.logoutInstance(userId, instance);
+      steps.push({ action: "logout", status: logout.status, message: logout.message });
+    } catch (error) {
+      steps.push({ action: "logout", status: "error", message: safeMessage(error) });
+    }
+
+    try {
+      const deleted = await this.deleteInstance(userId, instance);
+      steps.push({ action: "delete", status: deleted.status, message: deleted.message });
+      const success = deleted.status === "success";
+      await writeSystemLog({
+        userId,
+        level: success ? "info" : "warning",
+        module: "whatsapp",
+        action: "evolution_instance_reset",
+        message: success ? "Reset da instancia Evolution concluido" : "Reset da instancia Evolution precisa de acao manual",
+        metadata: { instance, steps }
+      });
+      return {
+        status: success ? "success" : deleted.status,
+        instance,
+        message: success
+          ? "Instancia desconectada/removida. Agora crie uma nova instancia e gere o QR Code."
+          : "Nao consegui concluir o reset automatico. Veja os passos e use o manager se necessario.",
+        steps,
+        manualActionRequired: deleted.status !== "success",
+        checklist: deleted.status === "success" ? [] : manualAction("Excluir manualmente a instancia no manager da Evolution.").checklist
+      };
+    } catch (error) {
+      steps.push({ action: "delete", status: "error", message: safeMessage(error) });
+      await writeSystemLog({
+        userId,
+        level: "warning",
+        module: "whatsapp",
+        action: "evolution_instance_reset_failed",
+        message: "Falha no reset da instancia Evolution",
+        metadata: { instance, steps }
+      });
+      return { status: "error", instance, message: "Nao foi possivel resetar a instancia pela API.", steps };
     }
   },
 

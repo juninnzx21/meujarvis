@@ -1,5 +1,17 @@
 ﻿# FINAL_VALIDATION_REPORT
 
+## Atualizacao 2026-05-18 - Reset seguro da Evolution
+
+Resultado: **APROVADO** para a correcao do erro de delete no fluxo operacional.
+
+- Implementado reset seguro da instancia Evolution pelo painel `/whatsapp`.
+- O backend tenta logout/delete sem expor segredo e registra falhas com redacao.
+- O frontend exige confirmacao textual `RESETAR EVOLUTION` antes da acao.
+- Testes backend/frontend atualizados e aprovados: backend 41 testes, frontend 16 testes.
+- Frontend `npm run validate` passou; backend `npm run validate` precisou parar processos Node por EPERM do Prisma no Windows e foi reexecutado.
+
+Ressalva real: se a Evolution API retornar 404/405 ou bloquear remocao da instancia, o painel mostra `manual_action_required`; nesse caso a limpeza final precisa ser feita no manager/API com permissao adequada.
+
 ## Atualizacao 2026-05-18 - CMD online de logs
 
 Resultado: **APROVADO** para melhoria de observabilidade.

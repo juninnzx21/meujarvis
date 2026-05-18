@@ -94,6 +94,10 @@ const optionalInstanceSchema = z.object({
   instanceName: z.string().min(1).max(80).optional()
 });
 
+const resetInstanceSchema = optionalInstanceSchema.extend({
+  confirmation: z.literal("RESETAR EVOLUTION")
+});
+
 router.get("/status", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.status(req.user!.id))));
 router.get("/config", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.getConfig(req.user!.id))));
 router.put("/config", authMiddleware, validate(configSchema), asyncHandler(async (req, res) => {
@@ -136,6 +140,14 @@ router.post("/evolution/logout", authMiddleware, validate(optionalInstanceSchema
 router.post("/evolution/restart", authMiddleware, validate(optionalInstanceSchema), asyncHandler(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   res.json(await evolutionManagerService.restartInstance(req.user!.id, req.body.instanceName));
+}));
+router.delete("/evolution/instances", authMiddleware, validate(resetInstanceSchema), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.deleteInstance(req.user!.id, req.body.instanceName));
+}));
+router.post("/evolution/reset", authMiddleware, validate(resetInstanceSchema), asyncHandler(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(await evolutionManagerService.resetInstance(req.user!.id, req.body.instanceName));
 }));
 router.post("/evolution/configure-webhook", authMiddleware, validate(optionalInstanceSchema.extend({ webhookUrl: z.string().url().optional() })), asyncHandler(async (req, res) => {
   if (!requireAdmin(req, res)) return;

@@ -26,6 +26,7 @@ export function WhatsAppPage() {
   const [content, setContent] = useState("ei jarvis status do sistema");
   const [message, setMessage] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState("");
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef<number | undefined>();
 
@@ -165,6 +166,25 @@ export function WhatsAppPage() {
     }
   }
 
+  async function resetEvolutionInstance() {
+    if (resetConfirmation !== "RESETAR EVOLUTION") {
+      setMessage("Digite RESETAR EVOLUTION para confirmar o reset da instancia.");
+      return;
+    }
+    try {
+      const res = await api.post("/whatsapp/evolution/reset", {
+        instanceName: config.instance || undefined,
+        confirmation: resetConfirmation
+      });
+      setEvolution((current) => ({ ...current, ...res.data }));
+      setMessage(res.data.message || "Reset solicitado.");
+      setResetConfirmation("");
+      await load();
+    } catch (error) {
+      setMessage(friendlyError(error));
+    }
+  }
+
   async function send(event: FormEvent) {
     event.preventDefault();
     const cleanPhone = phone.replace(/\D/g, "");
@@ -248,6 +268,32 @@ export function WhatsAppPage() {
           {evolution.pairingCode && <p className="rounded-xl bg-white/5 p-3 text-sm text-slate-200">Pairing code: <strong>{evolution.pairingCode}</strong></p>}
           {evolution.connectionState === "connected" && <p className="rounded-xl bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">WhatsApp conectado.</p>}
         </div>
+      </div>
+
+      <div className="glass space-y-4 rounded-2xl border border-red-400/20 p-5">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-xl font-black text-white">Reset seguro da Evolution</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Use quando o manager da Evolution travar, nao deletar a instancia ou parar de sincronizar mensagens. O JARVIS tentara logout e delete pela API, mantendo a chave oculta.
+            </p>
+          </div>
+          <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-bold text-red-100">acao destrutiva</span>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+          <input
+            className="input"
+            value={resetConfirmation}
+            onChange={(event) => setResetConfirmation(event.target.value)}
+            placeholder="Digite RESETAR EVOLUTION para confirmar"
+          />
+          <button type="button" onClick={resetEvolutionInstance} className="btn border-red-400/40 bg-red-500/15 text-red-100 hover:bg-red-500/25">
+            <Trash2 size={18} /> Resetar instancia
+          </button>
+        </div>
+        <p className="text-xs text-slate-500">
+          Depois do reset, crie uma instancia nova, gere QR Code, conecte o WhatsApp e configure o webhook oficial novamente.
+        </p>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_.9fr]">

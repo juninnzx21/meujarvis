@@ -73,7 +73,8 @@ A pagina Voz usa Web Speech API quando disponivel, envia transcricao para `POST 
 - WhatsApp: `WhatsAppService` usa Evolution API, exige confirmacao para envio, valida telefone e nao faz disparo em massa.
 - WhatsApp webhook: auto reply ignora mensagens do proprio JARVIS e grupos para reduzir risco de loop.
 - Evolution manager: `modules/whatsapp/evolutionManagerService.ts` gerencia conexao pelo painel, normaliza QR Code/pairing code, normaliza estado de conexao, tenta endpoints alternativos da Evolution e retorna `manual_action_required` quando a versao nao suportar automacao.
-- WhatsApp QR flow: `/api/whatsapp/evolution/*` expoe rotas admin protegidas para status, instancia, QR, polling de conexao, logout/restart e configuracao de webhook sem retornar API key real.
+- WhatsApp QR flow: `/api/whatsapp/evolution/*` expoe rotas admin protegidas para status, instancia, QR, polling de conexao, logout/restart, reset seguro e configuracao de webhook sem retornar API key real.
+- Reset Evolution: o reset de instancia exige confirmacao textual `RESETAR EVOLUTION`, tenta logout/delete por endpoints conhecidos e retorna `manual_action_required` quando a versao da Evolution nao permite automacao.
 - Controle Financeiro: `FinanceIntegrationService` guarda URL/token por usuario em `Setting`, retorna token apenas mascarado, testa `/api/v1/me`, consulta `/api/v1/summary/month` e cria lancamentos em `/api/v1/transactions`.
 - Controle Financeiro via WhatsApp: antes do orquestrador geral, o webhook tenta interpretar mensagens financeiras com entrada/saida e valor; se reconhecer, registra no sistema externo ou pede complemento sem expor segredo.
 - Home Assistant: `HomeAssistantService` lista entidades agrupadas, chama servicos e conversa via `conversation.process`; dominios sensiveis exigem confirmacao.
