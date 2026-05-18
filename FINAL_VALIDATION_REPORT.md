@@ -1,5 +1,18 @@
 ﻿# FINAL_VALIDATION_REPORT
 
+## Atualizacao 2026-05-18 - CMD online de logs
+
+Resultado: **APROVADO** para melhoria de observabilidade.
+
+- Painel `/logs` atualizado como CMD online do JARVIS.
+- Backend adicionou `GET /api/logs/summary`.
+- Webhook WhatsApp passou a registrar eventos redigidos para diagnosticar chegada, ignorados, processamento, previa de extrato e auto reply desativado.
+- Backend: testes passaram com 41 testes.
+- Frontend: testes passaram com 16 testes.
+- Segredos e payload bruto nao sao exibidos no painel.
+
+Ressalva real: WhatsApp/Evolution ainda precisa configuracao real em producao para responder mensagens. Se uma mensagem nao gerar `whatsapp.webhook_received`, a Evolution nao chamou o webhook oficial.
+
 ## Checagem publica de URLs 2026-05-17
 
 Resultado: **APROVADO**.

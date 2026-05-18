@@ -20,6 +20,7 @@ import { IntegrationSettingsPage } from "./Integrations/IntegrationSettingsPage"
 import { IntegrationSetupSummaryPage } from "./Integrations/IntegrationSetupSummaryPage";
 import { IntegrationWizardPage } from "./Integrations/IntegrationWizardPage";
 import { JarvisModePage } from "./JarvisMode/JarvisModePage";
+import { LogsPage } from "./Logs/LogsPage";
 import { WhatsAppPage } from "./WhatsApp/WhatsAppPage";
 import { VoicePage } from "./Voice/VoicePage";
 import { VoiceSettingsPage } from "./Settings/VoiceSettingsPage";
@@ -60,6 +61,8 @@ vi.mock("../services/api", () => ({
       if (url === "/finance/reports/categories") return Promise.resolve({ data: { categories: [{ category: "Servicos prestados", type: "income", total: "500" }] } });
       if (url === "/finance/reports/cashflow") return Promise.resolve({ data: { cashflow: [{ date: "2026-05-16", income: "500", expense: "120", net: "380" }] } });
       if (url.startsWith("/notifications")) return Promise.resolve({ data: { unreadCount: 1, notifications: [{ id: "n1", title: "Aviso", message: "Mensagem", type: "warning", createdAt: new Date().toISOString() }] } });
+      if (url === "/logs") return Promise.resolve({ data: { logs: [{ id: "l1", level: "warning", module: "whatsapp", action: "webhook_ignored", message: "Webhook WhatsApp ignorado: frase ei jarvis ausente", createdAt: new Date().toISOString() }] } });
+      if (url === "/logs/summary") return Promise.resolve({ data: { since: new Date().toISOString(), levels: { warning: 1, error: 0, security: 0, info: 2 }, modules: [{ module: "whatsapp", total: 1 }], recentIssues: [{ id: "l1", level: "warning", module: "whatsapp", action: "webhook_ignored", message: "Webhook WhatsApp ignorado: frase ei jarvis ausente", createdAt: new Date().toISOString() }], latest: null, watchedModules: ["whatsapp", "n8n"] } });
       if (url === "/documents") return Promise.resolve({ data: { documents: [{ id: "d1", title: "Documento teste", fileType: "md" }] } });
       if (url.startsWith("/documents/search")) return Promise.resolve({ data: { chunks: [{ id: "ch1", content: "Trecho redigido do JARVIS" }] } });
       if (url === "/health/full") return Promise.resolve({ data: { app: "ok", database: "ok", scheduler: { enabled: true } } });
@@ -226,6 +229,13 @@ describe("Phase 5 and 6 pages", () => {
     );
     expect((await screen.findAllByText("Notificacoes")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("1")).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders live logs command panel with WhatsApp diagnostics", async () => {
+    render(<LogsPage />);
+    expect(await screen.findByText("CMD online do JARVIS")).toBeInTheDocument();
+    expect((await screen.findAllByText("whatsapp.webhook_ignored")).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Evolution nao esta chamando o webhook/)).toBeInTheDocument();
   });
 
   it("renders mobile assistant and sends quick command", async () => {

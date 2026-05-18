@@ -48,6 +48,18 @@ O painel possui uma central para configurar e validar integrações sem expor se
 
 Documentacao: `INTEGRATIONS_CONTROL_CENTER.md`.
 
+## CMD online e logs ao vivo
+
+A tela `/logs` agora funciona como painel de operacao em tempo quase real:
+
+- auto-refresh a cada 5 segundos, com botao para pausar;
+- filtros por nivel, modulo e busca textual;
+- resumo das ultimas 12 horas por erro, aviso, seguranca e info;
+- linha do tempo para `whatsapp`, `n8n`, `scheduler`, `routines`, `integrations`, `finance`, `documents`, `brain`, `ai`, `auth` e Home Assistant;
+- diagnostico claro para o fluxo WhatsApp: `webhook_received`, `webhook_ignored`, `webhook_processing`, `statement_preview_created` e `auto_reply_disabled`.
+
+O painel nao mostra segredos nem payload bruto. Quando uma mensagem do WhatsApp nao aparece como `whatsapp.webhook_received`, a Evolution nao chamou o webhook da API oficial. Quando aparece como `webhook_ignored`, o motivo fica no log: sem `ei jarvis`, `fromMe` ou grupo.
+
 ## WhatsApp com QR Code pelo painel
 
 A tela `/whatsapp` permite conectar WhatsApp pela Evolution API diretamente no JARVIS:

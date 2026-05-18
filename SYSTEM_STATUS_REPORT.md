@@ -1,5 +1,17 @@
 ﻿# SYSTEM_STATUS_REPORT
 
+## Atualizacao 2026-05-18 - CMD online de logs
+
+Status: **APROVADO** para observabilidade local.
+
+- `/logs` foi ampliado para funcionar como CMD online do JARVIS, com auto-refresh, filtros por nivel/modulo/busca, cards de resumo e linha do tempo.
+- `GET /api/logs/summary` foi adicionado para totalizar as ultimas 12 horas por nivel e modulo.
+- Webhook WhatsApp agora registra eventos seguros em `SystemLog`: `webhook_received`, `webhook_ignored`, `webhook_processing`, `statement_preview_created` e `auto_reply_disabled`.
+- Logs nao exibem API key, token, senha, payload bruto do WhatsApp ou telefone completo.
+- Diagnostico atual observado: WhatsApp/Evolution e n8n seguem `not_configured`; mensagens enviadas do proprio numero conectado podem ser ignoradas como `fromMe`.
+
+Proximo passo: configurar Evolution API em producao, conectar QR no painel e validar se ao enviar mensagem aparece `whatsapp.webhook_received` em `/logs`.
+
 ## Checagem publica de URLs 2026-05-17
 
 Status: **APROVADO** para disponibilidade HTTP basica.

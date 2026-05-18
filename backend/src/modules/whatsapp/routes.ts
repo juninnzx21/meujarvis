@@ -73,6 +73,12 @@ async function safeSendWhatsApp(phone: string, content: string, userId?: string)
   }
 }
 
+function maskPhoneForLog(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length <= 4) return digits ? "****" : "";
+  return `***${digits.slice(-4)}`;
+}
+
 const configSchema = z.object({
   apiUrl: z.string().url("Informe a URL da Evolution API.").transform((value) => value.replace(/\/+$/, "")),
   apiKey: z.string().optional().refine((value) => !value || !/^https?:\/\//i.test(value), "API key nao pode ser uma URL. Cole a chave da Evolution API."),
@@ -159,6 +165,22 @@ router.post("/webhook", asyncHandler(async (req, res) => {
     wakePhraseDetected = whatsappService.hasWakePhrase(content);
   }
 
+  await writeSystemLog({
+    userId: admin?.id,
+    module: "whatsapp",
+    action: "webhook_received",
+    message: "Webhook WhatsApp recebido",
+    metadata: {
+      phoneMasked: maskPhoneForLog(inbound.cleanPhone || inbound.phone),
+      hasText: Boolean(content),
+      hasAttachment: inbound.attachment.hasAttachment,
+      hasAudio: inbound.hasAudio,
+      fromMe: inbound.fromJarvis,
+      isGroup: inbound.isGroup,
+      wakePhraseDetected
+    } as never
+  });
+
   await prisma.whatsAppMessage.create({
     data: {
       phone: inbound.phone,
@@ -170,11 +192,40 @@ router.post("/webhook", asyncHandler(async (req, res) => {
   });
 
   if (!wakePhraseDetected || inbound.fromJarvis || inbound.isGroup) {
+    await writeSystemLog({
+      userId: admin?.id,
+      level: "warning",
+      module: "whatsapp",
+      action: "webhook_ignored",
+      message: !wakePhraseDetected
+        ? "Webhook WhatsApp ignorado: frase ei jarvis ausente"
+        : inbound.fromJarvis
+          ? "Webhook WhatsApp ignorado: mensagem enviada pelo proprio numero"
+          : "Webhook WhatsApp ignorado: mensagem de grupo",
+      metadata: {
+        phoneMasked: maskPhoneForLog(inbound.cleanPhone || inbound.phone),
+        reason: !wakePhraseDetected ? "wake_phrase_required" : inbound.fromJarvis ? "from_me" : "group_message",
+        hasAttachment: inbound.attachment.hasAttachment,
+        hasAudio: inbound.hasAudio
+      } as never
+    });
     res.json({ received: true, ignored: "wake_phrase_required", processedText: false, transcriptionStatus: transcriptionStatus || undefined });
     return;
   }
 
   content = whatsappService.stripWakePhrase(content);
+  await writeSystemLog({
+    userId: admin?.id,
+    module: "whatsapp",
+    action: "webhook_processing",
+    message: "Webhook WhatsApp processando comando com ei jarvis",
+    metadata: {
+      phoneMasked: maskPhoneForLog(inbound.cleanPhone || inbound.phone),
+      hasAttachment: inbound.attachment.hasAttachment,
+      hasAudio: inbound.hasAudio,
+      contentLength: content.length
+    } as never
+  });
 
   if (admin && inbound.attachment.hasAttachment) {
     const file = await whatsappService.downloadInboundAttachment(req.body, admin.id);
@@ -186,6 +237,18 @@ router.post("/webhook", asyncHandler(async (req, res) => {
         confirmedAccount: false
       });
       statementImportId = statement.id;
+      await writeSystemLog({
+        userId: admin.id,
+        module: "whatsapp",
+        action: "statement_preview_created",
+        message: "Previa de extrato criada via WhatsApp",
+        metadata: {
+          statementImportId: statement.id,
+          fileType: statement.fileType,
+          totalRows: statement.totalRows,
+          phoneMasked: maskPhoneForLog(inbound.cleanPhone || inbound.phone)
+        } as never
+      });
       await safeSendWhatsApp(
         inbound.cleanPhone || inbound.phone,
         `Recebi seu extrato. Detectei ${statement.fileType.toUpperCase()}, ${statement.bankNameDetected ?? "banco em revisao"}, conta ${statement.accountDetected ?? "a confirmar"} e ${statement.totalRows} movimentacoes. Preparei uma previa segura antes de importar: /finance/import/${statement.id}/review`,
@@ -214,6 +277,18 @@ router.post("/webhook", asyncHandler(async (req, res) => {
       }
     } else if (inbound.hasAudio && !content) {
       await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);
+    } else {
+      await writeSystemLog({
+        userId: admin.id,
+        level: "warning",
+        module: "whatsapp",
+        action: "auto_reply_disabled",
+        message: "Comando WhatsApp recebido, mas resposta automatica esta desativada",
+        metadata: {
+          phoneMasked: maskPhoneForLog(inbound.cleanPhone || inbound.phone),
+          processedText: Boolean(content)
+        } as never
+      });
     }
   }
   res.json({ received: true, processedText: Boolean(content), statementImportId: statementImportId || undefined, transcriptionStatus: transcriptionStatus || undefined });

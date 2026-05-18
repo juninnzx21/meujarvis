@@ -114,6 +114,10 @@ Scripts PowerShell na raiz controlam ciclo local:
 
 `GET /api/health/full` retorna uptime, status do banco, status OpenAI/Gemini/n8n/WhatsApp/Home Assistant, contagem de logs e ultimas falhas. A tela `/status` consome esses dados sem expor segredos.
 
+`GET /api/logs` retorna a linha do tempo operacional autenticada com filtros por nivel, modulo, periodo e busca. Administradores conseguem enxergar logs globais e por usuario; usuarios comuns ficam restritos aos seus registros. `GET /api/logs/summary` alimenta o painel `/logs` com totais por nivel, modulos mais ativos e ultimos pontos de atencao.
+
+O webhook do WhatsApp grava eventos operacionais redigidos em `SystemLog`: recebimento, ignorado por falta de `ei jarvis`, `fromMe`, grupo, processamento, previa de extrato e resposta automatica desativada. Isso permite diagnosticar se a Evolution chamou a API sem expor telefone completo, payload bruto, token ou conteudo sensivel.
+
 ## Base de conhecimento pessoal
 
 A base pessoal do JARVIS fica em `backend/prisma/personal-profile/profile-data.ts` e e importada por `backend/prisma/seed-personal-profile.ts`. O importador grava 47 memorias em `Memory` de forma idempotente usando `userId + title + type`, reconhece aliases de titulos antigos, atualiza o conteudo canonico, remove duplicatas equivalentes, bloqueia padroes sensiveis e registra `SystemLog` sem imprimir segredos. O backend nao importa esses arquivos em runtime de producao; nesta fase o uso oficial e via script `npm run seed:personal`.

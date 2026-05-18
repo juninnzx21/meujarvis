@@ -3,6 +3,14 @@ export type ApiList<T, K extends string> = Record<K, T[]>;
 export type Task = { id: string; title: string; description?: string; status: string; priority: string; dueDate?: string; createdAt: string };
 export type Memory = { id: string; type: string; title: string; content: string; tags: string[]; importance: number; createdAt: string };
 export type Automation = { id: string; name: string; description?: string; actionType: string; triggerType: string; enabled: boolean; config: Record<string, unknown> };
-export type SystemLog = { id: string; level: string; module: string; action: string; message: string; createdAt: string };
+export type SystemLog = { id: string; level: string; module: string; action: string; message: string; metadata?: Record<string, unknown>; createdAt: string };
+export type SystemLogSummary = {
+  since: string;
+  levels: Record<string, number>;
+  modules: { module: string; total: number }[];
+  recentIssues: SystemLog[];
+  latest?: SystemLog | null;
+  watchedModules: string[];
+};
 export type Message = { id: string; role: "user" | "assistant" | "system" | "tool"; content: string; createdAt: string };
 export type Conversation = { id: string; title: string; messages?: Message[]; createdAt: string; updatedAt: string };
