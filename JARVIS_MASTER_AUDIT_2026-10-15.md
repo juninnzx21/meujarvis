@@ -30,6 +30,8 @@ A validação mais recente desta rodada é [JARVIS CI #25](https://github.com/ju
 
 Validação local adicional: frontend `npm run validate` passou (35 testes e build). O backend passou typecheck e typecheck dos seeds, mas a suíte local não pôde executar por falta de PostgreSQL/Docker nesta máquina; a suíte completa do backend passou no CI com PostgreSQL descartável.
 
+Depois disso, o lockfile do backend foi atualizado com `npm audit fix` sem `--force`: os 13 avisos de dependências foram eliminados e `npm audit` passou sem vulnerabilidades. Typecheck, typecheck dos seeds e build do backend passaram localmente; o CI precisa validar o lockfile atualizado.
+
 Durante o CI foram corrigidos problemas reais da esteira: ação Android antiga solicitava o pacote removido `tools`; `JWT_SECRET` de teste era menor que a validação mínima; faltava semear o banco temporário; alguns testes não refletiam a exigência atual de confirmação para gravar memória e deixavam transporte HTTP mockado incompleto; o scanner de segredo dava falso positivo em fixture de teste e na própria expressão regular. A suíte foi executada novamente e passou.
 
 ## Entrega e estado de produção
@@ -38,13 +40,14 @@ Durante o CI foram corrigidos problemas reais da esteira: ação Android antiga 
 - A branch `main` e a VPS de produção não foram alteradas.
 - A comparação da cópia de produção com a branch encontrou 15 arquivos de código diferentes. As diferenças incluem a versão exibida, proteção para exigir confirmação antes de criar memória/tarefa, validação do endpoint Brain, seleção do provedor local Ollama e ajustes de voz/instalação. A cópia do servidor não é um checkout Git; o compose e a aplicação estão implantados por imagem Docker.
 - A base PostgreSQL de produção ocupa aproximadamente 14 MB e o diretório JARVIS cerca de 109 MB. Há 36 GB livres na raiz. Ainda não foi feito backup de produção nesta rodada nem deploy; a implantação permanece pendente de backup externo verificável e revisão final da divergência de código/configuração para permitir rollback seguro.
-- `npm audit --omit=dev` identificou 7 avisos em dependências de produção do backend (1 crítico, 2 altos, 3 moderados e 1 baixo; entre elas `proxy-addr`, `axios` e `express`). O frontend não apresentou vulnerabilidades em dependências de produção. As atualizações não foram aplicadas; precisam de atualização de lockfile e novo CI antes do deploy.
+- A atualização sem breaking changes zerou as vulnerabilidades do backend. No frontend, `npm audit --omit=dev` não aponta vulnerabilidades de produção, mas a auditoria completa ainda mostra 7 avisos em dependências de desenvolvimento transitivas do Tailwind CSS 3. O npm só oferece correção automática via `--force`, que migraria para Tailwind CSS 4; isso foi evitado por ser uma mudança incompatível que precisa de migração e testes próprios.
 - A integração do GitHub negou a criação do PR com HTTP 403 (`Resource not accessible by integration`). Comparação pronta para abrir/criar PR: `https://github.com/juninnzx21/meujarvis/compare/main...codex/jarvis-2.0-platform-20261015?expand=1`.
 - O CI roda em pushes de branches para validar a entrega antes do PR.
 
 ## Próximas etapas
 1. Abrir e revisar o PR acima; a integração atual não tem permissão para criá-lo.
-2. Atualizar dependências de produção do backend e executar novamente o CI.
-3. Revisar com segurança as 15 diferenças contra a imagem atual, fazer backup externo verificável de fonte/configuração/base e só então implantar com rollback documentado. O ambiente efetivo ainda precisa ser conferido, inclusive `APP_VERSION`; nenhuma implantação foi feita nesta etapa.
-4. Validar TTS, IA, WhatsApp e Home Assistant com credenciais/cotas reais, sem registrar segredos.
-5. Preparar releases assinados para Windows e Android, instalar em dispositivos e seguir os processos de publicação das lojas.
+2. Validar no CI a atualização segura do lockfile do backend.
+3. Planejar a migração do Tailwind CSS 3 para 4 para eliminar os avisos de desenvolvimento, sem aplicar atualização forçada.
+4. Revisar com segurança as 15 diferenças contra a imagem atual, fazer backup externo verificável de fonte/configuração/base e só então implantar com rollback documentado. O ambiente efetivo ainda precisa ser conferido, inclusive `APP_VERSION`; nenhuma implantação foi feita nesta etapa.
+5. Validar TTS, IA, WhatsApp e Home Assistant com credenciais/cotas reais, sem registrar segredos.
+6. Preparar releases assinados para Windows e Android, instalar em dispositivos e seguir os processos de publicação das lojas.
