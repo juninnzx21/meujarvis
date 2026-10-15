@@ -48,13 +48,25 @@ export function getAvailableVoices(): SpeechSynthesisVoice[] {
   return window.speechSynthesis.getVoices();
 }
 
+const masculineVoiceName = /\b(?:male|mascul|homem|antonio|daniel|bruno|carlos|felipe|ricardo|thiago|tiago|rafael|luiz|lucas|paulo|pedro|arthur|david|george|ryan|caio|andre|vitor|guilherme|marcos|mateus|matheus|roberto|eduardo|thomas|david|alexander)\b/i;
+
+export function isMasculineJarvisVoice(voice: Pick<SpeechSynthesisVoice, "name" | "voiceURI"> | null | undefined): boolean {
+  if (!voice) return false;
+  const searchableName = `${voice.name} ${voice.voiceURI}`.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  return masculineVoiceName.test(searchableName);
+}
+
 export function selectBestJarvisVoice(voices = getAvailableVoices()) {
-  const masculine = /\b(?:male|mascul|homem|antonio|antônio|daniel|bruno|carlos|felipe|ricardo|thiago|tiago|rafael|luiz|lucas|paulo|pedro|arthur|david|george|ryan)\b/i;
-  const preferred = voices.find((voice) => /pt-BR/i.test(voice.lang) && masculine.test(voice.name));
-  const ptBr = voices.find((voice) => /pt-BR/i.test(voice.lang));
-  const pt = voices.find((voice) => /^pt/i.test(voice.lang));
-  const neutral = voices.find((voice) => /en-GB/i.test(voice.lang) && /male|daniel|george|ryan|arthur/i.test(voice.name));
-  return preferred || ptBr || pt || neutral || voices[0] || null;
+  const masculine = voices.filter(isMasculineJarvisVoice);
+  return masculine.find((voice) => /^pt-BR$/i.test(voice.lang))
+    || masculine.find((voice) => /^pt(?:-|$)/i.test(voice.lang))
+    || masculine[0]
+    || null;
+}
+
+export function resolveJarvisVoice(voices: SpeechSynthesisVoice[], preferredVoiceURI: string) {
+  const savedVoice = voices.find((voice) => voice.voiceURI === preferredVoiceURI);
+  return isMasculineJarvisVoice(savedVoice) ? savedVoice : selectBestJarvisVoice(voices);
 }
 
 export function loadVoiceSettings(): JarvisVoiceSettings {
@@ -79,24 +91,31 @@ export function stopSpeaking() {
   if (activeAudio) { activeAudio.pause(); activeAudio.src = ""; activeAudio = null; }
 }
 
-function speakWithBrowser(text: string, settings: JarvisVoiceSettings, onEnd?: () => void, generation = speechGeneration) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return false;
+function speakWithBrowser(text: string, settings: JarvisVoiceSettings, options: { onStart?: () => void; onEnd?: () => void; onError?: () => void } = {}, generation = speechGeneration) {
+  if (typeof window === "undefined" || !window.speechSynthesis) { options.onError?.(); return false; }
   let finished = false;
   const finish = () => {
     if (finished || generation !== speechGeneration) return;
     finished = true;
-    onEnd?.();
+    options.onEnd?.();
+  };
+  const fail = () => {
+    if (finished || generation !== speechGeneration) return;
+    finished = true;
+    options.onError?.();
   };
   const utterance = new SpeechSynthesisUtterance(text.trim());
   const voices = getAvailableVoices();
-  const selected = voices.find((voice) => voice.voiceURI === settings.voiceURI) || selectBestJarvisVoice(voices);
+  const selected = resolveJarvisVoice(voices, settings.voiceURI);
+  if (!selected) return false;
   if (selected) { utterance.voice = selected; utterance.lang = selected.lang || settings.lang; }
   else utterance.lang = settings.lang;
   utterance.rate = settings.rate;
   utterance.pitch = settings.pitch;
   utterance.volume = settings.volume;
+  utterance.onstart = () => options.onStart?.();
   utterance.onend = finish;
-  utterance.onerror = finish;
+  utterance.onerror = fail;
   window.speechSynthesis.speak(utterance);
   return true;
 }
@@ -111,7 +130,7 @@ async function getRemoteProvider(): Promise<RemoteTtsProvider> {
   } catch { return "none"; }
 }
 
-export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSettings>, options: { onEnd?: () => void } = {}) {
+export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSettings>, options: { onStart?: () => void; onEnd?: () => void; onError?: () => void } = {}) {
   if (typeof window === "undefined" || !text.trim()) return false;
   const settings = normalizeSettings({ ...loadVoiceSettings(), ...override });
   if (!settings.spokenRepliesEnabled) return false;
@@ -133,19 +152,42 @@ export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSe
         if (activeAudio === player) activeAudio = null;
         if (!finished && generation === speechGeneration) { finished = true; options.onEnd?.(); }
       };
+      const fail = () => {
+        URL.revokeObjectURL(url);
+        if (activeAudio === player) activeAudio = null;
+        if (!finished && generation === speechGeneration) { finished = true; options.onError?.(); }
+      };
       player.onended = finish;
-      player.onerror = finish;
+      player.onerror = fail;
       await player.play();
+      options.onStart?.();
       return true;
     } catch {
       remoteProviderCache = null;
+      options.onError?.();
       return false;
     }
   }
-  if (provider === "browser") return speakWithBrowser(text, settings, options.onEnd, generation);
+  if (provider === "browser") return speakWithBrowser(text, settings, options, generation);
   return false;
 }
 
-export function testVoice(settings?: Partial<JarvisVoiceSettings>) {
-  return speakJarvis("Certo. Esta e a voz JARVIS BR Premium, uma voz original do projeto.", settings);
+export type VoiceTestResult = "completed" | "unavailable" | "error" | "timeout";
+
+export function testVoice(settings?: Partial<JarvisVoiceSettings>): Promise<VoiceTestResult> {
+  if (typeof window === "undefined") return Promise.resolve("unavailable");
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result: VoiceTestResult) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve(result);
+    };
+    const timer = window.setTimeout(() => finish("timeout"), 30_000);
+    void speakJarvis("Certo. Esta e a voz JARVIS BR Premium, uma voz original do projeto.", settings, {
+      onEnd: () => finish("completed"),
+      onError: () => finish("error")
+    }).then((started) => { if (!started) finish("unavailable"); }).catch(() => finish("error"));
+  });
 }

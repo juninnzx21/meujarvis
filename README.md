@@ -482,3 +482,7 @@ A seleção automática foi atualizada para priorizar vozes masculinas pt-BR ide
 Na Central de Integrações, os botões de carregar vozes e testar a síntese salvam primeiro os campos atualmente preenchidos. Isso evita testar com uma configuração anterior ainda persistida. A consulta Fish Audio pede explicitamente o sinalizador de crédito grátis e reconhece essa elegibilidade mesmo quando não há saldo numérico. No modo automático, só são usados provedores com cota confirmada e suficiente; uma consulta indisponível faz o JARVIS tentar o próximo provedor, sem arriscar consumo às cegas. Para ativar síntese remota ainda é necessário configurar chave válida e voice ID.
 
 A release frontend `1cd1170` e backend `116225f` estão implantadas na VPS. Ambos passaram smoke tests HTTP 200; a consulta Fish solicita explicitamente o estado do crédito grátis. O teste de áudio premium ainda depende de credenciais novas cadastradas em `/settings/integrations`.
+
+## Voz do navegador — validação masculina — 2026-10-15
+
+O seletor local ignora uma preferência salva para a voz Google genérica e procura uma voz masculina identificável, priorizando pt-BR. Se o navegador só oferecer uma voz genérica/feminina, a aplicação não a reproduz como se fosse a voz masculina do JARVIS; a página `/settings/voice` informa que falta instalar uma voz local adequada ou configurar Fish Audio, ElevenLabs ou Speechma em `/settings/integrations`. O botão **Testar voz** aguarda o fim da reprodução e informa sucesso, erro, indisponibilidade ou timeout.

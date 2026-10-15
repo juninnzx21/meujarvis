@@ -1,24 +1,35 @@
 import { useEffect, useState } from "react";
 import { Save, Square, Volume2 } from "lucide-react";
-import { getAvailableVoices, jarvisVoicePreset, loadVoiceSettings, saveVoiceSettings, selectBestJarvisVoice, stopSpeaking, testVoice, type JarvisVoiceSettings } from "../../services/textToSpeechService";
+import { getAvailableVoices, isMasculineJarvisVoice, jarvisVoicePreset, loadVoiceSettings, saveVoiceSettings, selectBestJarvisVoice, stopSpeaking, testVoice, type JarvisVoiceSettings } from "../../services/textToSpeechService";
 
 export function VoiceSettingsPage() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [settings, setSettings] = useState<JarvisVoiceSettings>(loadVoiceSettings());
   const [message, setMessage] = useState("");
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     function refresh() {
       const nextVoices = getAvailableVoices();
       setVoices(nextVoices);
-      if (!settings.voiceURI) {
-        const best = selectBestJarvisVoice(nextVoices);
-        if (best) setSettings((current) => ({ ...current, voiceURI: best.voiceURI, lang: best.lang || current.lang }));
+      if (nextVoices.length > 0) {
+        const currentVoice = nextVoices.find((voice) => voice.voiceURI === settings.voiceURI);
+        if (!isMasculineJarvisVoice(currentVoice)) {
+          const best = selectBestJarvisVoice(nextVoices);
+          const corrected = saveVoiceSettings({ ...settings, voiceURI: best?.voiceURI || "", lang: best?.lang || jarvisVoicePreset.lang });
+          setSettings(corrected);
+          setMessage(best
+            ? `Voz antiga substituída por ${best.name} (${best.lang}).`
+            : "A voz Google genérica não será usada. Este navegador não oferece uma voz masculina identificável; adicione uma voz masculina pt-BR no sistema ou configure um provedor em Integrações.");
+        }
       }
     }
     refresh();
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = refresh;
-  }, []);
+    return () => {
+      if (window.speechSynthesis?.onvoiceschanged === refresh) window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, [settings.voiceURI]);
 
   function update(partial: Partial<JarvisVoiceSettings>) {
     setSettings((current) => ({ ...current, ...partial, preset: partial.preset || "custom" }));
@@ -27,7 +38,9 @@ export function VoiceSettingsPage() {
   function applyPreset() {
     const best = selectBestJarvisVoice(voices);
     setSettings({ ...jarvisVoicePreset, voiceURI: best?.voiceURI || "", lang: best?.lang || jarvisVoicePreset.lang });
-    setMessage("Preset JARVIS BR Premium aplicado.");
+    setMessage(best
+      ? `Preset aplicado com ${best.name} (${best.lang}). Salve e teste a fala.`
+      : "Nenhuma voz masculina identificável está instalada neste navegador. O Google genérico será ignorado; configure uma voz masculina ou um provedor remoto em Integrações.");
   }
 
   function save() {
@@ -35,6 +48,23 @@ export function VoiceSettingsPage() {
     setSettings(saved);
     setMessage("Configuracao de voz salva neste navegador.");
   }
+
+  async function runVoiceTest() {
+    setTesting(true);
+    setMessage("Testando a reprodução de voz…");
+    const result = await testVoice(settings);
+    setTesting(false);
+    setMessage(result === "completed"
+      ? "Teste concluído: o navegador terminou de reproduzir a fala."
+      : result === "timeout"
+        ? "A fala não terminou no tempo esperado. Confira o áudio e as permissões do navegador."
+        : result === "error"
+          ? "O navegador ou provedor encontrou um erro ao reproduzir a fala. Confira as configurações e tente novamente."
+          : "Não foi possível iniciar a fala. Instale uma voz masculina identificável ou configure um provedor em Integrações.");
+  }
+
+  const selectedVoice = voices.find((voice) => voice.voiceURI === settings.voiceURI);
+  const masculineVoices = voices.filter(isMasculineJarvisVoice);
 
   return (
     <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
@@ -46,19 +76,20 @@ export function VoiceSettingsPage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <button className="btn btn-primary" type="button" onClick={applyPreset}>Aplicar preset</button>
-          <button className="btn btn-ghost" type="button" onClick={() => testVoice(settings)}><Volume2 size={18} /> Testar voz</button>
+          <button className="btn btn-ghost" type="button" disabled={testing} onClick={() => void runVoiceTest()}><Volume2 size={18} /> {testing ? "Testando…" : "Testar voz"}</button>
           <button className="btn btn-ghost" type="button" onClick={stopSpeaking}><Square size={18} /> Parar fala</button>
         </div>
         <label className="block text-sm font-semibold text-slate-300">
-          Voz do navegador
+          Voz masculina do navegador
           <select className="input mt-2" value={settings.voiceURI} onChange={(event) => {
-            const voice = voices.find((item) => item.voiceURI === event.target.value);
+            const voice = masculineVoices.find((item) => item.voiceURI === event.target.value);
             update({ voiceURI: event.target.value, lang: voice?.lang || settings.lang });
           }}>
-            <option value="">Melhor voz disponivel automaticamente</option>
-            {voices.map((voice) => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name} - {voice.lang}</option>)}
+            <option value="">Selecionar automaticamente</option>
+            {masculineVoices.map((voice) => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name} - {voice.lang}</option>)}
           </select>
         </label>
+        {message && <p role="status" className={`rounded-xl p-3 text-sm ${selectedVoice ? "bg-white/5 text-slate-300" : "border border-amber-400/20 bg-amber-400/5 text-amber-100"}`}>{message}</p>}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-semibold text-slate-300">Idioma<input className="input mt-2" value={settings.lang} onChange={(event) => update({ lang: event.target.value })} /></label>
           <label className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3 text-sm text-slate-200"><span>Resposta falada ativa</span><input type="checkbox" checked={settings.spokenRepliesEnabled} onChange={(event) => update({ spokenRepliesEnabled: event.target.checked })} /></label>
@@ -67,11 +98,10 @@ export function VoiceSettingsPage() {
           <label className="block text-sm font-semibold text-slate-300">Volume: {settings.volume.toFixed(2)}<input className="mt-2 w-full" type="range" min="0" max="1" step="0.01" value={settings.volume} onChange={(event) => update({ volume: Number(event.target.value) })} /></label>
         </div>
         <button className="btn btn-primary" type="button" onClick={save}><Save size={18} /> Salvar configuracoes</button>
-        {message && <p className="rounded-xl bg-white/5 p-3 text-sm text-slate-300">{message}</p>}
       </div>
       <aside className="glass rounded-2xl p-5 text-sm text-slate-300">
         <h3 className="mb-3 font-bold text-white">Como deixar mais grave/elegante</h3>
-        <p>Use velocidade entre 0.90 e 0.95, pitch entre 0.75 e 0.88 e volume em 1. Prefira voz masculina/neutra pt-BR; se nao houver, teste en-GB.</p>
+        <p>Use velocidade entre 0.90 e 0.95, pitch entre 0.65 e 0.78 e volume em 1. Prefira voz masculina pt-BR. O teste agora confirma que a reprodução terminou; a identidade masculina só é garantida quando o próprio sistema oferece uma voz identificável.</p>
         <h3 className="mb-3 mt-6 font-bold text-white">Limites reais</h3>
         <p>A qualidade depende das vozes instaladas no navegador/sistema. Este preset nao clona voz de ator, filme ou personagem.</p>
         <div className="mt-6 rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-4">

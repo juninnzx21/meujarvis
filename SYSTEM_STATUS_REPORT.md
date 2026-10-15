@@ -412,3 +412,9 @@ O backend `116225f` também está publicado. A leitura de crédito agora envia `
 O modo automático só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Provedores com cota desconhecida ou insuficiente são pulados para evitar requisições sem confirmação de disponibilidade. A interface explica a regra.
 
 Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343`, com build Docker sem cache e recriação apenas de backend/frontend; sem migrations. Testes: bundle público contém a mensagem nova; `/settings/integrations`, API pública e checks internos retornaram HTTP 200. Frontend, backend, PostgreSQL e n8n permanecem ativos. A síntese remota continua sem validação porque produção não tem chaves nem voice IDs configurados para Fish Audio, ElevenLabs ou Speechma.
+
+## Validação da voz local — CI e deploy pendentes — 2026-10-15
+
+Causa: uma voz Google pt-BR salva tinha prioridade; se nenhuma voz masculina fosse identificada, o seletor escolhia a primeira voz pt-BR genérica. A correção ignora a preferência antiga, prioriza voz masculina identificável, não reproduz fallback genérico/feminino e informa quando o navegador não oferece voz adequada. O teste de voz aguarda o fim da reprodução e mostra resultado.
+
+Frontend validado: 8 arquivos, 43 testes e build concluídos. A página e o bundle públicos não foram modificados ainda. O navegador conectado está na tela de login; a sessão real de áudio não pôde ser testada. Produção não tem chaves/IDs de voz remota configurados, então síntese premium ainda não foi validada.

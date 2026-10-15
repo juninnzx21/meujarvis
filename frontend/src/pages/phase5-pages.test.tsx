@@ -33,13 +33,14 @@ vi.mock("../contexts/AuthContext", () => ({
 
 vi.mock("../services/textToSpeechService", () => ({
   jarvisVoicePreset: { preset: "jarvis-br-premium", voiceURI: "", lang: "pt-BR", rate: 0.92, pitch: 0.82, volume: 1, spokenRepliesEnabled: true },
-  getAvailableVoices: vi.fn(() => [{ voiceURI: "voice-1", name: "Brasil Neutral", lang: "pt-BR" }]),
-  selectBestJarvisVoice: vi.fn(() => ({ voiceURI: "voice-1", name: "Brasil Neutral", lang: "pt-BR" })),
+  getAvailableVoices: vi.fn(() => [{ voiceURI: "voice-1", name: "Microsoft Antonio Online (Natural)", lang: "pt-BR" }]),
+  isMasculineJarvisVoice: vi.fn(() => true),
+  selectBestJarvisVoice: vi.fn(() => ({ voiceURI: "voice-1", name: "Microsoft Antonio Online (Natural)", lang: "pt-BR" })),
   loadVoiceSettings: vi.fn(() => ({ preset: "jarvis-br-premium", voiceURI: "voice-1", lang: "pt-BR", rate: 0.92, pitch: 0.82, volume: 1, spokenRepliesEnabled: true })),
   saveVoiceSettings: vi.fn((settings) => settings),
   speakJarvis: vi.fn(() => true),
   stopSpeaking: vi.fn(),
-  testVoice: vi.fn(() => true)
+  testVoice: vi.fn(async () => "completed")
 }));
 
 vi.mock("../services/speechRecognitionService", () => ({
