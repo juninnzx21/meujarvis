@@ -2,7 +2,7 @@ import axios from "axios";
 import { prisma } from "../prisma/client.js";
 import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
 import { writeSystemLog } from "./systemLogService.js";
-import { parseFishAudioQuota, type TtsQuota } from "./ttsQuota.js";
+import { canUseTtsProvider, parseFishAudioQuota, type TtsQuota } from "./ttsQuota.js";
 
 export type RemoteTtsProvider = "speechma" | "elevenlabs" | "fish_audio";
 export type TtsProvider = "auto" | "browser" | RemoteTtsProvider;
@@ -230,8 +230,8 @@ export const ttsService = {
       }
       if (value.provider === "auto") {
         const quota = quotaByProvider.get(provider)!;
-        if (quota.status === "exhausted" || (quota.remaining !== null && quota.remaining < text.length)) {
-          failed.push(`${provider}: cota insuficiente para esta fala`);
+        if (!canUseTtsProvider(quota, text.length)) {
+          failed.push(`${provider}: ${quota.status === "unknown" ? "cota não confirmada" : "cota insuficiente para esta fala"}`);
           continue;
         }
       }

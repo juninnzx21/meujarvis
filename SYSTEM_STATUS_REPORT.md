@@ -406,3 +406,7 @@ Carregar vozes e testar a fala agora salvam antes os dados preenchidos na tela. 
 Release `1cd1170` publicada na VPS após CI verde. Frontend e backend foram recompilados sem cache e recriados sem dependências; PostgreSQL e n8n permaneceram em execução. Smoke tests: painel de integrações e health público HTTP 200. O status TTS autenticado segue em `browser`; as três chaves externas e os voice IDs estão ausentes, então a geração premium não pode ser testada ainda.
 
 O backend `116225f` também está publicado. A leitura de crédito agora envia `check_free_credit=true`, conforme o OpenAPI oficial da Fish Audio. Health público e página de integrações continuaram em HTTP 200 após recriar apenas o backend. Chaves e vozes remotas permanecem ausentes; ainda não é possível testar geração premium na conta.
+
+## Seleção automática por cota confirmada — em validação
+
+O código local agora exige cota confirmada e suficiente antes de sintetizar no modo automático. Provedores com cota desconhecida ou esgotada são pulados, e a interface explica esse comportamento. Testes unitários do backend (4 casos) e validação frontend (37 testes/build) passaram; a mudança aguarda CI e deploy.

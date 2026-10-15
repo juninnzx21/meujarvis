@@ -2,6 +2,10 @@ export type TtsQuota = { status: "available" | "exhausted" | "unknown" | "not_co
 
 const unavailable = (message: string): TtsQuota => ({ status: "unknown", remaining: null, limit: null, used: null, message });
 
+export function canUseTtsProvider(quota: TtsQuota, requiredCharacters: number): boolean {
+  return quota.status === "available" && (quota.remaining === null || quota.remaining >= requiredCharacters);
+}
+
 export function parseFishAudioQuota(data: unknown): TtsQuota {
   const response = data && typeof data === "object" ? data as Record<string, unknown> : {};
   const hasFreeCredit = response.has_free_credit === true;
