@@ -2,6 +2,7 @@ import axios from "axios";
 import { prisma } from "../prisma/client.js";
 import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
 import { writeSystemLog } from "./systemLogService.js";
+import { parseFishAudioQuota, type TtsQuota } from "./ttsQuota.js";
 
 export type RemoteTtsProvider = "speechma" | "elevenlabs" | "fish_audio";
 export type TtsProvider = "auto" | "browser" | RemoteTtsProvider;
@@ -43,7 +44,7 @@ async function upsert(userId: string, key: string, value: unknown) {
   });
 }
 
-type Quota = { status: "available" | "exhausted" | "unknown" | "not_configured"; remaining: number | null; limit: number | null; used: number | null; message: string };
+type Quota = TtsQuota;
 const unavailable = (message: string): Quota => ({ status: "unknown", remaining: null, limit: null, used: null, message });
 
 async function quotaFor(provider: RemoteTtsProvider, value: Awaited<ReturnType<typeof config>>): Promise<Quota> {
@@ -69,11 +70,7 @@ async function quotaFor(provider: RemoteTtsProvider, value: Awaited<ReturnType<t
     }
     if (!value.fishAudioApiKey) return { ...unavailable("Chave não configurada"), status: "not_configured" };
     const response = await axios.get("https://api.fish.audio/wallet/self/api-credit", { headers: { Authorization: `Bearer ${value.fishAudioApiKey}` }, timeout: 12000 });
-    const credit = Number(response.data?.credit);
-    const hasFreeCredit = response.data?.has_free_credit === true;
-    if (!Number.isFinite(credit)) return unavailable("A API não informou os créditos");
-    const remaining = hasFreeCredit ? null : Math.max(0, credit);
-    return { status: hasFreeCredit || credit > 0 ? "available" : "exhausted", remaining, limit: null, used: null, message: hasFreeCredit ? "Crédito gratuito disponível" : "Créditos Fish Audio" };
+    return parseFishAudioQuota(response.data);
   } catch (error) {
     const status = axios.isAxiosError(error) ? error.response?.status : undefined;
     return unavailable(status ? `Consulta de cota respondeu HTTP ${status}` : "Não foi possível consultar a cota agora");

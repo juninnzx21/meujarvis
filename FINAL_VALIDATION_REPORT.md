@@ -360,3 +360,7 @@ A seleção local não considera mais “Brasil” como indicador de voz masculi
 ### Confirmação de produção da seleção de voz
 
 Frontend da release `91d297c` publicado após CI verde. Página e bundle públicos HTTP 200; bundle conferido com o seletor novo e sem a regra antiga de gênero baseada em “Brasil”. Health público permanece 200 e health detalhado 401 sem autenticação. Em tempo de execução, o usuário ainda está selecionado em `browser`; a consulta de cotas retornou `not_configured` para os três serviços externos porque faltam as chaves e os voice IDs. Não foi possível validar síntese premium. Configure em `/settings/integrations` e use `auto`; a chave Fish Audio anteriormente compartilhada precisa ser rotacionada antes de voltar a ser usada.
+
+### Correção da seleção automática e dos testes de voz — 2026-10-15
+
+Frontend: `npm run validate` passou (8 arquivos, 37 testes e build). Backend: typecheck, build e teste isolado do parser passaram (3 testes). A suíte completa local não pôde rodar porque este checkout não tem `DATABASE_URL` e `JWT_SECRET`; o teste de integração depende também de um PostgreSQL disponível. A alteração reconhece crédito grátis da Fish Audio sem saldo numérico e faz os botões de carregar vozes/testar persistirem a configuração atual antes de consultar o provedor. A síntese real ainda não foi confirmada porque nenhuma chave/voice ID foi fornecida à produção.

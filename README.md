@@ -476,3 +476,7 @@ O health detalhado passou a exigir JWT e usa status de integrações do usuário
 ## Voz do navegador e disponibilidade dos provedores — 2026-10-15
 
 A seleção automática foi atualizada para priorizar vozes masculinas pt-BR identificadas pelo nome; “Brasil” não é mais tratado como marcador masculino. Dois testes cobrem o caso de Google Português do Brasil versus Microsoft Antonio. CI da release `91d297c` passou em validate, desktop e android; o frontend foi recompilado sem cache e o bundle público confirmado contém o seletor novo. O estado real do usuário na VPS está definido como `browser`, e nenhum provedor Fish Audio, ElevenLabs ou Speechma tem chave/voice ID configurados. Por isso, ainda não há TTS premium nem consulta de cota disponível. Configure em `/settings/integrations` e escolha `auto` para habilitar preferência por quota disponível.
+
+## Voz automática — correção do teste e cota Fish Audio
+
+Na Central de Integrações, os botões de carregar vozes e testar a síntese salvam primeiro os campos atualmente preenchidos. Isso evita testar com uma configuração anterior ainda persistida. O modo automático reconhece crédito gratuito Fish Audio mesmo quando a resposta de cota não inclui um saldo numérico; se a consulta de cota estiver indisponível, a síntese ainda tenta o provedor em vez de descartá-lo imediatamente. Para ativar síntese remota ainda é necessário configurar chave válida e voice ID.

@@ -398,3 +398,7 @@ A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identific
 ## Publicacao da correcao de voz — 2026-10-15
 
 A release `91d297c` está publicada. A página e o bundle público retornaram 200 e o bundle contém o seletor corrigido. A VPS segue saudável (app, banco e scheduler `ok`) com todos os cinco containers JARVIS/n8n em execução. A seleção local agora procura primeiro nomes masculinos pt-BR; o modo premium ainda está bloqueado porque não há chaves/IDs de Fish Audio, ElevenLabs ou Speechma salvos. O usuário pode configurar credenciais novas em `/settings/integrations` e selecionar `auto`. A credencial Fish Audio compartilhada na conversa não deve ser reutilizada; gere uma nova antes de salvar.
+
+## Correções adicionais da Central de Voz — 2026-10-15
+
+Carregar vozes e testar a fala agora salvam antes os dados preenchidos na tela. A leitura da cota Fish Audio aceita contas com crédito gratuito sem campo `credit`. Testes unitários cobrem crédito gratuito, saldo positivo, cota esgotada e resposta sem saldo. A produção ainda depende de chaves e voice IDs válidos do usuário para validar síntese remota real.

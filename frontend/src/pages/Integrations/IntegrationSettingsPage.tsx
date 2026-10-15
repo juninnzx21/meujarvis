@@ -151,6 +151,10 @@ export function IntegrationSettingsPage() {
   async function loadTtsVoices(provider: "speechma" | "elevenlabs") {
     setTtsBusy(`voices-${provider}`);
     try {
+      if (tts.speechmaApiKey || tts.elevenlabsApiKey) {
+        await api.put("/integrations/config/tts", tts);
+        window.dispatchEvent(new Event("jarvis-tts-config-updated"));
+      }
       const result = await api.get(`/integrations/tts/voices/${provider}`);
       const voices = Array.isArray(result.data.voices) ? result.data.voices : [];
       setTtsVoices((current) => ({ ...current, [provider]: voices }));
@@ -161,8 +165,10 @@ export function IntegrationSettingsPage() {
 
   async function testTts() {
     setTtsBusy("test");
-    setMessage("Gerando áudio de teste no provedor selecionado...");
+    setMessage("Salvando as configurações atuais e gerando um áudio de teste...");
     try {
+      await api.put("/integrations/config/tts", tts);
+      window.dispatchEvent(new Event("jarvis-tts-config-updated"));
       const result = await api.post("/voice/speech", { text: "Olá! Esta é uma mensagem de teste de voz do JARVIS." }, { responseType: "blob" });
       if (!result.data || result.data.size === 0) throw new Error("O provedor não retornou áudio.");
       const audioUrl = URL.createObjectURL(result.data);
@@ -296,7 +302,7 @@ export function IntegrationSettingsPage() {
           <div className="space-y-3 rounded-xl border border-white/10 bg-slate-950/30 p-4"><div className="flex items-center justify-between gap-3"><h4 className="font-semibold text-white">Speechma</h4><span className="text-xs text-slate-400">{status.providers?.tts?.speechma?.apiKeyConfigured ? `Chave salva · ${status.providers.tts.speechma.apiKeyMasked}` : "Não configurada"}</span></div><input className="input" type="password" autoComplete="new-password" value={tts.speechmaApiKey} onChange={(event) => setTts({ ...tts, speechmaApiKey: event.target.value })} placeholder={status.providers?.tts?.speechma?.apiKeyConfigured ? "Deixe vazio para manter a chave" : "Cole sua API key Speechma"} /><div className="flex gap-2"><select className="input" value={tts.speechmaVoiceId} onChange={(event) => setTts({ ...tts, speechmaVoiceId: event.target.value })}><option value="">Selecione/carregue uma voz</option>{ttsVoices.speechma.map((voice) => <option key={voice.id} value={voice.id}>{voice.name}{voice.gender ? ` · ${voice.gender}` : ""}{voice.language ? ` · ${voice.language}` : ""}</option>)}</select><button type="button" className="btn btn-ghost shrink-0" disabled={ttsBusy === "voices-speechma"} onClick={() => void loadTtsVoices("speechma")}>{ttsBusy === "voices-speechma" ? "Carregando..." : "Carregar vozes"}</button></div><input className="input" value={tts.speechmaVoiceId} onChange={(event) => setTts({ ...tts, speechmaVoiceId: event.target.value })} aria-label="ID de voz Speechma" placeholder="Ou digite o voice ID" /></div>
           <div className="space-y-3 rounded-xl border border-white/10 bg-slate-950/30 p-4"><div className="flex items-center justify-between gap-3"><h4 className="font-semibold text-white">ElevenLabs</h4><span className="text-xs text-slate-400">{status.providers?.tts?.elevenlabs?.configured ? `Chave salva · ${status.providers.tts.elevenlabs.apiKeyMasked}` : "Não configurada"}</span></div><input className="input" type="password" autoComplete="new-password" value={tts.elevenlabsApiKey} onChange={(event) => setTts({ ...tts, elevenlabsApiKey: event.target.value })} placeholder={status.providers?.tts?.elevenlabs?.configured ? "Deixe vazio para manter a chave" : "Cole sua API key ElevenLabs"} /><div className="flex gap-2"><select className="input" value={tts.elevenlabsVoiceId} onChange={(event) => setTts({ ...tts, elevenlabsVoiceId: event.target.value })}><option value="">Selecione/carregue uma voz</option>{ttsVoices.elevenlabs.map((voice) => <option key={voice.id} value={voice.id}>{voice.name}{voice.gender ? ` · ${voice.gender}` : ""}{voice.language ? ` · ${voice.language}` : ""}</option>)}</select><button type="button" className="btn btn-ghost shrink-0" disabled={ttsBusy === "voices-elevenlabs"} onClick={() => void loadTtsVoices("elevenlabs")}>{ttsBusy === "voices-elevenlabs" ? "Carregando..." : "Carregar vozes"}</button></div><input className="input" value={tts.elevenlabsVoiceId} onChange={(event) => setTts({ ...tts, elevenlabsVoiceId: event.target.value })} aria-label="ID de voz ElevenLabs" placeholder="Ou digite o voice ID" /><label className="block text-xs font-semibold text-slate-400">Modelo<input className="input mt-2" value={tts.elevenlabsModelId} onChange={(event) => setTts({ ...tts, elevenlabsModelId: event.target.value })} placeholder="eleven_multilingual_v2" /></label></div>
         </div>
-        <p className="text-xs text-slate-500">Carregue as vozes e escolha opções masculinas/pt-BR em Speechma e ElevenLabs. Se um provedor remoto falhar, o JARVIS não troca silenciosamente para uma voz feminina do navegador.</p>
+        <p className="text-xs text-slate-500">Carregue as vozes e escolha opções masculinas/pt-BR em Speechma e ElevenLabs. Ao carregar vozes ou testar, as configurações preenchidas nesta tela são salvas primeiro. Se um provedor remoto falhar, o JARVIS não troca silenciosamente para uma voz feminina do navegador.</p>
         <div className="flex flex-wrap gap-2"><button className="btn btn-primary"><Save size={18} /> Salvar configuração de voz</button><button type="button" className="btn btn-ghost" disabled={ttsBusy === "test" || tts.provider === "browser"} onClick={() => void testTts()}>{ttsBusy === "test" ? "Gerando áudio..." : "Testar voz selecionada"}</button></div>
       </form>
       <form onSubmit={submit("api_public", urls)} className="glass space-y-3 rounded-2xl p-5">
