@@ -16,9 +16,13 @@ const askSchema = z.object({
   allowTools: z.boolean().default(true)
 });
 
+const draftActionSchema = z.object({
+  draftAction: z.record(z.unknown()).refine((action) => Object.keys(action).length > 0)
+}).strict();
+
 router.post("/ask", validate(askSchema), asyncHandler(brainController.ask));
 router.post("/plan", validate(askSchema), asyncHandler(brainController.plan));
-router.post("/execute-draft", asyncHandler(brainController.executeDraft));
+router.post("/execute-draft", validate(draftActionSchema), asyncHandler(brainController.executeDraft));
 router.post("/feedback", validate(z.object({ message: z.string().min(1).max(2000), savePreference: z.boolean().optional() })), asyncHandler(brainController.feedback));
 router.get("/feedback", asyncHandler(brainController.listFeedback));
 router.get("/agents", asyncHandler(brainController.agents));

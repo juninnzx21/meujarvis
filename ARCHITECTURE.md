@@ -1,5 +1,11 @@
 # Arquitetura
 
+## Health e status de integracoes
+
+- `/api/health/public` e a interface para monitores sem sessao e retorna somente disponibilidade resumida.
+- `/api/health/full` exige JWT e calcula n8n, WhatsApp/Evolution e Home Assistant com as configuracoes do usuario autenticado; chaves permanecem redigidas.
+- Dados detalhados de operacao, como contagens financeiras e mensagens de falhas recentes, nao devem ser publicados em endpoints de monitoramento publico.
+
 ## Visao geral
 
 O sistema e dividido em frontend React/Vite e backend Express/TypeScript. O backend expoe API REST em `/api`, usa Prisma para persistencia em PostgreSQL e centraliza integracoes em servicos isolados.
@@ -43,11 +49,15 @@ O service worker nao cacheia `/api/*`, requisicoes com Authorization, cookies ou
 6. Acoes sensiveis retornam confirmacao exigida.
 7. Resposta do assistente e salva.
 
+Chat, voz, mobile e WhatsApp fornecem ao Brain as últimas mensagens da conversa persistida. O Brain limita o histórico a 8 mensagens e 3.000 caracteres por mensagem, preservando contexto sem deixar a solicitação crescer sem limite. A busca web também recebe esse histórico, inclusive em acompanhamentos curtos; consultas financeiras e de status continuam usando suas ferramentas locais.
+
 Tambem existe `/api/chat/stream`, que retorna eventos SSE com fallback de streaming. A estrutura esta pronta para streaming token a token futuro.
 
 ## Orquestracao de IA e tools
 
 `intentDetectorService` classifica intencoes como chat normal, memoria, tarefa, health, n8n, WhatsApp e Home Assistant. `toolRegistryService` descreve tools com nivel de seguranca (`safe`, `confirmation_required`, `forbidden`) para evoluir para function calling real sem abrir brecha para acoes perigosas.
+
+No Brain, intenções `memory.create` e `task.create` somente preparam uma proposta e retornam `needsConfirmation`; nenhuma escrita é feita durante a interpretação. A rota autenticada `/api/brain/execute-draft` valida a estrutura do pedido e permanece deliberadamente sem executor até haver autorização vinculada ao usuário, alvo imutável, expiração e uso único. Login do JARVIS continua baseado em senha e JWT, sem MFA ou revogação individual de sessões nesta versão.
 
 ## OpenAI
 
@@ -64,7 +74,7 @@ O health full expoe somente status operacional e modelo, nunca a chave.
 
 ## Voz
 
-A pagina Voz usa Web Speech API quando disponivel, envia transcricao para `POST /api/voice/process`, le resposta com `SpeechSynthesis`, mostra historico local e aviso de privacidade. Nao existe escuta continua. Wake word "Ei Jarvis" fica apenas planejada.
+A pagina Voz usa Web Speech API quando disponivel, envia transcricao para `POST /api/voice/process`, le resposta com `SpeechSynthesis`, mostra historico e aviso de privacidade. Cada turno é persistido e reutiliza a conversa autorizada do usuário. A opcao visivel de conversa com consentimento reativa o microfone depois da resposta falada; sem essa opcao, cada captura exige clique. Wake word "Ei Jarvis" fica apenas planejada.
 
 ## Integracoes
 
@@ -78,6 +88,7 @@ A pagina Voz usa Web Speech API quando disponivel, envia transcricao para `POST 
 - Controle Financeiro: `FinanceIntegrationService` guarda URL/token por usuario em `Setting`, retorna token apenas mascarado, testa `/api/v1/me`, consulta `/api/v1/summary/month` e cria lancamentos em `/api/v1/transactions`.
 - Controle Financeiro via WhatsApp: antes do orquestrador geral, o webhook tenta interpretar mensagens financeiras com entrada/saida e valor; se reconhecer, registra no sistema externo ou pede complemento sem expor segredo.
 - Home Assistant: `HomeAssistantService` lista entidades agrupadas, chama servicos e conversa via `conversation.process`; dominios sensiveis exigem confirmacao.
+- Vinculo Home Assistant: `/smart-home/setup` guia a criação do Long-Lived Access Token, salva URL/token pela configuração protegida de integração, testa `/api/` e consulta `/api/states` somente para descoberta. A tela não executa serviços durante o pareamento.
 - Home Assistant sensivel: `lock`, `alarm_control_panel`, `cover`, garagem, portao, abrir/destravar e termos similares exigem confirmacao.
 
 ## Seguranca
@@ -198,9 +209,13 @@ Ressalvas tecnicas da Fase 10: pgvector real, embeddings externos, deploy do sub
 
 Credenciais sensiveis sao persistidas em `Setting` usando AES-256-GCM via `encryptSettingValue` e sao expostas ao frontend apenas como `configured` e mascara. O painel usa `/integrations`, `/settings/integrations`, `/integrations/setup-wizard` e `/integrations/events`.
 
+OpenAI e Gemini tambem podem ser configurados por usuario em `/settings/integrations`. `aiProviderConfigService` le as chaves criptografadas e modelos da tabela `Setting`; `openAiService` e `geminiService` recebem o ID da conta nas chamadas de chat e Brain. Variaveis de ambiente continuam como fallback para compatibilidade. `ai_primary_provider` guarda `auto`, `openai` ou `gemini`; `auto` preserva OpenAI primeiro e Gemini como reserva. A rota administrativa autenticada `GET /api/integrations/models/:provider` consulta os modelos disponiveis para a chave, filtra OpenAI para IDs de modelos conversacionais e Gemini para modelos com `generateContent`. A escolha usa o provedor selecionado primeiro, tenta o outro quando configurado e termina no fallback local. O frontend recebe apenas status, origem e nomes de modelo; nunca recebe chaves.
+
 ## Assistente Universal de Configuracao
 
 `IntegrationSetupService` alimenta `/api/integrations/setup/*`, `/integrations/setup-wizard` e `/integrations/setup-summary`. O servico padroniza provider, status, campos mascarados, URLs publicas, acoes disponiveis e checklist manual para API publica, IA, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca.
+
+O Controle Financeiro externo e vinculado por `POST /api/finance/auth/login`; se a API exigir 2FA, o frontend guarda apenas o desafio temporario em memoria e confirma por `POST /api/finance/auth/challenge`. O backend troca as credenciais por token, armazena somente o token criptografado em `Setting` e nunca devolve o token. `/api/finance/test-connection` valida a sessao consultando `/api/v1/me`. A senha e o codigo TOTP nao sao persistidos nem registrados em logs.
 
 ## Fase 14 - JARVIS Super Intelligence Core
 
@@ -220,3 +235,81 @@ A arquitetura de producao fica dividida em:
 - Integracoes reais configuradas pela Central, com segredos criptografados em `Setting` ou `.env`.
 
 Deploy remoto, monitoramento externo, Evolution API, Home Assistant e backup offsite permanecem etapas operacionais com `manual_action_required` enquanto nao houver credenciais reais seguras.
+
+## Pesquisa web do JARVIS
+
+O Brain aciona Google Search Grounding do Gemini para perguntas de conhecimento e pedidos de informação atual. A busca ocorre no backend, usa a chave Gemini já configurada e devolve URLs e títulos associados à resposta para exibição nos clientes web e WhatsApp. Resultados externos são tratados como dados não confiáveis; segredos e credenciais não são encaminhados à busca. Se o grounding falhar, a resposta segue pelo provedor normal e não é apresentada como pesquisada. O recurso pode consumir quota/cobrança da conta Gemini.
+# Síntese de voz (TTS)
+
+As credenciais ElevenLabs e Fish Audio ficam em `Setting` criptografadas por `encryptSettingValue`; o endpoint de status retorna apenas indicador e chave mascarada. Em modo automático, `ttsService` tenta primeiro o Piper privado e depois provedores remotos com cota confirmada. ElevenLabs exige autorização específica para fallback. A consulta manual `/api/integrations/tts/quotas` mostra somente uso e disponibilidade, sem credenciais. O frontend envia texto autenticado para `/api/voice/speech`, recebe WAV (Piper) ou MP3 (provedores remotos) sem cache e reproduz localmente; a resposta inclui o motor que sintetizou.
+
+O serviço Piper expõe apenas `/health` e `/synthesize` na rede privada do Compose, carrega um modelo pt-BR por vez, valida WAV e limita o texto. Docker restringe o container a 1 CPU e 512 MB. Kokoro e Chatterbox aguardam benchmark, pois não há GPU e a VPS é compartilhada.
+
+## Instalacao e assistente flutuante
+
+`/install` apresenta a instalacao do PWA em Android/iOS e distribui o companion nativo x64 para Windows; o PWA continua instalavel por Chrome/Edge no desktop. O componente `JarvisFloatingAssistant` pertence ao `AppLayout`, usa `/voice/process` e `speakJarvis`, e so inicia captura depois de ativacao manual. O modo conversa e visivel e para quando o painel fecha ou a aba fica oculta.
+
+## Companion local do Windows
+
+`desktop/` e um shell Electron para Windows que abre apenas o dominio oficial do JARVIS em HTTPS. O renderer tem `nodeIntegration=false`, `contextIsolation=true`, sandbox, navegacao restrita e acesso IPC verificado pela origem; o preload expoe apenas comandos locais tipados, abertura da janela e autorizacao temporaria do microfone. `commandPolicy.ts` aceita uma gramatica curta e fechada. O processo principal mapeia somente apps internos, atalhos exatos do menu Iniciar e pastas pessoais conhecidas; leitura de nomes de arquivos aparece apenas em dialogo nativo local. Criacoes, abertura de atalhos/documentos e exclusoes pedem confirmacao; exclusoes usam a Lixeira. O companion nao expoe shell, terminal, caminhos arbitrarios ou permissoes administrativas. Hotword sempre ativa nao existe: `Ctrl+Shift+J` abre a janela, e voz exige clique explicito que libera audio por 60 segundos para o dominio confiavel.
+
+O painel flutuante possui modo imersivo com Fullscreen API e fallback visual em janela, HUD responsivo e saida por `Esc`. A tela cheia e da janela JARVIS, nao uma sobreposicao sobre outros jogos.
+
+## Versao da aplicacao
+
+Desde 2026-10-14, os pacotes frontend, backend e desktop usam a versao de release `2.0.0`; o manifesto PWA, os titulos web e a janela Electron exibem JARVIS 2.0. A versao publicada na Central de Downloads e mantida separada dos artefatos locais para nao afirmar que uma release nao publicada esta disponivel.
+# Auditoria de dispositivos e navegação — 2026-10-14
+
+O estado implementado e as lacunas de pareamento autenticado, Android nativo, Home Assistant e Waze estão em [PROJECT_AUDIT_MULTIPLATFORM.md](PROJECT_AUDIT_MULTIPLATFORM.md). A navegação Waze do PWA usa deep links oficiais sem armazenar destino no backend. O bridge Electron continua local; ainda não há protocolo de agente remoto/dispositivo no backend.
+# Central de Downloads — 2026-10-15
+
+`/downloads` lista o instalador Windows x64 e o APK Android assinado JARVIS 2.0.0; os botões e QR apontam para os arquivos de uma release pública GitHub e o checksum acompanha os dois pacotes. A tag `v2.0.0` aciona `.github/workflows/release-downloads.yml`, que compila o EXE e publica os artefatos. O APK usa o certificado que corresponde ao `assetlinks.json` do domínio. O EXE continua sem assinatura Authenticode. O deploy do frontend para a VPS é separado e não é feito por esse workflow. Manual em [DOWNLOADS_CENTER_GUIDE.md](DOWNLOADS_CENTER_GUIDE.md).
+
+### Abertura de aplicativos e jogos
+
+`parseLocalCommand` continua usando uma gramática local fechada. `findStartMenuShortcut` consolida atalhos com o mesmo alvo/argumentos para evitar falsos conflitos entre atalhos do usuário e globais. Rust é a única integração de jogo dedicada: o processo principal encontra o Steam via atalho confiável, verifica `appmanifest_252490.acf` e `RustClient.exe` nas bibliotecas em `libraryfolders.vdf`, solicita confirmação nativa e chama `steam.exe -applaunch 252490` com `shell: false`. O navegador/PWA não tem essa permissão local.
+## Distribuicao multiplataforma — 2026-10-14
+
+- Windows: companion Electron x64, instalador NSIS por usuário, autenticado pelo site JARVIS. A janela abre o origin HTTPS remoto e exige internet.
+- Android: aplicativo TWA com package `br.com.juninnzxtec.jarvis.twa`, versão 2.0.0, Android mínimo 24 e target 36. O conteúdo é servido pelo mesmo site; a chave de upload fica local e fora do Git.
+- O APK de instalação direta foi assinado com a chave local, e o fingerprint está configurado em `frontend/public/.well-known/assetlinks.json`. A publicação na Play Store usa uma identidade/certificado App Signing diferente e exige atualização da associação após cadastro na loja.
+- A publicação em Microsoft Store/Play Console depende da conta do publicador, identidade reservada, ficha da loja, declarações legais e certificação da loja.
+
+## CI multiplataforma — 2026-10-14
+
+O workflow `.github/workflows/ci.yml` valida e arquiva builds de web, Windows e Android debug. O workflow `.github/workflows/release-downloads.yml`, ao receber uma tag `v*`, publica o instalador Windows e o APK Android assinado em GitHub Releases. O deploy do frontend na VPS e o envio às lojas continuam separados; veja `CI_CD_GUIDE.md`.
+
+Web, Windows e TWA Android carregam a interface do domínio JARVIS. Uma publicação do frontend/API na VPS propaga as mudanças web para esses clientes ao recarregar. Alterações no companion nativo ou no wrapper Android requerem uma nova release e aprovação/distribuição pelas respectivas lojas.
+
+## IA local híbrida (2026-10-14)
+
+O roteador central `openAiService.complete()` agora tenta Ollama primeiro no modo `auto`, seguido de OpenAI e Gemini. A preferência explícita Ollama também mantém os dois provedores cloud como fallback. `ollamaService` usa `/api/tags` para verificar/listar modelos e `/api/chat` sem streaming, contexto limitado a 4096, timeout de 90 s e descarrega o modelo após 30 s sem atividade. A configuração por usuário/admin fica na tabela `Setting`; somente status e URL privada aparecem no frontend. O backend aceita `localhost`, o nome interno Compose `ollama`, loopback, RFC1918 e Tailscale CGNAT; exige URL raiz e bloqueia redirects. Nunca exponha a porta 11434 à internet, pois Ollama não autentica chamadas. A instalação na VPS está suspensa enquanto a memória disponível continuar em 3,4 GiB e o swap em uso; ver `LOCAL_AI_AUDIT.md`.
+
+### TTS Fish Audio com referência de voz
+O serviço `ttsService` armazena a chave Fish Audio criptografada e o ID da voz. O endpoint administrativo `/api/integrations/tts/fish-audio/clone` recebe somente áudio MP3 (limite de 8 MB), valida o cabeçalho, envia a amostra ao endpoint oficial `/model` com visibilidade privada e grava o ID retornado. A síntese usa `/v1/tts` com `reference_id`; o MP3 não é salvo em disco nem em logs.
+# Health e status de integrações
+
+- `/api/health/public` é a interface para monitores sem sessão e retorna somente disponibilidade resumida.
+- `/api/health/full` exige JWT e calcula n8n, WhatsApp/Evolution e Home Assistant com as configurações do usuário autenticado; chaves permanecem redigidas.
+- Dados detalhados de operação, como contagens financeiras e mensagens de falhas recentes, não devem ser publicados em endpoints de monitoramento público.
+
+## Health detalhado protegido — 2026-10-15
+
+- `/api/health/full` agora exige JWT e reporta n8n, WhatsApp/Evolution e Home Assistant usando as configurações do usuário autenticado.
+- O health completo deixa de ser uma rota pública, pois inclui eventos recentes e contagens operacionais. Monitores sem sessão devem usar `/api/health/public`.
+- Tokens e chaves seguem mascarados; a validação autenticada é feita no CI porque esta cópia não tem banco local configurado.
+
+## Selecao da voz local e estado de provedores
+
+`selectBestJarvisVoice` só seleciona vozes cujo nome identifica uma voz masculina; prioriza pt-BR, depois outras vozes portuguesas e, por fim, outras línguas. Se uma preferência antiga apontar para a voz Google genérica ou não houver voz masculina identificável, o JARVIS não reproduz silenciosamente uma voz feminina. `testVoice` aguarda o evento real de término ou erro para informar o resultado. A lista depende do sistema operacional e navegador; configuração remota em `ttsService` continua sendo o meio para uma voz consistente entre dispositivos. No runtime, o modo `auto` consulta cota dos provedores configurados antes de sintetizar.
+
+Na Central de Integrações, carregar vozes e testar áudio persistem primeiro os campos atuais da tela para evitar requisições com chaves antigas. A consulta de crédito Fish Audio usa `check_free_credit=true`, conforme o OpenAPI oficial; `parseFishAudioQuota` considera `has_free_credit=true` suficiente para marcar a conta disponível, mesmo sem saldo numérico. `canUseTtsProvider` só permite síntese automática quando a API confirmou cota suficiente; cota desconhecida/esgotada é pulada antes de chamar o endpoint de áudio.
+
+O teste de voz apresenta mensagens seguras da API autenticada quando a geração falha, incluindo status HTTP quando disponível. O frontend lê apenas o campo `message`, sem registrar credenciais ou o corpo do áudio. A reprodução do navegador segue restrita a voz masculina identificável e não usa a voz Google genérica como fallback silencioso.
+# Voz e prosódia
+
+O serviço `ttsService` mantém credenciais remotas criptografadas e envia os parâmetros de estabilidade, semelhança, estilo e velocidade ao endpoint ElevenLabs. Faixas são limitadas no backend. Piper e Fish Audio permanecem disponíveis; os novos controles são específicos do ElevenLabs e não alteram esses provedores.
+
+## Conversas e integrações por usuário
+
+As rotas de conversa do chat e da voz têm timeout de cliente de 90 segundos para acomodar pesquisas e integrações lentas. Falhas do envio textual são apresentadas ao usuário e mantêm o prompt disponível para nova tentativa. Ferramentas do Brain que consultam status ou entidades do Home Assistant, n8n ou health recebem o `userId` autenticado para resolver as credenciais/configurações daquele usuário.

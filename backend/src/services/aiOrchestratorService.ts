@@ -136,7 +136,7 @@ export const aiOrchestratorService = {
       { role: "system", content: `Ferramentas disponiveis para chamadas futuras: ${toolSummary}. Nesta versao, execute somente pelas regras seguras do backend.` },
       { role: "system", content: `Memorias relevantes: ${memories.map((m) => `${m.title}: ${m.content}`).join(" | ") || "nenhuma"}` },
       { role: "user", content }
-    ]);
+    ], userId);
     const safeResponse = isLocalFallbackReply(response) ? buildMemoryFallbackReply(content, memories) || response : response;
     await writeSystemLog({ userId, module: "chat", action: "reply", message: "Resposta do JARVIS gerada" });
     return { reply: safeResponse, intent: "chat.normal" };

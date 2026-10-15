@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FlaskConical, Home, ShieldAlert } from "lucide-react";
+import { Link } from "react-router-dom";
 import { StatusPill } from "../../components/StatusPill";
 import { api, friendlyError } from "../../services/api";
 
@@ -53,9 +54,10 @@ export function SmartHomePage() {
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-3xl font-black text-white">Casa Inteligente</h2>
-        <StatusPill status={status.status} />
+        <div><h2 className="text-3xl font-black text-white">Casa Inteligente</h2><p className="text-sm text-slate-400">Consulte dispositivos e envie comandos ao Home Assistant.</p></div>
+        <div className="flex items-center gap-2"><StatusPill status={status.status} /><Link to="/smart-home/setup" className="btn btn-primary">{status.configured ? "Gerenciar vínculo" : "Vincular Home Assistant"}</Link></div>
       </div>
+      {!status.configured && <div className="glass rounded-2xl p-4 text-sm text-slate-300">O Home Assistant ainda não está vinculado. Use o assistente para informar a URL, salvar o token com segurança e descobrir os dispositivos.</div>}
       <div className="glass flex items-start gap-3 rounded-2xl p-4 text-sm text-amber-100">
         <ShieldAlert className="mt-0.5 shrink-0" size={18} />
         <p>Fechaduras, alarmes, garagem, portoes e covers exigem confirmacao explicita no backend antes de qualquer acionamento.</p>

@@ -1,14 +1,17 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell, FileText, MessageSquare, Mic, Send, ShieldCheck, WalletCards } from "lucide-react";
 import { api, friendlyError } from "../../services/api";
 import { isSpeechRecognitionSupported, onError, onTranscript, startListening } from "../../services/speechRecognitionService";
 import { speakJarvis } from "../../services/textToSpeechService";
+import { WazeNavigationCard } from "../../components/WazeNavigationCard";
+import { buildWazeFavoriteUrl, parseWazeFavoriteIntent, type WazeFavorite } from "../../services/wazeNavigation";
 
 type HistoryItem = {
   text: string;
   reply: string;
   at: string;
+  sources: Array<{ type: string; title: string; url?: string }>;
 };
 
 const quickActions = [
@@ -26,7 +29,9 @@ export function MobileAssistantPage() {
   const [status, setStatus] = useState("pronto");
   const [error, setError] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const conversationIdRef = useRef("");
   const [whatsappLink, setWhatsappLink] = useState("/whatsapp");
+  const [pendingWazeFavorite, setPendingWazeFavorite] = useState<WazeFavorite | null>(null);
   const available = isSpeechRecognitionSupported();
 
   useEffect(() => {
@@ -49,12 +54,23 @@ export function MobileAssistantPage() {
   async function sendCommand(value: string) {
     const command = value.trim();
     if (!command) return;
+    const requestedFavorite = parseWazeFavoriteIntent(command);
+    if (requestedFavorite) {
+      setPendingWazeFavorite(requestedFavorite);
+      setText("");
+      setError("");
+      setStatus("aguardando confirmação");
+      return;
+    }
+    setPendingWazeFavorite(null);
     setStatus("processando");
     setError("");
     try {
-      const response = await api.post("/chat/send", { content: command });
+      const response = await api.post("/chat/send", { content: command, ...(conversationIdRef.current ? { conversationId: conversationIdRef.current } : {}) });
+      if (response.data.conversation?.id) conversationIdRef.current = response.data.conversation.id;
       const reply = response.data.assistantMessage?.content || response.data.reply || "Comando processado.";
-      setHistory((items) => [{ text: command, reply, at: new Date().toLocaleTimeString("pt-BR") }, ...items].slice(0, 5));
+      const sources = response.data.usedSources ?? response.data.assistantMessage?.metadata?.usedSources ?? [];
+      setHistory((items) => [{ text: command, reply, at: new Date().toLocaleTimeString("pt-BR"), sources }, ...items].slice(0, 5));
       setText("");
       setStatus("pronto");
       speakJarvis(reply);
@@ -97,6 +113,19 @@ export function MobileAssistantPage() {
         <p className="mt-3 inline-flex rounded-full bg-white/5 px-4 py-2 text-sm text-slate-300">{status}</p>
       </div>
 
+      <WazeNavigationCard />
+
+      {pendingWazeFavorite && (
+        <div className="glass rounded-2xl border border-cyan-300/30 p-4" role="status">
+          <p className="font-bold text-white">Rota preparada para {pendingWazeFavorite === "home" ? "Casa" : "Trabalho"}</p>
+          <p className="mt-1 text-sm text-slate-300">Confirme para abrir o Waze usando esse favorito salvo no próprio aplicativo.</p>
+          <div className="mt-3 flex gap-2">
+            <a className="btn btn-primary" href={buildWazeFavoriteUrl(pendingWazeFavorite)}>Confirmar e abrir Waze</a>
+            <button className="btn btn-ghost" onClick={() => { setPendingWazeFavorite(null); setStatus("pronto"); }}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={submit} className="glass rounded-2xl p-4">
         <label className="text-sm font-semibold text-slate-300" htmlFor="mobile-command">Comando rapido</label>
         <div className="mt-2 flex gap-2">
@@ -132,6 +161,7 @@ export function MobileAssistantPage() {
             <div key={`${item.at}-${item.text}`} className="rounded-xl bg-white/5 p-3 text-sm">
               <p className="font-semibold text-cyan-100">{item.at} - {item.text}</p>
               <p className="mt-1 text-slate-300">{item.reply}</p>
+              {item.sources.filter((source) => source.type === "web" && source.url).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="mt-2 mr-3 inline-block text-cyan-200 underline">{source.title}</a>)}
             </div>
           ))}
         </div>

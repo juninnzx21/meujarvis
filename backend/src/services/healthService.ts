@@ -8,7 +8,7 @@ import { geminiService } from "./geminiService.js";
 import { whatsappService } from "./whatsappService.js";
 import { publicIntegrationUrls } from "./integrationConfigService.js";
 
-export async function getHealth(full = false) {
+export async function getHealth(full = false, userId?: string) {
   let database = "ok";
   let logsCount = 0;
   let recentFailures: unknown[] = [];
@@ -31,9 +31,10 @@ export async function getHealth(full = false) {
     database = "error";
   }
 
-  const [whatsappStatus, homeAssistantStatus, pendingImports, pendingReviewRows, lastBackup] = await Promise.all([
-    whatsappService.status(),
-    homeAssistantService.status(),
+  const [whatsappStatus, homeAssistantStatus, n8nStatus, pendingImports, pendingReviewRows, lastBackup] = await Promise.all([
+    whatsappService.status(userId),
+    homeAssistantService.status(userId),
+    userId ? n8nService.userStatus(userId) : Promise.resolve(n8nService.status()),
     prisma.statementImport.count({ where: { status: { in: ["uploaded", "parsed", "review_required"] } } }),
     prisma.statementImportRow.count({ where: { status: "pending" } }),
     prisma.systemLog.findFirst({ where: { module: "backup" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
@@ -43,7 +44,7 @@ export async function getHealth(full = false) {
     database,
     openaiConfigured: openAiService.configured,
     geminiConfigured: geminiService.configured,
-    n8nConfigured: n8nService.configured,
+    n8nConfigured: n8nStatus.configured,
     whatsappConfigured: whatsappStatus.configured,
     homeAssistantConfigured: homeAssistantStatus.configured,
     uptimeSeconds: Math.round(process.uptime()),
@@ -57,7 +58,7 @@ export async function getHealth(full = false) {
     ...base,
     integrations: {
       apiPublic: { url: publicIntegrationUrls.apiPublicUrl, status: "configured" },
-      n8n: { ...n8nService.status(), urlMasked: publicIntegrationUrls.n8nPublicUrl, reachable: undefined, lastTestAt: undefined },
+      n8n: { ...n8nStatus, urlMasked: publicIntegrationUrls.n8nPublicUrl, reachable: undefined, lastTestAt: undefined },
       whatsapp: { ...whatsappStatus, webhookUrl: publicIntegrationUrls.whatsappWebhookUrl, wakePhraseRequired: true, autoReply: whatsappStatus.autoReply, lastTestAt: undefined },
       evolution: { configured: whatsappStatus.configured, reachable: undefined, instanceStatus: whatsappStatus.status },
       homeAssistant: homeAssistantStatus,

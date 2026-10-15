@@ -1,4 +1,4 @@
-﻿# FINAL_VALIDATION_REPORT
+# FINAL_VALIDATION_REPORT
 
 ## Atualizacao 2026-05-18 - Reset seguro da Evolution
 
@@ -337,3 +337,80 @@ Validado/preparado:
 - E2E Playwright: plano atualizado; script ainda nao ativo.
 
 Ressalvas: credenciais reais, deploy remoto, Caddy/DNS, Home Assistant, backup offsite e monitoramento externo exigem acao manual segura.
+
+## 2026-10-15 - Health detalhado protegido
+
+- Implementado middleware JWT em `/api/health/full` e status das integrações por usuário.
+- Teste cobre HTTP 401 sem sessão e HTTP 200 autenticado. `npm run validate` executado: typecheck passou; teste de integração local não iniciou por ausência de `DATABASE_URL` e `JWT_SECRET`; frontend passou typecheck, 35 testes e build.
+- O pipeline CI fornece PostgreSQL e executa os testes de integração completos antes do deploy.
+
+### Deploy e smoke em produção — 2026-10-15
+
+- GitHub Actions CI `38732564543`: validate, desktop e android concluídos com sucesso.
+- Deploy `d9487c4` em release isolada da VPS; imagem anterior retida para rollback. Apenas `jarvis-backend` foi recriado.
+- Verificações públicas: site 200, health resumido 200; health detalhado 401 sem sessão. Teste interno autenticado do health detalhado 200, banco/app OK, versão 2.0.0 e sem segredo detectado na resposta.
+- n8n e WhatsApp/Evolution estão configurados nas preferências persistidas do usuário autenticado; a conectividade desses provedores não foi chamada nesta verificação. Home Assistant ainda não configurado e seu hostname público não resolve.
+
+Verificação segura da Evolution: GET de estado da instância retornou sucesso e sessão `open`, sem enviar mensagem. Esse teste confirma a conexão atual; não valida webhook, resposta automática ou execução de workflows.
+
+### Voz no navegador — seleção masculina
+
+A seleção local não considera mais “Brasil” como indicador de voz masculina e prioriza nomes masculinos pt-BR como Antonio/Antônio. Um teste garante que a voz Google genérica não tenha prioridade sobre uma voz masculina brasileira instalada. Naquela verificação, não havia chave nem voice ID salvos nos provedores remotos; a consulta real de cotas retornou `not_configured`. A aplicação não consegue criar a voz natural do JARVIS até que uma credencial válida e um ID de voz sejam configurados em `/settings/integrations`.
+
+### Confirmação de produção da seleção de voz
+
+Frontend da release `91d297c` publicado após CI verde. Página e bundle públicos HTTP 200; bundle conferido com o seletor novo e sem a regra antiga de gênero baseada em “Brasil”. Health público permanece 200 e health detalhado 401 sem autenticação. Em tempo de execução, o usuário ainda está selecionado em `browser`; a consulta de cotas retornou `not_configured` para os três serviços externos porque faltam as chaves e os voice IDs. Não foi possível validar síntese premium. Configure em `/settings/integrations` e use `auto`; a chave Fish Audio anteriormente compartilhada precisa ser rotacionada antes de voltar a ser usada.
+
+### Correção da seleção automática e dos testes de voz — 2026-10-15
+
+Frontend: `npm run validate` passou (8 arquivos, 37 testes e build). Backend: typecheck, build e teste isolado do parser passaram (3 testes). A suíte completa local não pôde rodar porque este checkout não tem `DATABASE_URL` e `JWT_SECRET`; o teste de integração depende também de um PostgreSQL disponível. A alteração reconhece crédito grátis da Fish Audio sem saldo numérico e faz os botões de carregar vozes/testar persistirem a configuração atual antes de consultar o provedor. A síntese real ainda não foi confirmada porque nenhuma chave/voice ID foi fornecida à produção.
+
+CI do GitHub para `1cd1170` concluída com sucesso (validate, desktop e android). Release implantada em `/opt/jarvis-home-assistant/releases/jarvis-1cd1170`; frontend/backend foram recriados sem dependências, e PostgreSQL/n8n permaneceram ativos. Testes de produção: `/settings/integrations` 200, `/api/health/public` 200, e o bundle compilado contém as novas mensagens/rotina. Naquela versão, o status TTS era `browser` e não havia configuração remota Fish Audio ou ElevenLabs. Assim, validação real de síntese premium aguardava chaves e voice IDs válidos fornecidos pelo painel.
+
+Auditoria posterior do OpenAPI oficial Fish Audio confirmou que a elegibilidade de crédito grátis requer `check_free_credit=true`. Backend `116225f` passou na CI completa (validate, desktop e android) e foi publicado em `/opt/jarvis-home-assistant/releases/jarvis-116225f`, recriando somente o backend. Health público e página de integrações retornaram HTTP 200; os containers frontend, backend, PostgreSQL e n8n estão rodando. Typecheck/build backend, 3 testes focados do parser e frontend validate (37 testes) passaram localmente. A conta de produção não tem chave, portanto não foi feita requisição autenticada à Fish Audio nem teste real de áudio.
+
+### Seleção automática de voz por cota confirmada — 2026-10-15
+
+O modo automático agora só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Uma cota desconhecida, indisponível ou insuficiente faz o sistema seguir para o próximo provedor, evitando chamadas remotas sem confirmação de saldo. Adicionado teste unitário para os quatro estados relevantes.
+
+Validação local nesta alteração: backend typecheck/build e 4 testes focados passaram; frontend validate passou com 37 testes e build. A suíte completa de backend depende do PostgreSQL e das variáveis de teste providas pela CI. CI do GitHub `38765847066` concluiu com sucesso nos jobs validate, desktop e android. Release `bb72343` publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343` após build Docker sem cache; somente backend e frontend foram recriados, sem migrations. Smoke tests: integração pública 200, health API público 200, health interno 200 e bundle frontend contém o texto atualizado. Backend, frontend, PostgreSQL e n8n continuam ativos. Síntese remota real permanece pendente de novas chaves e voice IDs válidos configurados em produção.
+
+### Voz Google feminina e teste de reprodução — publicada em 2026-10-15
+
+Causa identificada: o seletor local tinha a primeira voz pt-BR como fallback e mantinha prioridade para uma Google voiceURI salva. Agora uma voz salva só é aceita se o nome identifica uma voz masculina; a seleção procura primeiro pt-BR, depois outras vozes portuguesas e por fim vozes masculinas de outros idiomas. Sem voz reconhecível, não chama a voz Google genérica.
+
+A página `/settings/voice` corrige a preferência local antiga, lista somente vozes masculinas identificáveis e explica quando nenhuma está instalada. O botão de teste aguarda `onend` e mostra conclusão, erro, timeout ou ausência de voz. Testes simulam a Google antiga salva com uma voz masculina disponível, apenas Google disponível, e os eventos `onstart`/`onend`.
+
+Validação frontend: `npm run validate` passou, 8 arquivos/43 testes e build. Backend permaneceu sem alterações; seu `npm run validate` local concluiu Prisma e typechecks, e 22 testes independentes passaram, mas a suíte de integração interrompeu por ausência de `DATABASE_URL` e `JWT_SECRET`. A CI `38772235880` passou nos jobs validate, desktop e android, com suíte completa de backend e frontend. Release `73dec7f` publicada em `/opt/jarvis-home-assistant/releases/jarvis-73dec7f`, recriando só o frontend. Página `/settings/voice`, bundle público, health API público, frontend interno e API interna retornaram HTTP 200; bundle conferido com a proteção nova. Backend, PostgreSQL e n8n permaneceram ativos. O navegador desta sessão está deslogado e a VPS não tem chaves/voice IDs remotos, portanto não foi possível ouvir áudio real do usuário; os testes automatizados simulam os eventos de início/fim e garantem que a Google genérica não seja chamada como substituta masculina.
+
+### Piper local — publicada em 2026-10-15
+
+- O fluxo ativo aceita Piper local e mantém Fish Audio/ElevenLabs. Seleções antigas de navegador passam para modo automático, que prioriza Piper.
+- Foi criado serviço Docker privado com pt_BR-cadu-medium, geração WAV, texto limitado a 1.000 caracteres e limite de 1 CPU/512 MB. /api/voice/speech preserva MP3 remoto e responde audio/wav para Piper. Nenhuma porta do serviço é publicada no host.
+- Validação local: build TypeScript backend passou; 4 testes focados do cliente Piper passaram; frontend validate passou (43 testes e build). CI `38775757022` concluiu com sucesso nos jobs validate, desktop e android.
+- VPS: 4 vCPUs, 7.8 GiB RAM, nenhum GPU, 3.7 GiB disponíveis e 2.1 GiB de swap usada. Kokoro e Chatterbox não foram instalados para proteger os demais sistemas; precisam de benchmark e limites comprovados.
+- Release `c3899e0` publicada em `/opt/jarvis-home-assistant/releases/jarvis-c3899e0`, recriando apenas Piper, backend e frontend; PostgreSQL, n8n e outros projetos não foram reiniciados. A rota autenticada `/api/voice/speech` retornou HTTP 200 com `audio/wav`, provedor `piper` e WAV válido; health interno, API pública e site público retornaram HTTP 200. Uma fala de validação foi sintetizada em 2,19 s; Piper ficou saudável, com cerca de 260 MiB de RAM de 512 MiB e 0,34% de CPU no momento da coleta. A reprodução física no dispositivo do usuário não pôde ser ouvida nesta sessão.
+- Piper é GPL-3.0; o repositório da voz cadu atualmente informa MIT para os artefatos e CC0 para o dataset, mas registra fine-tuning sobre Lessac. Ver `tts/piper/NOTICE.md` e confirmar direitos antes de redistribuir ou usar comercialmente.
+
+### Diagnóstico do teste de voz — 2026-10-15
+
+O teste em Configurações > Voz agora exibe a mensagem segura retornada pela API TTS quando a geração falha, incluindo status HTTP quando disponível. Se o navegador bloquear a reprodução ou o dispositivo não conseguir tocar o áudio gerado, a interface apresenta essa causa separadamente. A seleção do navegador continua recusando fallback para a voz Google genérica. Frontend `npm run validate` passou com 45 testes e build; backend Prisma/typechecks/build e 26 testes sem a suíte de integração passaram. A suíte integrada local exige `DATABASE_URL` e `JWT_SECRET`; a CI executada no push valida com PostgreSQL descartável.
+
+### Downloads JARVIS 2.0.0 — 2026-10-15
+
+A Central de Downloads foi preparada para oferecer o EXE Windows x64 e o APK Android assinado como assets da release pública `v2.0.0`, com checksums e QR code direto para o APK. O APK recompilado a partir desta revisão foi validado com apksigner; package `br.com.juninnzxtec.jarvis.twa`, versão `2.0.0` (code `20000`) e fingerprint compatível com o `assetlinks.json`. O workflow de release compila o instalador Windows e publica os arquivos no GitHub. Frontend foi validado com 47 testes e build; backend typecheck/build e 3 testes focados passaram. A suíte de integração backend depende de `DATABASE_URL` e `JWT_SECRET`. A página ainda precisa de deploy na VPS; SSH de produção não autenticou nesta sessão.
+
+Deploy da melhoria de diagnóstico — commit `13cf8af`, CI `38783407549` concluída com sucesso nos jobs validate, desktop e android. Release criada em `/opt/jarvis-home-assistant/releases/jarvis-13cf8af`; apenas o frontend foi compilado e recriado. A imagem anterior foi preservada como `jarvis-home-assistant-frontend:rollback-13cf8af`. Site e API pública retornaram HTTP 200; health reportou aplicação, banco e scheduler `ok`; Piper permaneceu saudável; backend, PostgreSQL e n8n não foram recriados. O bundle publicado contém os diagnósticos de falha de TTS e bloqueio de reprodução pelo navegador.
+# Revisão de prosódia TTS — 15/10/2026
+
+- Os controles de prosódia do ElevenLabs são persistidos por usuário, limitados no backend e aplicados na chamada oficial de síntese.
+- Teste audível real permanece necessário no painel para avaliar timbre e pronúncia da voz disponível na conta.
+- Não se promete reprodução idêntica da atuação vocal dos filmes; a configuração busca um estilo original, masculino e cinematográfico.
+
+## Diagnóstico de interações — 15/10/2026
+
+- Health público da API: HTTP 200; banco `ok`; OpenAI/Gemini configurados; n8n/WhatsApp/Home Assistant não configurados no health público.
+- Corrigido o uso de configurações por usuário pelas ferramentas do Brain para Home Assistant e n8n.
+- O chat não engole mais erros de solicitação; o texto fica disponível para nova tentativa. Chat e voz recebem timeout específico de 90 segundos.
+- A suíte completa do backend local precisa de `DATABASE_URL` e `JWT_SECRET`, ausentes neste ambiente. Os testes locais de integração autenticada com IA/Home Assistant não puderam ser executados.
+- SSH de produção recusou autenticação; alterações ainda não implantadas.

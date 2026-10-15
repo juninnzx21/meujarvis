@@ -1,5 +1,7 @@
 # JARVIS Home AI Assistant
 
+As conversas do chat e da voz podem levar mais tempo quando o Brain consulta pesquisa e integrações; as telas aguardam até 90 segundos e o chat mostra falhas de rede/provider com opção de repetir a mensagem. Consultas do Brain ao Home Assistant e n8n usam a configuração vinculada ao usuário autenticado.
+
 ## Nota operacional de producao
 
 Frontend publico: `https://jarvis.juninnzxtec.com.br`.
@@ -18,12 +20,20 @@ No WhatsApp, o JARVIS so deve responder/executar quando a mensagem tiver `ei jar
 
 Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs, n8n proprio, EventBus, documentos/RAG preparado e integracoes preparadas com OpenAI, Gemini, Evolution API/WhatsApp, Home Assistant e Controle Financeiro.
 
+## Voz do JARVIS
+
+Em Configurações → Integrações → Voz do JARVIS, selecione uma voz masculina pt-BR do provedor e ajuste naturalidade, semelhança, expressividade e velocidade do ElevenLabs. O preset inicial é mais pausado e expressivo. Os controles são enviados apenas pelo backend; chaves continuam criptografadas. Use “Testar voz selecionada” para ouvir a amostra. O JARVIS oferece uma identidade original com estilo de assistente cinematográfico, sem clonar exatamente uma voz de ator/personagem.
+
 ## Stack
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React, Axios e React Router.
 - Backend: Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, JWT, bcrypt, Zod, OpenAI SDK, Axios, Helmet, CORS, rate limit e logs estruturados.
 - Infra: Docker Compose com PostgreSQL, backend, frontend, n8n e PostgreSQL dedicado do n8n.
 - Testes: Vitest, Supertest e Testing Library.
+
+## Conversa contextual e pesquisa
+
+Chat, voz e assistente mobile persistem o histórico em conversas do próprio usuário e enviam até 8 mensagens recentes à IA (com limite de 3.000 caracteres por mensagem). O Brain inclui esse contexto tanto nas chamadas normais aos provedores quanto na busca grounded do Gemini, e reconhece perguntas curtas de continuação para manter a pesquisa no mesmo assunto. O WhatsApp mantém uma conversa por usuário e remetente, sempre respeitando a exigência `ei jarvis` e a configuração de resposta automática. No modo Voz, a escuta volta a iniciar depois da resposta apenas se a opção de conversa com consentimento estiver ativa; cada sessão continua começando por clique explícito.
 
 ## Fase 10 - JARVIS 100000/10
 
@@ -43,10 +53,15 @@ O painel possui uma central para configurar e validar integrações sem expor se
 
 - `/integrations`: cards de status para OpenAI, Gemini, n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Webhooks, Monitoramento, Backup e API publica.
 - `/settings/integrations`: edicao segura de URLs e credenciais criptografadas.
+- A seção **Voz do JARVIS · Piper local, Fish Audio e ElevenLabs**, em `/settings/integrations`, testa a síntese. Piper roda em serviço Docker privado com voz pt-BR, sem chave ou cobrança por uso. O modo automático tenta Piper primeiro e só usa provedores remotos com cota confirmada; ElevenLabs precisa ser autorizado como fallback.
 - `/integrations/setup-wizard`: checklist guiado para conectar API, n8n, Evolution, WhatsApp, Financeiro e monitoramento.
 - `/integrations/events`: historico do EventBus e reenvio seguro.
 
 Documentacao: `INTEGRATIONS_CONTROL_CENTER.md`.
+
+## Vinculo assistido do Home Assistant
+
+Em `Casa Inteligente > Vincular Home Assistant` (`/smart-home/setup`), o assistente orienta a criar um Long-Lived Access Token no perfil do Home Assistant, recebe a URL/token, salva a credencial criptografada, testa a API e descobre entidades sem acionar dispositivos. A URL deve ser alcançável pela VPS. Ações de fechaduras, alarmes, portões e garagem continuam exigindo confirmação.
 
 ## CMD online e logs ao vivo
 
@@ -101,8 +116,7 @@ Guias:
 
 ## Login demo
 
-- Email: `admin@jarvis.local`
-- Senha: `12345678`
+O login de demonstração só deve ser usado em desenvolvimento. Em produção, mantenha `ALLOW_DEMO_LOGIN=false` e crie um usuário administrador próprio com `npm run create:admin`.
 
 ## Fase 7 - Financeiro inteligente
 
@@ -160,12 +174,11 @@ Guias:
 - `OFFSITE_BACKUP_PLAN.md`
 - `E2E_TEST_PLAN.md`
 
-## Producao
+## Produção
 
-- Frontend publico: `https://jarvis.juninnzxtec.com.br`
-- API publica: `https://apijarvis.juninnzxtec.com.br/api`
-- DNS esperado: `jarvis -> 166.0.186.20` (Fabweb) e `apijarvis -> 45.76.251.177` (VPS).
-- O frontend de producao e publicado como build estatico na Fabweb e consome a API dedicada na VPS.
+- Frontend público: `https://jarvis.juninnzxtec.com.br`
+- API pública: `https://apijarvis.juninnzxtec.com.br/api`
+- O frontend estático e a API são publicados na infraestrutura atual da VPS. Consulte o guia de deploy antes de alterar DNS ou serviços.
 
 ## Rodando local
 
@@ -377,11 +390,21 @@ Documentacao relacionada:
 
 O JARVIS agora possui um assistente universal em `/integrations/setup-wizard` e um resumo final em `/integrations/setup-summary`. Ele cobre API publica, OpenAI/Gemini, n8n, WhatsApp/Evolution, Home Assistant, financeiro, documentos/RAG, monitoramento, backup, mobile/PWA e seguranca. O frontend recebe apenas status, mascaras, URLs publicas e checklists; segredos reais permanecem criptografados no backend ou em ambiente seguro.
 
+### Configuracao de OpenAI e Gemini pelo painel
+
+Administradores podem configurar OpenAI e Gemini em `/settings/integrations`, escolher a IA principal (OpenAI, Gemini ou automatico) e carregar a lista de modelos liberados para cada chave. O modo automatico preserva OpenAI como primeira opcao e Gemini como reserva; ao escolher um provedor, ele e tentado primeiro e a outra IA configurada e usada como fallback. Chat, Brain e respostas faladas seguem essa preferencia. A transcricao de audio continua usando OpenAI Whisper e a sintese de voz tem configuracao propria. As chaves ficam criptografadas em `Setting`; a API retorna somente status, origem e nomes de modelo. O campo de chave vazio preserva uma chave existente. Testes e carga de modelos ocorrem apenas quando solicitados no painel.
+
+### Vincular o Controle Financeiro externo
+
+Em `/settings/integrations`, o cartao Controle Financeiro usa por padrao `https://controlefinanceiro.juninnzxtec.com.br`. Informe o e-mail e a senha usados nesse sistema e clique em **Conectar Controle Financeiro**. Se houver 2FA, informe o codigo temporario na etapa seguinte. A senha nao e armazenada; o token de API emitido pelo Financeiro e guardado criptografado em `Setting`. O botao de teste consulta `/api/v1/me`; o cartao tambem permite desvincular e revogar a sessao. O JARVIS nunca envia extratos financeiros a IA externa e mantem revisao obrigatoria de importacoes.
+
 ## Fase 14 - JARVIS Super Intelligence Core
 
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+
+No Brain, pedidos para criar memória ou tarefa agora geram uma proposta e exigem revisão; não gravam dados automaticamente. `POST /api/brain/execute-draft` valida o formato recebido, mas continua sem executar drafts até existir um fluxo de confirmação vinculado, com expiração e proteção contra repetição. A autenticação própria ainda usa senha + JWT; 2FA, sessões revogáveis e gerenciamento de dispositivos não estão implementados neste checkout.
 
 ## Fase 3.0 - producao real e uso diario
 
@@ -399,3 +422,83 @@ Arquivos principais:
 - `E2E_TEST_PLAN.md`
 
 Ressalvas: credenciais reais, Caddy/DNS, Home Assistant, Evolution API, monitoramento externo e backup offsite dependem de acao manual segura.
+
+## Pesquisa automática na web
+
+Perguntas de conhecimento geral passam pela busca Google Grounding do Gemini, com fontes vinculadas às respostas exibidas no Brain, Chat, voz, modo JARVIS e WhatsApp. A busca usa a configuração Gemini da conta ou o ambiente já suportado. Se a chave, o modelo ou a quota não permitir grounding, o JARVIS tenta responder pelo provedor normal e não afirma que pesquisou. A busca externa pode consumir quota ou cobrança da conta Gemini. No WhatsApp, continua obrigatório incluir `ei jarvis`.
+
+## Instalacao multiplataforma e avatar de voz — 2026-10-14
+
+A rota publica `/install` orienta a instalacao do JARVIS como PWA no Android e iPhone e disponibiliza o companion EXE x64 para Windows. Chrome/Edge tambem permitem instalar o PWA no desktop. O projeto agora inclui uma TWA Android com AAB/APK local, ainda nao publicada. O companion Windows e unsigned e pode mostrar aviso de editor desconhecido.
+
+Nas paginas autenticadas, o avatar holografico flutuante abre um painel compacto para conversa. O microfone permanece desligado ate o usuario ativar o modo de conversa; a interface mostra o estado de escuta, processamento e fala. A sessao para ao fechar o painel ou ocultar a aba. As falas usam `/api/voice/process`, o mesmo Brain/historico do modo Voz, e a resposta e sintetizada pelo TTS configurado.
+
+## JARVIS Desktop para Windows
+
+O companion nativo fica em `desktop/`, abre o JARVIS com `Ctrl+Shift+J` e permite acoes locais tipadas pelo mesmo assistente flutuante. O microfone recebe autorizacao temporaria quando o usuario clica em iniciar conversa; nao ha escuta oculta. O painel pode abrir em modo imersivo de tela cheia com visual HUD, e `Esc` sai desse modo. Operacoes em arquivos restritas a pastas pessoais pedem confirmacao do Windows, exclusao move para a Lixeira, e o app nunca executa comandos de terminal. Veja `DESKTOP_COMPANION_GUIDE.md` para comandos suportados, limites e geracao do instalador x64. O companion ainda requer autenticacao na conta JARVIS e internet para conversar com a IA.
+
+## JARVIS 2.0 — release preparada em 2026-10-14
+
+Os pacotes do frontend, backend e companion Windows estao na versao `2.0.0`; a identidade visual do site/PWA e do companion mostra JARVIS 2.0. Os pacotes Windows e Android sao gerados localmente. A release ainda nao foi enviada ao site nem as lojas, e a Central de Downloads online deve continuar identificando apenas os artefatos realmente publicados.
+
+### Microfone e modo imersivo — 2026-10-14
+
+No JARVIS Desktop atualizado, o botao **Ativar conversa por voz** libera uma janela de permissao de 60 segundos no processo principal antes de iniciar a captura de audio. A permissao continua restrita ao dominio JARVIS confiavel, ao quadro principal e apenas a audio. Para uma tela HUD de jogo, use o botao de tela cheia no topo do painel; `Esc` ou o botao de minimizar encerra o modo. O modo de tela cheia ocupa a janela do JARVIS e nao fica por cima de outro jogo em tela cheia.
+# Auditoria multiplataforma 2026-10-14
+
+Consulte [PROJECT_AUDIT_MULTIPLATFORM.md](PROJECT_AUDIT_MULTIPLATFORM.md) para o estado verificado de Windows, Android/PWA, voz, Home Assistant, Waze e serviços. A tela `/mobile-assistant` inclui navegação para Waze por endereço ou favoritos pessoais.
+## Central de Downloads
+
+A rota autenticada `/downloads` oferece o instalador Windows x64 e o APK Android assinado da release JARVIS 2.0.0. O workflow `.github/workflows/release-downloads.yml` gera o instalador e publica ambos os arquivos e seus checksums em uma release pública do GitHub ao enviar a tag `v2.0.0`. Consulte [DOWNLOADS_CENTER_GUIDE.md](DOWNLOADS_CENTER_GUIDE.md) para hashes, assinatura, instalação e limitações.
+
+### Abrir programas e jogos no Windows
+
+O companion abre aplicativos pelo nome exato do atalho do Menu Iniciar, após confirmação nativa do Windows. Atalhos duplicados que apontam para o mesmo executável são consolidados. O comando `Jarvis, abra o jogo Rust` verifica o manifesto e o executável nas bibliotecas registradas do Steam e pede confirmação antes de iniciar o App ID fixo do Rust (`252490`). Esta capacidade só funciona no JARVIS Desktop instalado e aberto; o site/PWA isolado não pode iniciar programas do computador. Não há execução de comandos de terminal nem caminhos de executáveis fornecidos pela IA.
+
+## Distribuicao para lojas — 2026-10-14
+
+O companion Windows 2.0.0 foi validado e o instalador x64 e gerado em `desktop/release/`. O Android agora tem um projeto TWA em `android/` e os artefatos assinados são preparados por `android/build-release.ps1`; o AAB de Play Console fica em `android/release/`. Esses artefatos são locais e ainda não foram publicados em nenhuma loja.
+
+O Android depende do site JARVIS e da associação em `/.well-known/assetlinks.json`. O APK direto está assinado com o certificado associado no arquivo-fonte `frontend/public/.well-known/assetlinks.json`. A assinatura do Google Play poderá ser diferente e deverá ser adicionada após criar o app na Play Console.
+
+## Builds automaticos por commit
+
+O workflow `.github/workflows/ci.yml` valida e arquiva builds de web, Windows e Android de teste por push/pull request. A release `v2.0.0` publica os instaladores Windows e Android assinados como assets públicos. Isso não implanta a interface na VPS nem publica o app nas lojas; mudanças web precisam de deploy e mudanças nativas exigem nova release. Leia [CI_CD_GUIDE.md](CI_CD_GUIDE.md) para os detalhes.
+
+### IA local híbrida — 2026-10-14
+
+A Central de Integrações agora permite configurar Ollama em `/integrations`, descobrir modelos instalados, testar conectividade e escolher `Ollama` como provedor principal. No modo automático, o Brain/chat/voz tentam Ollama primeiro e recorrem aos provedores OpenAI e Gemini quando o endpoint estiver indisponível. O endpoint aceita loopback, IP privado literal ou o nome interno `ollama` na rede Compose; URLs públicas são recusadas. A API Ollama não tem autenticação própria, portanto não publique a porta 11434. O runtime/modelo ainda não estão instalados; a VPS precisa de mais margem de memória antes de ativar o serviço. Auditoria e próximos passos em [LOCAL_AI_AUDIT.md](LOCAL_AI_AUDIT.md).
+
+### Voz personalizada do JARVIS
+Na Central de Integrações, configure a chave Fish Audio e use **Selecionar MP3 e clonar voz** para enviar uma amostra MP3 diretamente à Fish Audio. O modelo é criado com visibilidade privada; o arquivo não é persistido pelo JARVIS. Após o clone, Fish Audio fica selecionado como provedor TTS. O endpoint aceita MP3 de até 8 MB e exige administrador autenticado.
+
+### Diagnóstico autenticado
+`GET /api/health/public` fornece somente o estado básico de disponibilidade. `GET /api/health/full` exige autenticação e lê as configurações do usuário autenticado para mostrar n8n, WhatsApp/Evolution e Home Assistant. O endpoint completo pode incluir contagens financeiras e registros recentes; mantenha-o atrás da sessão do JARVIS e use a rota pública para monitores externos.
+
+## Atualizacao de producao 2026-10-15 — release d9487c4
+
+O health detalhado passou a exigir JWT e usa status de integrações do usuário autenticado. CI verde para backend/testes, companion Windows e APK de validação Android. Em produção, frontend 200, health público 200, health detalhado 401 sem sessão e 200 autenticado, banco e scheduler saudáveis. O teste GET da Evolution retornou sessão `open`; webhook e workflows não foram executados. Home Assistant está sem configuração e precisa de URL alcançável pela VPS e token de acesso.
+
+## Voz do navegador e disponibilidade dos provedores — 2026-10-15
+
+A seleção automática foi atualizada para priorizar vozes masculinas pt-BR identificadas pelo nome; “Brasil” não é mais tratado como marcador masculino. Dois testes cobrem o caso de Google Português do Brasil versus Microsoft Antonio. CI da release `91d297c` passou em validate, desktop e android; o frontend foi recompilado sem cache e o bundle público confirmado contém o seletor novo. Naquela versão, o usuário usava `browser`, e nenhum provedor remoto tinha chave/voice ID configurados. Configure em `/settings/integrations` e escolha `auto` para habilitar preferência por quota disponível.
+
+## Voz automática — correção do teste e cota Fish Audio
+
+Na Central de Integrações, os botões de carregar vozes e testar a síntese salvam primeiro os campos atualmente preenchidos. Isso evita testar com uma configuração anterior ainda persistida. A consulta Fish Audio pede explicitamente o sinalizador de crédito grátis e reconhece essa elegibilidade mesmo quando não há saldo numérico. No modo automático, só são usados provedores com cota confirmada e suficiente; uma consulta indisponível faz o JARVIS tentar o próximo provedor, sem arriscar consumo às cegas. Para ativar síntese remota ainda é necessário configurar chave válida e voice ID.
+
+A release frontend `1cd1170` e backend `116225f` estão implantadas na VPS. Ambos passaram smoke tests HTTP 200; a consulta Fish solicita explicitamente o estado do crédito grátis. O teste de áudio premium ainda depende de credenciais novas cadastradas em `/settings/integrations`.
+
+## Voz do navegador — validação masculina — 2026-10-15
+
+O seletor local ignora uma preferência salva para a voz Google genérica e procura uma voz masculina identificável, priorizando pt-BR. Se o navegador só oferecer uma voz genérica/feminina, a aplicação não a reproduz como se fosse a voz masculina do JARVIS; agora Piper fornece síntese pt-BR local por `/settings/integrations`, com Fish Audio e ElevenLabs opcionais. O botão **Testar voz** aguarda o fim da reprodução e informa sucesso, erro, indisponibilidade ou timeout.
+
+## Piper local — 2026-10-15
+
+O endpoint autenticado `/api/voice/speech` pode usar o serviço Piper em `http://piper:5000` pela rede privada do Compose. O serviço carrega um modelo pt-BR por vez, limita o texto a 1.000 caracteres e roda com 1 CPU/512 MB. O áudio WAV é enviado sem cache. O modo automático tenta Piper primeiro; Fish Audio segue disponível como fallback com cota confirmada e ElevenLabs só entra quando o administrador habilita a opção.
+
+Piper usa licença GPL-3.0; consulte `tts/piper/NOTICE.md` antes de redistribuir.
+
+Na VPS compartilhada, Kokoro e Chatterbox ainda não foram instalados: há 4 vCPUs, nenhum GPU e já existe uso de swap enquanto outros sites estão ativos. Esses dois motores permanecem pendentes de benchmark isolado e não são apresentados como disponíveis até uma geração de áudio validada.
+
+Em **Configurações > Voz**, o botão **Testar voz** mostra a mensagem segura retornada pelo TTS quando a geração falha. O JARVIS não substitui a voz local/remota pela voz Google genérica.

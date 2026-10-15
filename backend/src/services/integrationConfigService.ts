@@ -4,15 +4,18 @@ import { join } from "node:path";
 import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
 import { decryptSettingValue, encryptSettingValue, maskSecret, publicSettingValue } from "./encryptionService.js";
+import { getAiPrimaryProvider, saveAiPrimaryProvider, saveAiProviderConfig, saveOllamaConfig } from "./aiProviderConfigService.js";
 import { financeIntegrationService } from "./financeIntegrationService.js";
 import { geminiService } from "./geminiService.js";
 import { homeAssistantService } from "./homeAssistantService.js";
 import { n8nService } from "./n8nService.js";
 import { openAiService } from "./openAiService.js";
+import { ollamaService } from "./ollamaService.js";
 import { writeSystemLog } from "./systemLogService.js";
 import { whatsappService } from "./whatsappService.js";
 import { redactSensitive } from "../utils/redact.js";
 import { emitJarvisEvent } from "./eventBusService.js";
+import { ttsService } from "./ttsService.js";
 
 export const publicIntegrationUrls = {
   frontendPublicUrl: "https://jarvis.juninnzxtec.com.br",
@@ -33,13 +36,16 @@ const globalKeys = {
 };
 
 export const integrationProviders = [
+  "ai_selection",
   "openai",
   "gemini",
+  "ollama",
   "n8n",
   "whatsapp",
   "evolution",
   "home_assistant",
   "finance",
+  "tts",
   "monitoring",
   "backup",
   "api_public"
@@ -116,11 +122,16 @@ export async function listLocalN8nWorkflows() {
 export const integrationConfigService = {
   async status(userId: string) {
     const urls = await globalUrls(userId);
-    const [n8n, whatsapp, finance, homeAssistant, pendingImports, pendingRows, lastBackup] = await Promise.all([
+    const [primaryProvider, openai, gemini, ollama, n8n, whatsapp, finance, homeAssistant, tts, pendingImports, pendingRows, lastBackup] = await Promise.all([
+      getAiPrimaryProvider(userId),
+      openAiService.statusForUser(userId),
+      geminiService.statusForUser(userId),
+      ollamaService.statusForUser(userId),
       n8nService.userStatus(userId),
       whatsappService.status(userId),
       financeIntegrationService.status(userId),
       homeAssistantService.status(userId),
+      ttsService.status(userId),
       prisma.statementImport.count({ where: { userId, status: { in: ["uploaded", "parsed", "review_required"] } } }),
       prisma.statementImportRow.count({ where: { import: { userId }, status: "pending" } }),
       prisma.systemLog.findFirst({ where: { module: "backup" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
@@ -129,12 +140,15 @@ export const integrationConfigService = {
       urls,
       providers: {
         api_public: { status: "configured", configured: true, url: urls.apiPublicUrl, webhookUrl: urls.whatsappWebhookUrl },
-        openai: openAiService.status(),
-        gemini: geminiService.status(),
+        ai_selection: { primaryProvider },
+        openai,
+        gemini,
+        ollama,
         n8n: { ...n8n, publicUrl: urls.n8nPublicUrl },
         whatsapp: { ...whatsapp, webhookUrl: urls.whatsappWebhookUrl, wakePhraseRequired: true, wakePhrase: "ei jarvis", ignoreGroups: true },
         evolution: { ...whatsapp, webhookUrl: urls.whatsappWebhookUrl },
         home_assistant: homeAssistant,
+        tts,
         finance: { ...finance, pendingImports, pendingReviewRows: pendingRows, requireImportReview: true, externalAiCategorization: false },
         monitoring: { configured: true, status: "configured", publicHealthUrl: urls.publicHealthUrl, fullHealthUrl: urls.fullHealthUrl, alertsConfigured: false },
         backup: { configured: true, status: "configured", localConfigured: true, offsiteConfigured: false, lastBackupAt: lastBackup?.createdAt ?? null }
@@ -147,6 +161,21 @@ export const integrationConfigService = {
     return status;
   },
   async saveProvider(userId: string, provider: IntegrationProvider, input: Record<string, unknown>) {
+    if (provider === "ai_selection") {
+      const primaryProvider = await saveAiPrimaryProvider(userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: "ai_primary_provider_saved", message: "Provedor principal de IA atualizado.", metadata: { primaryProvider } });
+      return this.status(userId);
+    }
+    if (provider === "openai" || provider === "gemini") {
+      const saved = await saveAiProviderConfig(provider, userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: `${provider}_settings_saved`, message: `${provider === "openai" ? "OpenAI" : "Gemini"} configurado pelo painel.`, metadata: { keyConfigured: saved.configured, source: saved.source, model: saved.model } });
+      return this.status(userId);
+    }
+    if (provider === "ollama") {
+      const saved = await saveOllamaConfig(userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: "ollama_settings_saved", message: "Ollama configurado pelo painel.", metadata: { configured: saved.configured, model: saved.model } });
+      return this.status(userId);
+    }
     if (provider === "api_public") {
       const entries = [
         [globalKeys.frontendPublicUrl, validatePublicUrl(asString(input.frontendPublicUrl) || publicIntegrationUrls.frontendPublicUrl)],
@@ -192,6 +221,7 @@ export const integrationConfigService = {
         defaultAccountId: asString(input.defaultAccountId)
       });
     }
+    if (provider === "tts") return ttsService.save(userId, input);
     if (provider === "monitoring" || provider === "backup") {
       const key = provider === "monitoring" ? globalKeys.monitoringAlertsEnabled : globalKeys.backupOffsiteEnabled;
       await prisma.setting.upsert({
@@ -203,13 +233,20 @@ export const integrationConfigService = {
     }
     return { status: "manual_action_required", message: "Essa integracao usa variaveis de ambiente no backend. Configure pelo .env/secret manager e valide pelo health." };
   },
+  async listAiModels(userId: string, provider: "openai" | "gemini" | "ollama") {
+    if (provider === "openai") return openAiService.listModelsForUser(userId);
+    if (provider === "gemini") return geminiService.listModelsForUser(userId);
+    return ollamaService.listModels(userId);
+  },
   async testProvider(userId: string, provider: IntegrationProvider) {
-    if (provider === "openai") return openAiService.status();
-    if (provider === "gemini") return geminiService.status();
+    if (provider === "openai") return openAiService.testConnection(userId);
+    if (provider === "gemini") return geminiService.testConnection(userId);
+    if (provider === "ollama") return ollamaService.testConnection(userId);
     if (provider === "n8n") return n8nService.test(userId);
     if (provider === "whatsapp" || provider === "evolution") return whatsappService.testConnection(userId);
     if (provider === "home_assistant") return homeAssistantService.testConnection(userId);
     if (provider === "finance") return financeIntegrationService.testConnection(userId);
+    if (provider === "tts") return ttsService.test(userId);
     if (provider === "api_public" || provider === "monitoring") {
       const urls = await globalUrls(userId);
       const response = await axios.get(`${urls.apiPublicUrl}/health`, { timeout: 15000 });

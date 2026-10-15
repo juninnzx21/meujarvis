@@ -18,7 +18,7 @@ const optionalTrimmedString = z.preprocess((value) => (typeof value === "string"
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(3001),
-  APP_VERSION: trimmedString.default("1.0.0"),
+  APP_VERSION: trimmedString.default("2.0.0"),
   DATABASE_URL: trimmedString.pipe(z.string().min(1)),
   JWT_SECRET: trimmedString.pipe(z.string().min(24, "JWT_SECRET precisa ter ao menos 24 caracteres")),
   JWT_EXPIRES_IN: trimmedString.default("7d"),
@@ -35,6 +35,7 @@ const envSchema = z.object({
   WHATSAPP_AUTO_REPLY: booleanFromEnv.default(false),
   HOME_ASSISTANT_URL: optionalTrimmedString,
   HOME_ASSISTANT_TOKEN: optionalTrimmedString,
+  PIPER_TTS_URL: optionalTrimmedString,
   LOG_LEVEL: trimmedString.default("info"),
   SETTINGS_ENCRYPTION_KEY: optionalTrimmedString,
   ALLOW_DEMO_LOGIN: booleanFromEnv.default(process.env.NODE_ENV === "production" ? false : true),

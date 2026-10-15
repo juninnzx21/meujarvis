@@ -1,4 +1,4 @@
-﻿# SYSTEM_STATUS_REPORT
+# SYSTEM_STATUS_REPORT
 
 ## Atualizacao 2026-05-18 - Reset seguro da Evolution
 
@@ -378,3 +378,70 @@ Status: **APROVADO COM RESSALVAS**.
 - Monitoramento: health endpoints e checklist externo preparados.
 - Backup offsite: plano criptografado preparado; destino externo pendente.
 - E2E: plano atualizado; Playwright completo ainda pendente.
+
+## Atualizacao 2026-10-15 - Protecao do health detalhado
+
+- `/api/health/full` exige JWT e reflete integrações persistidas para o usuário autenticado.
+- `/api/health/public` continua disponível com resposta resumida para monitoramento externo.
+- n8n, WhatsApp/Evolution e Home Assistant seguem realmente não configurados na conta de produção, conforme health atual; essa alteração corrige a leitura por usuário, não adiciona credenciais.
+
+## Deploy 2026-10-15 — health seguro
+
+Commit `d9487c4` implantado no backend da VPS após CI verde (validate, desktop e android). Health público HTTP 200; health detalhado retorna 401 anonimamente e 200 com sessão autenticada. Smoke autenticado confirmou que a tela agora lê as configurações persistidas do admin: n8n e WhatsApp/Evolution estão configurados; Home Assistant não está. Isso atesta apenas configuração no painel, não teste de conexão dos provedores. A resposta não retornou padrões de segredo. Só o container JARVIS backend foi recriado; os demais containers e banco continuaram ativos.
+
+- Teste real de conexão Evolution (somente GET, sem disparo de mensagem): sucesso, instância com sessão `open`.
+
+## Voz local do navegador — 2026-10-15
+
+A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identificáveis e deixou de tratar “Brasil” no nome como indicador de gênero. A suíte frontend inclui teste de regressão para Google Português do Brasil e Microsoft Antonio. Naquela versão, não havia chaves/IDs de voz salvos para Fish Audio e ElevenLabs; suas cotas retornaram `not_configured`.
+
+## Publicacao da correcao de voz — 2026-10-15
+
+A release `91d297c` está publicada. A página e o bundle público retornaram 200 e o bundle contém o seletor corrigido. A VPS segue saudável (app, banco e scheduler `ok`) com todos os cinco containers JARVIS/n8n em execução. A seleção local agora procura primeiro nomes masculinos pt-BR; naquele momento, não havia chaves/IDs de Fish Audio ou ElevenLabs salvos. O usuário pode configurar credenciais novas em `/settings/integrations` e selecionar `auto`. A credencial Fish Audio compartilhada na conversa não deve ser reutilizada; gere uma nova antes de salvar.
+
+## Correções adicionais da Central de Voz — 2026-10-15
+
+Carregar vozes e testar a fala agora salvam antes os dados preenchidos na tela. A leitura da cota Fish Audio aceita contas com crédito gratuito sem campo `credit`. Testes unitários cobrem crédito gratuito, saldo positivo, cota esgotada e resposta sem saldo. A produção ainda depende de chaves e voice IDs válidos do usuário para validar síntese remota real.
+
+Release `1cd1170` publicada na VPS após CI verde. Frontend e backend foram recompilados sem cache e recriados sem dependências; PostgreSQL e n8n permaneceram em execução. Smoke tests: painel de integrações e health público HTTP 200. O status TTS autenticado segue em `browser`; as três chaves externas e os voice IDs estão ausentes, então a geração premium não pode ser testada ainda.
+
+O backend `116225f` também está publicado. A leitura de crédito agora envia `check_free_credit=true`, conforme o OpenAPI oficial da Fish Audio. Health público e página de integrações continuaram em HTTP 200 após recriar apenas o backend. Chaves e vozes remotas permanecem ausentes; ainda não é possível testar geração premium na conta.
+
+## Seleção automática por cota confirmada — publicada em 2026-10-15
+
+O modo automático só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Provedores com cota desconhecida ou insuficiente são pulados para evitar requisições sem confirmação de disponibilidade. A interface explica a regra.
+
+Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343`, com build Docker sem cache e recriação apenas de backend/frontend; sem migrations. Testes: bundle público contém a mensagem nova; `/settings/integrations`, API pública e checks internos retornaram HTTP 200. Frontend, backend, PostgreSQL e n8n permanecem ativos. A síntese remota continuava sem validação por falta de chaves e voice IDs.
+
+## Validação da voz local — publicada em 2026-10-15
+
+Causa: uma voz Google pt-BR salva tinha prioridade; se nenhuma voz masculina fosse identificada, o seletor escolhia a primeira voz pt-BR genérica. Agora uma voz salva só é aceita se o nome identifica uma voz masculina; o seletor prioriza pt-BR e não reproduz fallback Google genérico. A página corrige preferência antiga, lista vozes masculinas identificáveis e o teste aguarda o fim da fala para exibir o resultado.
+
+Commit `73dec7f`; CI `38772235880` verde nos jobs validate, desktop e android. Release `/opt/jarvis-home-assistant/releases/jarvis-73dec7f` implantada na VPS, recriando somente frontend. Página e bundle públicos HTTP 200, bundle conferido com a proteção contra fallback e mensagem de teste; health público e backend interno HTTP 200. Frontend, backend, PostgreSQL e n8n seguem ativos. Os testes simulados de Web Speech passam. Não foi possível ouvir áudio nesta sessão, que está deslogada; provedores remotos seguem sem credenciais/voice IDs configurados.
+
+## Piper local — publicada em 2026-10-15
+
+Foi adicionada uma integração TTS Piper isolada e interna, com o modelo PT-BR pt_BR-cadu-medium (aprox. 63 MB), limite Docker de 1 CPU/512 MB, health check e síntese WAV autenticada pela API JARVIS. O modo automático prioriza Piper, Fish Audio pode ser usado com cota confirmada e ElevenLabs requer autorização explícita para fallback.
+
+A VPS tem 4 vCPUs, 7.8 GiB de RAM, nenhum GPU, 3.7 GiB disponíveis no diagnóstico e 2.1 GiB em swap usada. Kokoro e Chatterbox ainda não foram instalados ou testados; aguardam benchmark seguro devido ao uso de recursos dos outros serviços.
+
+Commit `c3899e0`; CI `38775757022` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-c3899e0`; somente Piper, backend e frontend foram criados/recriados, sem migrations nem reinício de PostgreSQL, n8n ou outros projetos. A síntese autenticada `/api/voice/speech` retornou HTTP 200, `audio/wav`, provedor `piper` e WAV válido. A geração respondeu em 2,19 s no teste inicial; o container ficou saudável e usou cerca de 260 MiB de 512 MiB, com 0,34% de CPU no instante medido. Página pública, frontend interno e API pública retornaram HTTP 200. A voz foi gerada e validada tecnicamente; reprodução audível no dispositivo do usuário ainda depende de teste na sessão logada.
+
+## Diagnóstico do teste de voz — 2026-10-15
+
+O botão **Testar voz** agora mostra a mensagem segura do backend quando a geração remota falha, incluindo status HTTP quando disponível. Se o servidor gerar o áudio mas o dispositivo não conseguir tocá-lo, a interface informa esse cenário separadamente. A seleção do navegador continua recusando fallback para a voz Google genérica.
+
+Deploy da tela de diagnóstico de voz — 2026-10-15
+
+A release `13cf8af` está publicada na VPS. CI `38783407549` passou em validate, desktop e android. Somente `jarvis-frontend` foi recriado; a imagem anterior está preservada com tag de rollback. Site/API retornaram 200, health da aplicação e banco está `ok`, e Piper continua saudável.
+# Atualização de voz — 15/10/2026
+
+O fluxo ElevenLabs agora aceita parâmetros ajustáveis de estabilidade, semelhança, expressividade e velocidade. O painel inicia com estabilidade 0,42, semelhança 0,82, estilo 0,18 e velocidade 0,94; as opções são armazenadas como configurações do usuário e aplicadas apenas pelo backend. A seleção de uma voz masculina pt-BR continua dependente das vozes liberadas na conta do provedor. Uma amostra audível e a confirmação da voz escolhida dependem de teste no navegador autenticado.
+
+## Diagnóstico de interações — 15/10/2026
+
+Health público consultado: app e banco retornaram `ok`; OpenAI e Gemini constam como configurados no servidor; n8n, WhatsApp e Home Assistant constam como não configurados no health público. Isso não substitui o status autenticado por usuário. Corrigido o encaminhamento do usuário autenticado para consultas do Brain ao Home Assistant/n8n/health. Chat e voz agora aguardam até 90 segundos; o chat apresenta erros em vez de ocultá-los e permite repetir a mensagem. A VPS não foi atualizada: acesso SSH por chave/senha não autenticou neste ambiente.
+
+## Central de downloads JARVIS 2.0.0 — 15/10/2026
+
+O APK TWA assinado foi compilado nesta revisão e validado pelo `apksigner`; o certificado coincide com o fingerprint configurado em `assetlinks.json`. A Central foi atualizada para apontar para os assets de uma release pública do GitHub. O workflow `release-downloads.yml` compila o EXE Windows, cria checksums e publica APK e EXE ao enviar a tag `v2.0.0`. O instalador Windows não tem assinatura Authenticode. O repositório não tem deploy automático do frontend e SSH recusou a autenticação; portanto, o site online ainda precisa receber o build do frontend para exibir os novos botões.

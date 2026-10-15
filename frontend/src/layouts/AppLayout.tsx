@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Activity, Banknote, Bell, Bot, Brain, Cable, FileText, Gauge, Home, Landmark, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
+import { Activity, Banknote, Bell, Bot, Brain, Cable, Download, FileText, Gauge, Home, Landmark, Laptop, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PackageCheck, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
+import { JarvisFloatingAssistant } from "../components/JarvisFloatingAssistant";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
@@ -8,11 +9,14 @@ import { api } from "../services/api";
 const items = [
   { to: "/", label: "Dashboard", icon: Gauge },
   { to: "/mobile-assistant", label: "Assistente Mobile", icon: Smartphone },
+  { to: "/install", label: "Instalar JARVIS", icon: Download },
+  { to: "/downloads", label: "Central de Downloads", icon: PackageCheck },
   { to: "/jarvis-mode", label: "Modo JARVIS", icon: Bot },
   { to: "/brain", label: "Cerebro IA", icon: Brain },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/voice", label: "Voz", icon: Mic },
   { to: "/commands", label: "Comandos", icon: PlaySquare },
+  { to: "/computer", label: "Computador", icon: Laptop },
   { to: "/routines", label: "Rotinas", icon: Activity },
   { to: "/reports", label: "Relatorios", icon: ScrollText },
   { to: "/documents", label: "Documentos", icon: FileText },
@@ -59,7 +63,7 @@ export function AppLayout() {
         <div className="mb-8 flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400/15 text-cyanx"><Bot /></div>
           <div>
-            <h1 className="font-black text-white">JARVIS Home AI</h1>
+            <h1 className="font-black text-white">JARVIS 2.0</h1>
             <p className="text-xs text-slate-400">Casa, rotina e automacoes</p>
           </div>
         </div>
@@ -103,6 +107,7 @@ export function AppLayout() {
         </div>
       </nav>
       <PwaInstallPrompt />
+      <JarvisFloatingAssistant />
     </div>
   );
 }
