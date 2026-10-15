@@ -494,3 +494,5 @@ O endpoint autenticado `/api/voice/speech` pode usar o serviço Piper em `http:/
 Piper usa licença GPL-3.0; consulte `tts/piper/NOTICE.md` antes de redistribuir.
 
 Na VPS compartilhada, Kokoro e Chatterbox ainda não foram instalados: há 4 vCPUs, nenhum GPU e já existe uso de swap enquanto outros sites estão ativos. Esses dois motores permanecem pendentes de benchmark isolado e não são apresentados como disponíveis até uma geração de áudio validada.
+
+Em **Configurações > Voz**, o botão **Testar voz** mostra a mensagem segura retornada pelo TTS quando a geração falha. O JARVIS não substitui a voz local/remota pela voz Google genérica.

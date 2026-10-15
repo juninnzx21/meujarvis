@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiGet = vi.fn();
-vi.mock("./api", () => ({ api: { get: (...args: unknown[]) => apiGet(...args), post: vi.fn() } }));
+const apiPost = vi.fn();
+vi.mock("./api", () => ({ api: { get: (...args: unknown[]) => apiGet(...args), post: (...args: unknown[]) => apiPost(...args) } }));
 
 import { isMasculineJarvisVoice, jarvisVoicePreset, resolveJarvisVoice, saveVoiceSettings, selectBestJarvisVoice, speakJarvis, testVoice } from "./textToSpeechService";
 
@@ -70,6 +71,7 @@ describe("browser JARVIS speech validation", () => {
   beforeEach(() => {
     window.localStorage.clear();
     apiGet.mockReset();
+    apiPost.mockReset();
     apiGet.mockResolvedValue({ data: { status: "configured", provider: "browser" } });
     window.dispatchEvent(new Event("jarvis-tts-config-updated"));
     voices = [
@@ -102,7 +104,7 @@ describe("browser JARVIS speech validation", () => {
   it("speaks with the masculine voice and completes the audio test", async () => {
     saveVoiceSettings({ ...jarvisVoicePreset, voiceURI: "google-pt-br" });
     const result = await testVoice();
-    expect(result).toBe("completed");
+    expect(result).toEqual({ status: "completed" });
     expect(browserSpeak).toHaveBeenCalledOnce();
     expect(utterances[0]?.voice?.voiceURI).toBe("antonio-pt-br");
   });
@@ -112,5 +114,32 @@ describe("browser JARVIS speech validation", () => {
     const started = await speakJarvis("Teste de fala");
     expect(started).toBe(false);
     expect(browserSpeak).not.toHaveBeenCalled();
+  });
+
+  it("shows a safe provider message when remote speech generation fails", async () => {
+    apiGet.mockResolvedValue({ data: { status: "configured", provider: "piper" } });
+    apiPost.mockRejectedValue({ response: { status: 502, data: new Blob([JSON.stringify({ message: "Piper não conseguiu gerar o áudio (HTTP 503)." })], { type: "application/json" }) } });
+
+    const result = await testVoice();
+
+    expect(result).toEqual({ status: "error", message: "Piper não conseguiu gerar o áudio (HTTP 503)." });
+    expect(browserSpeak).not.toHaveBeenCalled();
+  });
+
+  it("explains when the browser blocks playback after audio generation", async () => {
+    apiGet.mockResolvedValue({ data: { status: "configured", provider: "piper" } });
+    apiPost.mockResolvedValue({ data: new Blob(["wav"], { type: "audio/wav" }) });
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:jarvis-test");
+    vi.stubGlobal("Audio", class {
+      onended?: () => void;
+      onerror?: () => void;
+      pause = vi.fn();
+      src = "";
+      play = vi.fn().mockRejectedValue(new DOMException("Playback requires a user gesture", "NotAllowedError"));
+    });
+
+    const result = await testVoice();
+
+    expect(result).toEqual({ status: "error", message: "O navegador bloqueou a reprodução automática. Clique em Testar voz novamente e confira se a aba está autorizada a reproduzir áudio." });
   });
 });

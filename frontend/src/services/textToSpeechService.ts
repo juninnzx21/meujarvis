@@ -130,7 +130,7 @@ async function getRemoteProvider(): Promise<RemoteTtsProvider> {
   } catch { return "none"; }
 }
 
-export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSettings>, options: { onStart?: () => void; onEnd?: () => void; onError?: () => void } = {}) {
+export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSettings>, options: { onStart?: () => void; onEnd?: () => void; onError?: (message?: string) => void } = {}) {
   if (typeof window === "undefined" || !text.trim()) return false;
   const settings = normalizeSettings({ ...loadVoiceSettings(), ...override });
   if (!settings.spokenRepliesEnabled) return false;
@@ -152,19 +152,21 @@ export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSe
         if (activeAudio === player) activeAudio = null;
         if (!finished && generation === speechGeneration) { finished = true; options.onEnd?.(); }
       };
-      const fail = () => {
+      player.onended = finish;
+      player.onerror = () => {
         URL.revokeObjectURL(url);
         if (activeAudio === player) activeAudio = null;
-        if (!finished && generation === speechGeneration) { finished = true; options.onError?.(); }
+        if (!finished && generation === speechGeneration) {
+          finished = true;
+          options.onError?.("O áudio foi gerado, mas o navegador não conseguiu reproduzi-lo. Confira a saída de áudio do dispositivo.");
+        }
       };
-      player.onended = finish;
-      player.onerror = fail;
       await player.play();
       options.onStart?.();
       return true;
-    } catch {
+    } catch (error) {
       remoteProviderCache = null;
-      options.onError?.();
+      options.onError?.(await speechErrorMessage(error));
       return false;
     }
   }
@@ -172,10 +174,43 @@ export async function speakJarvis(text: string, override?: Partial<JarvisVoiceSe
   return false;
 }
 
-export type VoiceTestResult = "completed" | "unavailable" | "error" | "timeout";
+export type VoiceTestResult = {
+  status: "completed" | "unavailable" | "error" | "timeout";
+  message?: string;
+};
+
+async function speechErrorMessage(error: unknown): Promise<string> {
+  const errorName = error && typeof error === "object" && "name" in error && typeof error.name === "string" ? error.name : "";
+  if (errorName === "NotAllowedError") {
+    return "O navegador bloqueou a reprodução automática. Clique em Testar voz novamente e confira se a aba está autorizada a reproduzir áudio.";
+  }
+  if (errorName === "NotSupportedError") {
+    return "O navegador não oferece suporte ao formato de áudio recebido. Atualize o navegador ou teste em outro dispositivo.";
+  }
+  if (error && typeof error === "object") {
+    const response = (error as { response?: { data?: unknown; status?: number } }).response;
+    const data = response?.data;
+    if (data instanceof Blob) {
+      try {
+        const parsed: unknown = JSON.parse(await data.text());
+        if (parsed && typeof parsed === "object" && "message" in parsed) {
+          const message = (parsed as { message?: unknown }).message;
+          if (typeof message === "string" && message.trim()) return message.trim().slice(0, 240);
+        }
+      } catch {
+        // A resposta pode ser áudio ou um erro que não veio em JSON.
+      }
+    } else if (data && typeof data === "object" && "message" in data) {
+      const message = (data as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim()) return message.trim().slice(0, 240);
+    }
+    if (typeof response?.status === "number") return `O serviço de voz respondeu com HTTP ${response.status}.`;
+  }
+  return "Não foi possível contatar o serviço de voz. Confira a conexão e o status do provedor em Integrações.";
+}
 
 export function testVoice(settings?: Partial<JarvisVoiceSettings>): Promise<VoiceTestResult> {
-  if (typeof window === "undefined") return Promise.resolve("unavailable");
+  if (typeof window === "undefined") return Promise.resolve({ status: "unavailable" });
   return new Promise((resolve) => {
     let settled = false;
     const finish = (result: VoiceTestResult) => {
@@ -184,10 +219,10 @@ export function testVoice(settings?: Partial<JarvisVoiceSettings>): Promise<Voic
       window.clearTimeout(timer);
       resolve(result);
     };
-    const timer = window.setTimeout(() => finish("timeout"), 30_000);
+    const timer = window.setTimeout(() => finish({ status: "timeout", message: "A reprodução não terminou em 30 segundos." }), 30_000);
     void speakJarvis("Certo. Esta e a voz JARVIS BR Premium, uma voz original do projeto.", settings, {
-      onEnd: () => finish("completed"),
-      onError: () => finish("error")
-    }).then((started) => { if (!started) finish("unavailable"); }).catch(() => finish("error"));
+      onEnd: () => finish({ status: "completed" }),
+      onError: (message) => finish({ status: "error", message })
+    }).then((started) => { if (!started) finish({ status: "unavailable" }); }).catch(async (error: unknown) => finish({ status: "error", message: await speechErrorMessage(error) }));
   });
 }

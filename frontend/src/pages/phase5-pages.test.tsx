@@ -40,7 +40,7 @@ vi.mock("../services/textToSpeechService", () => ({
   saveVoiceSettings: vi.fn((settings) => settings),
   speakJarvis: vi.fn(() => true),
   stopSpeaking: vi.fn(),
-  testVoice: vi.fn(async () => "completed")
+  testVoice: vi.fn(async () => ({ status: "completed" as const }))
 }));
 
 vi.mock("../services/speechRecognitionService", () => ({

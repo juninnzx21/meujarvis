@@ -54,12 +54,12 @@ export function VoiceSettingsPage() {
     setMessage("Testando a reprodução de voz…");
     const result = await testVoice(settings);
     setTesting(false);
-    setMessage(result === "completed"
+    setMessage(result.status === "completed"
       ? "Teste concluído: o navegador terminou de reproduzir a fala."
-      : result === "timeout"
-        ? "A fala não terminou no tempo esperado. Confira o áudio e as permissões do navegador."
-        : result === "error"
-          ? "O navegador ou provedor encontrou um erro ao reproduzir a fala. Confira as configurações e tente novamente."
+      : result.status === "timeout"
+        ? result.message || "A fala não terminou no tempo esperado. Confira o áudio e as permissões do navegador."
+        : result.status === "error"
+          ? result.message || "O navegador ou provedor encontrou um erro ao reproduzir a fala. Confira as configurações e tente novamente."
           : "Não foi possível iniciar a fala. Instale uma voz masculina identificável ou configure um provedor em Integrações.");
   }
 
