@@ -1,36 +1,42 @@
 # JARVIS 2.0 — auditoria e estado da entrega (15/10/2026)
 
 ## Escopo
-Auditoria da cópia do JARVIS em `E:\jarvis-home-assistant`, comparação com o GitHub e verificações de leitura na VPS. O resumo registra os limites dos testes; integrações que precisam de credenciais, dispositivos ou serviços externos não são consideradas validadas sem uma chamada real.
+Auditoria da cópia em `E:\jarvis-home-assistant`, comparação com o GitHub e verificações de leitura na VPS. Integrações que dependem de credenciais, serviços ou dispositivos externos só são consideradas validadas após chamada real autorizada.
 
-## Arquitetura identificada
-- Backend Node.js, Express 4, TypeScript 5, Prisma 5 e PostgreSQL; módulos de autenticação, chat/IA, voz, Brain/agentes, memória, tarefas, automações, comandos, relatórios, financeiro, Home Assistant, WhatsApp/Evolution, n8n e integrações.
-- Frontend React 18, TypeScript, Vite e React Router, com áreas de chat, voz, configurações de IA/integrações, memória, financeiro, WhatsApp, downloads e PWA.
-- Aplicativo desktop Electron com lista controlada de comandos locais e build Windows.
-- Android baseado em Trusted Web Activity/PWA. Esta entrega não comprova publicação nas lojas nem teste em aparelho físico.
-- Voz oferece ElevenLabs, Fish Audio e Speechma, modo automático e fallback. O reconhecimento de fala é executado no cliente.
+## Arquitetura
+- Backend Node.js, Express 4, TypeScript 5, Prisma 5 e PostgreSQL: autenticação, chat/IA, voz, Brain/agentes, memória, tarefas, automações, financeiro, Home Assistant, WhatsApp/Evolution, n8n e integrações.
+- Frontend React 18, TypeScript, Vite e React Router; painel, voz, integrações, memória, financeiro, WhatsApp, downloads e PWA.
+- Desktop Electron com lista controlada de comandos locais e empacotamento Windows.
+- Android Trusted Web Activity/PWA. O build de validação não representa release assinado, instalação em aparelho físico ou publicação em loja.
+- TTS com ElevenLabs, Fish Audio e Speechma, seleção/fallback configurável; reconhecimento de fala no cliente.
 
-## Evidências e limites
-- Na verificação anterior, o site JARVIS, API de health, health completo e n8n responderam HTTP 200; API e banco reportaram `ok` e o scheduler estava ativo. São verificações pontuais, não garantia contínua.
-- Métricas pontuais da VPS: RAM total 7,8 GiB, disponível 3,4 GiB; swap 4 GiB, 1,9 GiB usada; disco raiz com 36 GiB livres de 96 GiB.
-- Backend: Prisma, TypeScript e build passaram. A suíte completa local não iniciou porque não havia `DATABASE_URL` e `JWT_SECRET`; 18 testes passaram ao excluir os testes dependentes desse ambiente.
-- Frontend: typecheck, 35 testes em 7 arquivos e build passaram. Bundle principal aproximado de 626 kB minificado, acima do aviso de 500 kB.
-- Desktop: typecheck/build e 4 testes passaram.
-- Android: compilação local não foi possível por ausência de JDK/JAVA_HOME. O workflow de CI prepara Temurin 17 e SDK Android para validar essa plataforma remotamente.
-- Teste real de TTS recebeu HTTP 402 da ElevenLabs. Não foi comprovado nesta rodada que Fish Audio ou Speechma tenham cota e credenciais válidas. Integrações externas também dependem das credenciais configuradas pelo proprietário.
+## Evidências operacionais e limites
+- Na verificação pontual anterior, site JARVIS, health da API, health completo e n8n responderam HTTP 200; API e banco reportaram `ok`, com scheduler ativo.
+- Métricas pontuais da VPS: RAM 7,8 GiB total/3,4 GiB disponível; swap de 4 GiB com 1,9 GiB usado; raiz com 36 GiB livres de 96 GiB.
+- Teste real de síntese TTS falhou com HTTP 402 da ElevenLabs. Não ficou comprovada nesta rodada cota/credencial funcional em Fish Audio ou Speechma.
+- Serviços externos como WhatsApp, Home Assistant, IA e voz precisam de configuração válida para validar chamadas reais; não foram alterados nem testados com novas credenciais.
+- Build frontend principal fica em torno de 626 kB minificado, acima do aviso padrão de 500 kB.
 
-## Sincronização e entrega
-- Repositório: `juninnzx21/meujarvis`; branch base `main` estava no commit `ee4f987` quando comparada.
-- Código sincronizado, revisado para excluir `.env`, tokens, chaves de assinatura, bancos, backups, caches e artefatos de build.
-- Branch de trabalho: `codex/jarvis-2.0-platform-20261015`.
-- Commit de sincronização: `ce7e7d201954f0c99a49b4b439257c88aecade90` (`feat: sync JARVIS 2.0 platform implementation`).
-- A branch `main` e a VPS de produção não foram modificadas.
-- Criação de PR pela integração GitHub retornou HTTP 403 (`Resource not accessible by integration`). O usuário pode abrir a comparação em: `https://github.com/juninnzx21/meujarvis/compare/main...codex/jarvis-2.0-platform-20261015?expand=1`.
-- O workflow `.github/workflows/ci.yml` agora também roda em push para qualquer branch, para que a branch de entrega possa receber validação mesmo antes de um PR.
+## Validação do GitHub Actions
+A execução [JARVIS CI #24](https://github.com/juninnzx21/meujarvis/actions/runs/38728349677), commit `afbde3a`, finalizou com sucesso em todos os jobs:
+- Backend: instalação, Prisma, migrations em PostgreSQL temporário, seed da base descartável, suíte completa de testes e build.
+- Frontend: suíte de testes, build e scan de segredos.
+- Desktop: validação e geração do instalador Windows.
+- Android: build de APK debug com JDK 17 e Android SDK.
 
-## Próximas etapas para concluir com segurança
-1. Aguardar e revisar o CI da branch; resolver falhas antes de integrar.
-2. Criar PR para `main` pela página GitHub acima se a permissão da integração continuar bloqueada.
-3. Fazer validação autenticada das integrações e da voz com chaves/cotas válidas, sem imprimir os segredos em logs.
-4. Após CI aprovado e revisão do diff, planejar implantação da branch na VPS com backup e rollback. A implantação requer atualização de `APP_VERSION` no ambiente efetivo para `2.0.0` e recriação controlada do backend; isso não foi realizado nesta entrega.
-5. Validar Android no CI, assinatura dos artefatos de release e instalação em dispositivos antes de publicação nas lojas.
+Artefatos de validação anexados à execução: web, instalador Windows e APK Android debug. O APK é de teste e não está assinado para distribuição na Play Store; o instalador Windows também precisa de revisão de assinatura e publicação antes de distribuição.
+
+Durante o CI foram corrigidos problemas reais da esteira: ação Android antiga solicitava o pacote removido `tools`; `JWT_SECRET` de teste era menor que a validação mínima; faltava semear o banco temporário; alguns testes não refletiam a exigência atual de confirmação para gravar memória e deixavam transporte HTTP mockado incompleto; o scanner de segredo dava falso positivo em fixture de teste e na própria expressão regular. A suíte foi executada novamente e passou.
+
+## Entrega e estado de produção
+- Repositório: `juninnzx21/meujarvis`; base `main` estava em `ee4f987` quando comparada.
+- Branch: `codex/jarvis-2.0-platform-20261015`; contém o sincronismo das implementações JARVIS 2.0, ajustes de versão/documentação e workflow de CI.
+- A branch `main` e a VPS de produção não foram alteradas.
+- A integração do GitHub negou a criação do PR com HTTP 403 (`Resource not accessible by integration`). Comparação pronta para abrir/criar PR: `https://github.com/juninnzx21/meujarvis/compare/main...codex/jarvis-2.0-platform-20261015?expand=1`.
+- O CI roda em pushes de branches para validar a entrega antes do PR.
+
+## Próximas etapas
+1. Abrir e revisar o PR acima; a integração atual não tem permissão para criá-lo.
+2. Após integrar a mudança revisada, planejar deploy com backup verificado e rollback. O ambiente efetivo ainda precisa ser conferido, inclusive `APP_VERSION`; nenhuma implantação foi feita nesta etapa.
+3. Validar TTS, IA, WhatsApp e Home Assistant com credenciais/cotas reais, sem registrar segredos.
+4. Preparar releases assinados para Windows e Android, instalar em dispositivos e seguir os processos de publicação das lojas.
