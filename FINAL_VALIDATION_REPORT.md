@@ -1,4 +1,4 @@
-﻿# FINAL_VALIDATION_REPORT
+# FINAL_VALIDATION_REPORT
 
 ## Atualizacao 2026-05-18 - Reset seguro da Evolution
 
@@ -373,4 +373,4 @@ Auditoria posterior do OpenAPI oficial Fish Audio confirmou que a elegibilidade 
 
 O modo automático agora só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Uma cota desconhecida, indisponível ou insuficiente faz o sistema seguir para o próximo provedor, evitando chamadas remotas sem confirmação de saldo. Adicionado teste unitário para os quatro estados relevantes.
 
-Validação local nesta alteração: backend typecheck/build e 4 testes focados passaram; frontend validate passou com 37 testes e build. A suíte completa de backend depende do PostgreSQL e das variáveis de teste providas pela CI. A publicação fica pendente até os jobs do GitHub Actions concluírem.
+Validação local nesta alteração: backend typecheck/build e 4 testes focados passaram; frontend validate passou com 37 testes e build. A suíte completa de backend depende do PostgreSQL e das variáveis de teste providas pela CI. CI do GitHub `38765847066` concluiu com sucesso nos jobs validate, desktop e android. Release `bb72343` publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343` após build Docker sem cache; somente backend e frontend foram recriados, sem migrations. Smoke tests: integração pública 200, health API público 200, health interno 200 e bundle frontend contém o texto atualizado. Backend, frontend, PostgreSQL e n8n continuam ativos. Síntese remota real permanece pendente de novas chaves e voice IDs válidos configurados em produção.

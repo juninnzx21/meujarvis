@@ -1,4 +1,4 @@
-﻿# SYSTEM_STATUS_REPORT
+# SYSTEM_STATUS_REPORT
 
 ## Atualizacao 2026-05-18 - Reset seguro da Evolution
 
@@ -407,6 +407,8 @@ Release `1cd1170` publicada na VPS após CI verde. Frontend e backend foram reco
 
 O backend `116225f` também está publicado. A leitura de crédito agora envia `check_free_credit=true`, conforme o OpenAPI oficial da Fish Audio. Health público e página de integrações continuaram em HTTP 200 após recriar apenas o backend. Chaves e vozes remotas permanecem ausentes; ainda não é possível testar geração premium na conta.
 
-## Seleção automática por cota confirmada — em validação
+## Seleção automática por cota confirmada — publicada em 2026-10-15
 
-O código local agora exige cota confirmada e suficiente antes de sintetizar no modo automático. Provedores com cota desconhecida ou esgotada são pulados, e a interface explica esse comportamento. Testes unitários do backend (4 casos) e validação frontend (37 testes/build) passaram; a mudança aguarda CI e deploy.
+O modo automático só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Provedores com cota desconhecida ou insuficiente são pulados para evitar requisições sem confirmação de disponibilidade. A interface explica a regra.
+
+Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343`, com build Docker sem cache e recriação apenas de backend/frontend; sem migrations. Testes: bundle público contém a mensagem nova; `/settings/integrations`, API pública e checks internos retornaram HTTP 200. Frontend, backend, PostgreSQL e n8n permanecem ativos. A síntese remota continua sem validação porque produção não tem chaves nem voice IDs configurados para Fish Audio, ElevenLabs ou Speechma.
