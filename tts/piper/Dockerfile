@@ -15,7 +15,7 @@ RUN python -m pip install --no-cache-dir --upgrade pip \
 
 WORKDIR /app
 COPY server.py entrypoint.sh ./
-RUN chmod 0555 /app/entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod 0555 /app/entrypoint.sh
 
 EXPOSE 5000
 ENTRYPOINT ["/app/entrypoint.sh"]
