@@ -1,5 +1,7 @@
 # JARVIS Home AI Assistant
 
+As conversas do chat e da voz podem levar mais tempo quando o Brain consulta pesquisa e integrações; as telas aguardam até 90 segundos e o chat mostra falhas de rede/provider com opção de repetir a mensagem. Consultas do Brain ao Home Assistant e n8n usam a configuração vinculada ao usuário autenticado.
+
 ## Nota operacional de producao
 
 Frontend publico: `https://jarvis.juninnzxtec.com.br`.

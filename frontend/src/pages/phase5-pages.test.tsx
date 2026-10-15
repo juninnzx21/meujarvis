@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppLayout } from "../layouts/AppLayout";
 import { BrainAgentsPage, BrainFeedbackPage, BrainPage, BrainToolsPage } from "./Brain/BrainPages";
 import { CommandsPage } from "./Commands/CommandsPage";
+import { ChatPage } from "./Chat/ChatPage";
 import { FinancePage } from "./Finance/FinancePage";
 import { DocumentsPage } from "./Documents/DocumentsPage";
 import { NotificationsPage } from "./Notifications/NotificationsPage";
@@ -109,6 +110,16 @@ describe("Phase 5 and 6 pages", () => {
     render(<CommandsPage />);
     expect(await screen.findByText("Comandos")).toBeInTheDocument();
     expect((await screen.findAllByText("status do sistema")).length).toBeGreaterThan(0);
+  });
+
+  it("shows chat request failures and restores the unsent prompt for retry", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("network unavailable"));
+    render(<ChatPage />);
+    const input = await screen.findByPlaceholderText("Digite um comando ou mensagem...");
+    fireEvent.change(input, { target: { value: "status do sistema" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("erro");
+    expect(input).toHaveValue("status do sistema");
   });
 
   it("renders scheduled routines", async () => {

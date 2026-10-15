@@ -309,3 +309,7 @@ O teste de voz apresenta mensagens seguras da API autenticada quando a geração
 # Voz e prosódia
 
 O serviço `ttsService` mantém credenciais remotas criptografadas e envia os parâmetros de estabilidade, semelhança, estilo e velocidade ao endpoint ElevenLabs. Faixas são limitadas no backend. Piper e Fish Audio permanecem disponíveis; os novos controles são específicos do ElevenLabs e não alteram esses provedores.
+
+## Conversas e integrações por usuário
+
+As rotas de conversa do chat e da voz têm timeout de cliente de 90 segundos para acomodar pesquisas e integrações lentas. Falhas do envio textual são apresentadas ao usuário e mantêm o prompt disponível para nova tentativa. Ferramentas do Brain que consultam status ou entidades do Home Assistant, n8n ou health recebem o `userId` autenticado para resolver as credenciais/configurações daquele usuário.

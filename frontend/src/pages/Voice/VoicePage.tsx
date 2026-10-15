@@ -36,7 +36,7 @@ export function VoicePage() {
     setError("");
     setStatus("processando");
     try {
-      const res = await api.post("/voice/process", { text: command, ...(conversationIdRef.current ? { conversationId: conversationIdRef.current } : {}) });
+      const res = await api.post("/voice/process", { text: command, ...(conversationIdRef.current ? { conversationId: conversationIdRef.current } : {}) }, { timeout: 90000 });
       conversationIdRef.current = res.data.conversationId || conversationIdRef.current;
       const response = res.data.reply;
       setReply(response);

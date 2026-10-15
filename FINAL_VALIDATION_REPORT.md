@@ -402,3 +402,11 @@ Deploy da melhoria de diagnóstico — commit `13cf8af`, CI `38783407549` conclu
 - Os controles de prosódia do ElevenLabs são persistidos por usuário, limitados no backend e aplicados na chamada oficial de síntese.
 - Teste audível real permanece necessário no painel para avaliar timbre e pronúncia da voz disponível na conta.
 - Não se promete reprodução idêntica da atuação vocal dos filmes; a configuração busca um estilo original, masculino e cinematográfico.
+
+## Diagnóstico de interações — 15/10/2026
+
+- Health público da API: HTTP 200; banco `ok`; OpenAI/Gemini configurados; n8n/WhatsApp/Home Assistant não configurados no health público.
+- Corrigido o uso de configurações por usuário pelas ferramentas do Brain para Home Assistant e n8n.
+- O chat não engole mais erros de solicitação; o texto fica disponível para nova tentativa. Chat e voz recebem timeout específico de 90 segundos.
+- A suíte completa do backend local precisa de `DATABASE_URL` e `JWT_SECRET`, ausentes neste ambiente. Os testes locais de integração autenticada com IA/Home Assistant não puderam ser executados.
+- SSH de produção recusou autenticação; alterações ainda não implantadas.

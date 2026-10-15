@@ -437,3 +437,7 @@ A release `13cf8af` está publicada na VPS. CI `38783407549` passou em validate,
 # Atualização de voz — 15/10/2026
 
 O fluxo ElevenLabs agora aceita parâmetros ajustáveis de estabilidade, semelhança, expressividade e velocidade. O painel inicia com estabilidade 0,42, semelhança 0,82, estilo 0,18 e velocidade 0,94; as opções são armazenadas como configurações do usuário e aplicadas apenas pelo backend. A seleção de uma voz masculina pt-BR continua dependente das vozes liberadas na conta do provedor. Uma amostra audível e a confirmação da voz escolhida dependem de teste no navegador autenticado.
+
+## Diagnóstico de interações — 15/10/2026
+
+Health público consultado: app e banco retornaram `ok`; OpenAI e Gemini constam como configurados no servidor; n8n, WhatsApp e Home Assistant constam como não configurados no health público. Isso não substitui o status autenticado por usuário. Corrigido o encaminhamento do usuário autenticado para consultas do Brain ao Home Assistant/n8n/health. Chat e voz agora aguardam até 90 segundos; o chat apresenta erros em vez de ocultá-los e permite repetir a mensagem. A VPS não foi atualizada: acesso SSH por chave/senha não autenticou neste ambiente.
