@@ -419,8 +419,10 @@ Causa: uma voz Google pt-BR salva tinha prioridade; se nenhuma voz masculina fos
 
 Commit `73dec7f`; CI `38772235880` verde nos jobs validate, desktop e android. Release `/opt/jarvis-home-assistant/releases/jarvis-73dec7f` implantada na VPS, recriando somente frontend. Página e bundle públicos HTTP 200, bundle conferido com a proteção contra fallback e mensagem de teste; health público e backend interno HTTP 200. Frontend, backend, PostgreSQL e n8n seguem ativos. Os testes simulados de Web Speech passam. Não foi possível ouvir áudio nesta sessão, que está deslogada; provedores remotos seguem sem credenciais/voice IDs configurados.
 
-## Piper local e remoção do Speechma — em implementação
+## Piper local e remoção do Speechma — publicada em 2026-10-15
 
 Foi adicionada uma integração TTS Piper isolada e interna, com o modelo PT-BR pt_BR-cadu-medium (aprox. 63 MB), limite Docker de 1 CPU/512 MB, health check e síntese WAV autenticada pela API JARVIS. Speechma foi retirado da interface e endpoints ativos; configurações históricas não são removidas. O modo automático prioriza Piper, Fish Audio pode ser usado com cota confirmada e ElevenLabs requer autorização explícita para fallback.
 
-A VPS tem 4 vCPUs, 7.8 GiB de RAM, nenhum GPU, 3.7 GiB disponíveis no diagnóstico e 2.1 GiB em swap usada. Kokoro e Chatterbox ainda não foram instalados ou testados; aguardam benchmark seguro devido ao uso de recursos dos outros serviços. Falta validar o container na VPS e ouvir áudio gerado na interface autenticada antes de declarar a voz pronta.
+A VPS tem 4 vCPUs, 7.8 GiB de RAM, nenhum GPU, 3.7 GiB disponíveis no diagnóstico e 2.1 GiB em swap usada. Kokoro e Chatterbox ainda não foram instalados ou testados; aguardam benchmark seguro devido ao uso de recursos dos outros serviços.
+
+Commit `c3899e0`; CI `38775757022` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-c3899e0`; somente Piper, backend e frontend foram criados/recriados, sem migrations nem reinício de PostgreSQL, n8n ou outros projetos. A síntese autenticada `/api/voice/speech` retornou HTTP 200, `audio/wav`, provedor `piper` e WAV válido. A geração respondeu em 2,19 s no teste inicial; o container ficou saudável e usou cerca de 260 MiB de 512 MiB, com 0,34% de CPU no instante medido. Página pública, frontend interno e API pública retornaram HTTP 200. A voz foi gerada e validada tecnicamente; reprodução audível no dispositivo do usuário ainda depende de teste na sessão logada.
