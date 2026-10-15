@@ -47,6 +47,7 @@ jobs:
           npx prisma generate
           npx prisma validate
           npx prisma migrate deploy
+          npx prisma db seed
           npm run test
           npm run build
       - name: Frontend install
