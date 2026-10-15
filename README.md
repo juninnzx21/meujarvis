@@ -47,7 +47,7 @@ O painel possui uma central para configurar e validar integrações sem expor se
 
 - `/integrations`: cards de status para OpenAI, Gemini, n8n, WhatsApp/Evolution, Home Assistant, Financeiro, Webhooks, Monitoramento, Backup e API publica.
 - `/settings/integrations`: edicao segura de URLs e credenciais criptografadas.
-- A seção **Voz do JARVIS · Piper local, Fish Audio e ElevenLabs**, em `/settings/integrations`, testa a síntese. Piper roda em serviço Docker privado com voz pt-BR, sem chave ou cobrança por uso. O modo automático tenta Piper primeiro e só usa provedores remotos com cota confirmada; ElevenLabs precisa ser autorizado como fallback. Speechma não participa mais do fluxo ativo e suas antigas configurações são mantidas apenas para auditoria.
+- A seção **Voz do JARVIS · Piper local, Fish Audio e ElevenLabs**, em `/settings/integrations`, testa a síntese. Piper roda em serviço Docker privado com voz pt-BR, sem chave ou cobrança por uso. O modo automático tenta Piper primeiro e só usa provedores remotos com cota confirmada; ElevenLabs precisa ser autorizado como fallback.
 - `/integrations/setup-wizard`: checklist guiado para conectar API, n8n, Evolution, WhatsApp, Financeiro e monitoramento.
 - `/integrations/events`: historico do EventBus e reenvio seguro.
 
@@ -475,7 +475,7 @@ O health detalhado passou a exigir JWT e usa status de integrações do usuário
 
 ## Voz do navegador e disponibilidade dos provedores — 2026-10-15
 
-A seleção automática foi atualizada para priorizar vozes masculinas pt-BR identificadas pelo nome; “Brasil” não é mais tratado como marcador masculino. Dois testes cobrem o caso de Google Português do Brasil versus Microsoft Antonio. CI da release `91d297c` passou em validate, desktop e android; o frontend foi recompilado sem cache e o bundle público confirmado contém o seletor novo. O estado real do usuário na VPS está definido como `browser`, e nenhum provedor Fish Audio, ElevenLabs ou Speechma tem chave/voice ID configurados. Por isso, ainda não há TTS premium nem consulta de cota disponível. Configure em `/settings/integrations` e escolha `auto` para habilitar preferência por quota disponível.
+A seleção automática foi atualizada para priorizar vozes masculinas pt-BR identificadas pelo nome; “Brasil” não é mais tratado como marcador masculino. Dois testes cobrem o caso de Google Português do Brasil versus Microsoft Antonio. CI da release `91d297c` passou em validate, desktop e android; o frontend foi recompilado sem cache e o bundle público confirmado contém o seletor novo. Naquela versão, o usuário usava `browser`, e nenhum provedor remoto tinha chave/voice ID configurados. Configure em `/settings/integrations` e escolha `auto` para habilitar preferência por quota disponível.
 
 ## Voz automática — correção do teste e cota Fish Audio
 
@@ -487,10 +487,10 @@ A release frontend `1cd1170` e backend `116225f` estão implantadas na VPS. Ambo
 
 O seletor local ignora uma preferência salva para a voz Google genérica e procura uma voz masculina identificável, priorizando pt-BR. Se o navegador só oferecer uma voz genérica/feminina, a aplicação não a reproduz como se fosse a voz masculina do JARVIS; agora Piper fornece síntese pt-BR local por `/settings/integrations`, com Fish Audio e ElevenLabs opcionais. O botão **Testar voz** aguarda o fim da reprodução e informa sucesso, erro, indisponibilidade ou timeout.
 
-## Piper local e remoção do Speechma — 2026-10-15
+## Piper local — 2026-10-15
 
 O endpoint autenticado `/api/voice/speech` pode usar o serviço Piper em `http://piper:5000` pela rede privada do Compose. O serviço carrega um modelo pt-BR por vez, limita o texto a 1.000 caracteres e roda com 1 CPU/512 MB. O áudio WAV é enviado sem cache. O modo automático tenta Piper primeiro; Fish Audio segue disponível como fallback com cota confirmada e ElevenLabs só entra quando o administrador habilita a opção.
 
-Speechma foi retirado da tela, rotas e síntese. Registros antigos ficam preservados, mas seleções antigas de Speechma ou navegador passam ao modo automático para evitar a voz feminina genérica. Piper usa licença GPL-3.0; consulte `tts/piper/NOTICE.md` antes de redistribuir.
+Piper usa licença GPL-3.0; consulte `tts/piper/NOTICE.md` antes de redistribuir.
 
 Na VPS compartilhada, Kokoro e Chatterbox ainda não foram instalados: há 4 vCPUs, nenhum GPU e já existe uso de swap enquanto outros sites estão ativos. Esses dois motores permanecem pendentes de benchmark isolado e não são apresentados como disponíveis até uma geração de áudio validada.

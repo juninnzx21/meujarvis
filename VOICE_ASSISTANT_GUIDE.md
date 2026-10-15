@@ -63,4 +63,4 @@ Entre no JARVIS como administrador e abra **Configurações → Integrações** 
 3. Pressione **Testar voz** para gerar e reproduzir o áudio.
 4. O modo automático tenta Piper primeiro. Provedores remotos só são chamados com configuração e cota confirmadas; autorize ElevenLabs explicitamente para permitir esse fallback.
 
-As respostas faladas usam o provedor ativo. Se nenhum motor masculino estiver disponível, o JARVIS informa a falha em vez de selecionar uma voz feminina genérica. Speechma foi removido do fluxo ativo e seus registros antigos permanecem no banco para auditoria.
+As respostas faladas usam o provedor ativo. Se nenhum motor masculino estiver disponível, o JARVIS informa a falha em vez de selecionar uma voz feminina genérica.

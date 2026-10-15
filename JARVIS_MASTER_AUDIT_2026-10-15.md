@@ -8,12 +8,12 @@ Auditoria da cópia em `E:\jarvis-home-assistant`, comparação com o GitHub e v
 - Frontend React 18, TypeScript, Vite e React Router; painel, voz, integrações, memória, financeiro, WhatsApp, downloads e PWA.
 - Desktop Electron com lista controlada de comandos locais e empacotamento Windows.
 - Android Trusted Web Activity/PWA. O build de validação não representa release assinado, instalação em aparelho físico ou publicação em loja.
-- TTS com ElevenLabs, Fish Audio e Speechma, seleção/fallback configurável; reconhecimento de fala no cliente.
+- TTS com ElevenLabs e Fish Audio, seleção/fallback configurável; reconhecimento de fala no cliente.
 
 ## Evidências operacionais e limites
 - Na verificação pontual anterior, site JARVIS, health da API, health completo e n8n responderam HTTP 200; API e banco reportaram `ok`, com scheduler ativo.
 - Métricas pontuais da VPS: RAM 7,8 GiB total/3,4 GiB disponível; swap de 4 GiB com 1,9 GiB usado; raiz com 36 GiB livres de 96 GiB.
-- Teste real de síntese TTS falhou com HTTP 402 da ElevenLabs. Não ficou comprovada nesta rodada cota/credencial funcional em Fish Audio ou Speechma.
+- Teste real de síntese TTS falhou com HTTP 402 da ElevenLabs. Não ficou comprovada naquela rodada cota/credencial funcional em Fish Audio.
 - Serviços externos como WhatsApp, Home Assistant, IA e voz precisam de configuração válida para validar chamadas reais; não foram alterados nem testados com novas credenciais.
 - Build frontend principal fica em torno de 626 kB minificado, acima do aviso padrão de 500 kB.
 
@@ -73,7 +73,7 @@ A chamada real de teste de conexão executou somente o GET de estado da instânc
 
 ### Seleção da voz local do navegador — 2026-10-15
 
-Corrigida a seleção automática do preset JARVIS: a palavra “Brasil” deixou de ser usada como sinal de voz masculina, e nomes masculinos comuns em pt-BR (incluindo Antonio/Antônio) são priorizados. Se o dispositivo não tiver uma voz masculina identificável, a seleção ainda pode cair na voz pt-BR disponível; para uma voz masculina natural consistente, configure um provedor remoto e voice ID na Central de Integrações. Na produção auditada, Fish Audio, ElevenLabs e Speechma estão sem credencial/voice ID salvos, então nenhuma cota remota pode ser consultada ou sintetizada.
+Corrigida a seleção automática do preset JARVIS: a palavra “Brasil” deixou de ser usada como sinal de voz masculina, e nomes masculinos comuns em pt-BR (incluindo Antonio/Antônio) são priorizados. Se o dispositivo não tiver uma voz masculina identificável, a seleção ainda pode cair na voz pt-BR disponível; para uma voz masculina natural consistente, configure um provedor remoto e voice ID na Central de Integrações. Na produção auditada, Fish Audio e ElevenLabs estavam sem credencial/voice ID salvos, então nenhuma cota remota podia ser consultada ou sintetizada.
 
 ### Bundle de voz publicado — 2026-10-15
 
@@ -81,4 +81,4 @@ Corrigida a seleção automática do preset JARVIS: a palavra “Brasil” deixo
 - Build da interface foi feito sem cache após detectar que a primeira imagem manteve o bundle antigo. A imagem antiga permanece em `rollback-voice-20261015`.
 - Só `jarvis-frontend` foi recriado; o backend, PostgreSQL e n8n continuaram ativos. Site e health público HTTP 200; health completo sem autenticação HTTP 401.
 - Bundle público HTTP 200 contém a nova prioridade masculina e não contém a regra antiga que interpretava “Brasil” como voz masculina.
-- A VPS ainda está em `browser`; quotas reais retornaram `not_configured` para Fish Audio, ElevenLabs e Speechma por ausência de chaves e IDs. A voz remota depende de nova credencial e voice ID salvos em `/settings/integrations`, e então selecionar `auto`.
+- A VPS ainda estava em `browser`; quotas reais retornaram `not_configured` para Fish Audio e ElevenLabs por ausência de chaves e IDs. A voz remota depende de nova credencial e voice ID salvos em `/settings/integrations`, e então selecionar `auto`.

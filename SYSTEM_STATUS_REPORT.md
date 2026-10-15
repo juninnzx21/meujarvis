@@ -393,11 +393,11 @@ Commit `d9487c4` implantado no backend da VPS após CI verde (validate, desktop 
 
 ## Voz local do navegador — 2026-10-15
 
-A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identificáveis e deixou de tratar “Brasil” no nome como indicador de gênero. A suíte frontend inclui teste de regressão para Google Português do Brasil e Microsoft Antonio. A VPS não possui chaves/IDs de voz salvos para Fish Audio, ElevenLabs e Speechma; suas cotas retornaram `not_configured`.
+A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identificáveis e deixou de tratar “Brasil” no nome como indicador de gênero. A suíte frontend inclui teste de regressão para Google Português do Brasil e Microsoft Antonio. Naquela versão, não havia chaves/IDs de voz salvos para Fish Audio e ElevenLabs; suas cotas retornaram `not_configured`.
 
 ## Publicacao da correcao de voz — 2026-10-15
 
-A release `91d297c` está publicada. A página e o bundle público retornaram 200 e o bundle contém o seletor corrigido. A VPS segue saudável (app, banco e scheduler `ok`) com todos os cinco containers JARVIS/n8n em execução. A seleção local agora procura primeiro nomes masculinos pt-BR; o modo premium ainda está bloqueado porque não há chaves/IDs de Fish Audio, ElevenLabs ou Speechma salvos. O usuário pode configurar credenciais novas em `/settings/integrations` e selecionar `auto`. A credencial Fish Audio compartilhada na conversa não deve ser reutilizada; gere uma nova antes de salvar.
+A release `91d297c` está publicada. A página e o bundle público retornaram 200 e o bundle contém o seletor corrigido. A VPS segue saudável (app, banco e scheduler `ok`) com todos os cinco containers JARVIS/n8n em execução. A seleção local agora procura primeiro nomes masculinos pt-BR; naquele momento, não havia chaves/IDs de Fish Audio ou ElevenLabs salvos. O usuário pode configurar credenciais novas em `/settings/integrations` e selecionar `auto`. A credencial Fish Audio compartilhada na conversa não deve ser reutilizada; gere uma nova antes de salvar.
 
 ## Correções adicionais da Central de Voz — 2026-10-15
 
@@ -411,7 +411,7 @@ O backend `116225f` também está publicado. A leitura de crédito agora envia `
 
 O modo automático só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Provedores com cota desconhecida ou insuficiente são pulados para evitar requisições sem confirmação de disponibilidade. A interface explica a regra.
 
-Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343`, com build Docker sem cache e recriação apenas de backend/frontend; sem migrations. Testes: bundle público contém a mensagem nova; `/settings/integrations`, API pública e checks internos retornaram HTTP 200. Frontend, backend, PostgreSQL e n8n permanecem ativos. A síntese remota continua sem validação porque produção não tem chaves nem voice IDs configurados para Fish Audio, ElevenLabs ou Speechma.
+Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343`, com build Docker sem cache e recriação apenas de backend/frontend; sem migrations. Testes: bundle público contém a mensagem nova; `/settings/integrations`, API pública e checks internos retornaram HTTP 200. Frontend, backend, PostgreSQL e n8n permanecem ativos. A síntese remota continuava sem validação por falta de chaves e voice IDs.
 
 ## Validação da voz local — publicada em 2026-10-15
 
@@ -419,9 +419,9 @@ Causa: uma voz Google pt-BR salva tinha prioridade; se nenhuma voz masculina fos
 
 Commit `73dec7f`; CI `38772235880` verde nos jobs validate, desktop e android. Release `/opt/jarvis-home-assistant/releases/jarvis-73dec7f` implantada na VPS, recriando somente frontend. Página e bundle públicos HTTP 200, bundle conferido com a proteção contra fallback e mensagem de teste; health público e backend interno HTTP 200. Frontend, backend, PostgreSQL e n8n seguem ativos. Os testes simulados de Web Speech passam. Não foi possível ouvir áudio nesta sessão, que está deslogada; provedores remotos seguem sem credenciais/voice IDs configurados.
 
-## Piper local e remoção do Speechma — publicada em 2026-10-15
+## Piper local — publicada em 2026-10-15
 
-Foi adicionada uma integração TTS Piper isolada e interna, com o modelo PT-BR pt_BR-cadu-medium (aprox. 63 MB), limite Docker de 1 CPU/512 MB, health check e síntese WAV autenticada pela API JARVIS. Speechma foi retirado da interface e endpoints ativos; configurações históricas não são removidas. O modo automático prioriza Piper, Fish Audio pode ser usado com cota confirmada e ElevenLabs requer autorização explícita para fallback.
+Foi adicionada uma integração TTS Piper isolada e interna, com o modelo PT-BR pt_BR-cadu-medium (aprox. 63 MB), limite Docker de 1 CPU/512 MB, health check e síntese WAV autenticada pela API JARVIS. O modo automático prioriza Piper, Fish Audio pode ser usado com cota confirmada e ElevenLabs requer autorização explícita para fallback.
 
 A VPS tem 4 vCPUs, 7.8 GiB de RAM, nenhum GPU, 3.7 GiB disponíveis no diagnóstico e 2.1 GiB em swap usada. Kokoro e Chatterbox ainda não foram instalados ou testados; aguardam benchmark seguro devido ao uso de recursos dos outros serviços.
 

@@ -24,13 +24,9 @@ function str(value: unknown) { return typeof value === "string" ? value.trim() :
 async function config(userId: string) {
   const rows = await prisma.setting.findMany({ where: { userId, key: { in: Object.values(keys) } } });
   const values = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-  const storedProvider = str(values[keys.provider]);
-  const storedPreferredProvider = str(values[keys.autoPreferredProvider]);
   return {
-    // Keep legacy rows for audit, but never call Speechma after its removal.
-    // Keep legacy selections in storage, but migrate their effective behavior to Piper-first auto mode.
-    provider: (storedProvider === "speechma" || storedProvider === "browser" ? "auto" : storedProvider || "auto") as TtsProvider,
-    autoPreferredProvider: (storedPreferredProvider === "speechma" ? "fish_audio" : storedPreferredProvider || "fish_audio") as RemoteTtsProvider,
+    provider: (str(values[keys.provider]) === "browser" ? "auto" : str(values[keys.provider]) || "auto") as TtsProvider,
+    autoPreferredProvider: (str(values[keys.autoPreferredProvider]) || "fish_audio") as RemoteTtsProvider,
     allowElevenLabsFallback: values[keys.allowElevenLabsFallback] === true || str(values[keys.allowElevenLabsFallback]) === "true",
     fishAudioApiKey: str(decryptSettingValue(keys.fishAudioApiKey, values[keys.fishAudioApiKey])),
     fishAudioVoiceId: str(values[keys.fishAudioVoiceId]),
