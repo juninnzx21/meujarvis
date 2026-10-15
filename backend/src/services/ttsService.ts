@@ -16,10 +16,18 @@ const keys = {
   fishAudioVoiceId: "tts_fish_audio_voice_id",
   elevenlabsApiKey: "tts_elevenlabs_api_key",
   elevenlabsVoiceId: "tts_elevenlabs_voice_id",
-  elevenlabsModelId: "tts_elevenlabs_model_id"
+  elevenlabsModelId: "tts_elevenlabs_model_id",
+  elevenlabsStability: "tts_elevenlabs_stability",
+  elevenlabsSimilarity: "tts_elevenlabs_similarity",
+  elevenlabsStyle: "tts_elevenlabs_style",
+  elevenlabsSpeed: "tts_elevenlabs_speed"
 };
 
 function str(value: unknown) { return typeof value === "string" ? value.trim() : ""; }
+function boundedNumber(value: unknown, fallback: number, min: number, max: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
 
 async function config(userId: string) {
   const rows = await prisma.setting.findMany({ where: { userId, key: { in: Object.values(keys) } } });
@@ -32,7 +40,11 @@ async function config(userId: string) {
     fishAudioVoiceId: str(values[keys.fishAudioVoiceId]),
     elevenlabsApiKey: str(decryptSettingValue(keys.elevenlabsApiKey, values[keys.elevenlabsApiKey])),
     elevenlabsVoiceId: str(values[keys.elevenlabsVoiceId]),
-    elevenlabsModelId: str(values[keys.elevenlabsModelId]) || "eleven_multilingual_v2"
+    elevenlabsModelId: str(values[keys.elevenlabsModelId]) || "eleven_multilingual_v2",
+    elevenlabsStability: boundedNumber(values[keys.elevenlabsStability], 0.42, 0, 1),
+    elevenlabsSimilarity: boundedNumber(values[keys.elevenlabsSimilarity], 0.82, 0, 1),
+    elevenlabsStyle: boundedNumber(values[keys.elevenlabsStyle], 0.18, 0, 1),
+    elevenlabsSpeed: boundedNumber(values[keys.elevenlabsSpeed], 0.94, 0.7, 1.2)
   };
 }
 
@@ -85,7 +97,13 @@ async function synthesizeWith(provider: RemoteTtsProvider, value: Awaited<Return
     return Buffer.from(response.data);
   }
   const response = await axios.post(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(value.elevenlabsVoiceId)}`, {
-    text, model_id: value.elevenlabsModelId, voice_settings: { stability: 0.55, similarity_boost: 0.75 }
+    text, model_id: value.elevenlabsModelId, voice_settings: {
+      stability: value.elevenlabsStability,
+      similarity_boost: value.elevenlabsSimilarity,
+      style: value.elevenlabsStyle,
+      speed: value.elevenlabsSpeed,
+      use_speaker_boost: true
+    }
   }, { headers: { "xi-api-key": value.elevenlabsApiKey, "Content-Type": "application/json", Accept: "audio/mpeg" }, responseType: "arraybuffer", timeout: 45000 });
   return Buffer.from(response.data);
 }
@@ -105,7 +123,17 @@ export const ttsService = {
       status: selectedConfigured ? "configured" : "not_configured",
       piper: { status: piperHealth.status, configured: piperHealth.status === "available", model: piperHealth.model ?? "pt_BR-cadu-medium", latencyMs: piperHealth.latencyMs ?? null, endpointConfigured: Boolean(env.PIPER_TTS_URL) },
       fishAudio: { configured: fishAudioConfigured, apiKeyConfigured: Boolean(value.fishAudioApiKey), apiKeyMasked: value.fishAudioApiKey ? maskSecret(value.fishAudioApiKey) : "", voiceId: value.fishAudioVoiceId },
-      elevenlabs: { configured: elevenlabsConfigured, apiKeyConfigured: Boolean(value.elevenlabsApiKey), apiKeyMasked: value.elevenlabsApiKey ? maskSecret(value.elevenlabsApiKey) : "", voiceId: value.elevenlabsVoiceId, modelId: value.elevenlabsModelId }
+      elevenlabs: {
+        configured: elevenlabsConfigured,
+        apiKeyConfigured: Boolean(value.elevenlabsApiKey),
+        apiKeyMasked: value.elevenlabsApiKey ? maskSecret(value.elevenlabsApiKey) : "",
+        voiceId: value.elevenlabsVoiceId,
+        modelId: value.elevenlabsModelId,
+        stability: value.elevenlabsStability,
+        similarity: value.elevenlabsSimilarity,
+        style: value.elevenlabsStyle,
+        speed: value.elevenlabsSpeed
+      }
     };
   },
 
@@ -130,6 +158,10 @@ export const ttsService = {
     if (elevenlabsApiKey) entries.push([keys.elevenlabsApiKey, elevenlabsApiKey]);
     entries.push([keys.elevenlabsVoiceId, str(input.elevenlabsVoiceId) || current.elevenlabsVoiceId]);
     entries.push([keys.elevenlabsModelId, str(input.elevenlabsModelId) || current.elevenlabsModelId]);
+    entries.push([keys.elevenlabsStability, boundedNumber(input.elevenlabsStability, current.elevenlabsStability, 0, 1)]);
+    entries.push([keys.elevenlabsSimilarity, boundedNumber(input.elevenlabsSimilarity, current.elevenlabsSimilarity, 0, 1)]);
+    entries.push([keys.elevenlabsStyle, boundedNumber(input.elevenlabsStyle, current.elevenlabsStyle, 0, 1)]);
+    entries.push([keys.elevenlabsSpeed, boundedNumber(input.elevenlabsSpeed, current.elevenlabsSpeed, 0.7, 1.2)]);
     await Promise.all(entries.map(([key, value]) => upsert(userId, key, value)));
     await writeSystemLog({ userId, module: "integrations", action: "tts_settings_saved", message: "Configuração de síntese de voz atualizada.", metadata: { provider } });
     return this.status(userId);

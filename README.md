@@ -18,6 +18,10 @@ No WhatsApp, o JARVIS so deve responder/executar quando a mensagem tiver `ei jar
 
 Base full stack para um assistente pessoal inteligente com painel web, chat com IA, voz, memoria, tarefas, automacoes, logs, n8n proprio, EventBus, documentos/RAG preparado e integracoes preparadas com OpenAI, Gemini, Evolution API/WhatsApp, Home Assistant e Controle Financeiro.
 
+## Voz do JARVIS
+
+Em Configurações → Integrações → Voz do JARVIS, selecione uma voz masculina pt-BR do provedor e ajuste naturalidade, semelhança, expressividade e velocidade do ElevenLabs. O preset inicial é mais pausado e expressivo. Os controles são enviados apenas pelo backend; chaves continuam criptografadas. Use “Testar voz selecionada” para ouvir a amostra. O JARVIS oferece uma identidade original com estilo de assistente cinematográfico, sem clonar exatamente uma voz de ator/personagem.
+
 ## Stack
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React, Axios e React Router.

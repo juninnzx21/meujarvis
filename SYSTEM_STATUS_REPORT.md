@@ -434,3 +434,6 @@ O botão **Testar voz** agora mostra a mensagem segura do backend quando a gera�
 Deploy da tela de diagnóstico de voz — 2026-10-15
 
 A release `13cf8af` está publicada na VPS. CI `38783407549` passou em validate, desktop e android. Somente `jarvis-frontend` foi recriado; a imagem anterior está preservada com tag de rollback. Site/API retornaram 200, health da aplicação e banco está `ok`, e Piper continua saudável.
+# Atualização de voz — 15/10/2026
+
+O fluxo ElevenLabs agora aceita parâmetros ajustáveis de estabilidade, semelhança, expressividade e velocidade. O painel inicia com estabilidade 0,42, semelhança 0,82, estilo 0,18 e velocidade 0,94; as opções são armazenadas como configurações do usuário e aplicadas apenas pelo backend. A seleção de uma voz masculina pt-BR continua dependente das vozes liberadas na conta do provedor. Uma amostra audível e a confirmação da voz escolhida dependem de teste no navegador autenticado.

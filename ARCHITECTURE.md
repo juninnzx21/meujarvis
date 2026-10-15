@@ -306,3 +306,6 @@ O serviço `ttsService` armazena a chave Fish Audio criptografada e o ID da voz.
 Na Central de Integrações, carregar vozes e testar áudio persistem primeiro os campos atuais da tela para evitar requisições com chaves antigas. A consulta de crédito Fish Audio usa `check_free_credit=true`, conforme o OpenAPI oficial; `parseFishAudioQuota` considera `has_free_credit=true` suficiente para marcar a conta disponível, mesmo sem saldo numérico. `canUseTtsProvider` só permite síntese automática quando a API confirmou cota suficiente; cota desconhecida/esgotada é pulada antes de chamar o endpoint de áudio.
 
 O teste de voz apresenta mensagens seguras da API autenticada quando a geração falha, incluindo status HTTP quando disponível. O frontend lê apenas o campo `message`, sem registrar credenciais ou o corpo do áudio. A reprodução do navegador segue restrita a voz masculina identificável e não usa a voz Google genérica como fallback silencioso.
+# Voz e prosódia
+
+O serviço `ttsService` mantém credenciais remotas criptografadas e envia os parâmetros de estabilidade, semelhança, estilo e velocidade ao endpoint ElevenLabs. Faixas são limitadas no backend. Piper e Fish Audio permanecem disponíveis; os novos controles são específicos do ElevenLabs e não alteram esses provedores.
