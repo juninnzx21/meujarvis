@@ -481,4 +481,4 @@ A seleção automática foi atualizada para priorizar vozes masculinas pt-BR ide
 
 Na Central de Integrações, os botões de carregar vozes e testar a síntese salvam primeiro os campos atualmente preenchidos. Isso evita testar com uma configuração anterior ainda persistida. A consulta Fish Audio pede explicitamente o sinalizador de crédito grátis e reconhece essa elegibilidade mesmo quando não há saldo numérico; se a consulta de cota estiver indisponível, a síntese ainda tenta o provedor em vez de descartá-lo imediatamente. Para ativar síntese remota ainda é necessário configurar chave válida e voice ID.
 
-A release `1cd1170` está implantada na VPS. Frontend e backend passaram smoke tests HTTP 200; o teste de áudio premium ainda depende de credenciais novas cadastradas em `/settings/integrations`.
+A release frontend `1cd1170` e backend `116225f` estão implantadas na VPS. Ambos passaram smoke tests HTTP 200; a consulta Fish solicita explicitamente o estado do crédito grátis. O teste de áudio premium ainda depende de credenciais novas cadastradas em `/settings/integrations`.
