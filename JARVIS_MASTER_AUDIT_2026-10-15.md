@@ -26,17 +26,25 @@ A execução [JARVIS CI #24](https://github.com/juninnzx21/meujarvis/actions/run
 
 Artefatos de validação anexados à execução: web, instalador Windows e APK Android debug. O APK é de teste e não está assinado para distribuição na Play Store; o instalador Windows também precisa de revisão de assinatura e publicação antes de distribuição.
 
+A validação mais recente desta rodada é [JARVIS CI #25](https://github.com/juninnzx21/meujarvis/actions/runs/38729501272), commit `b500e0d`; os jobs `validate`, `desktop` e `android` terminaram com sucesso. O commit também corrige a exposição CORS do cabeçalho que informa qual provedor TTS gerou o áudio e inclui teste de preflight.
+
+Validação local adicional: frontend `npm run validate` passou (35 testes e build). O backend passou typecheck e typecheck dos seeds, mas a suíte local não pôde executar por falta de PostgreSQL/Docker nesta máquina; a suíte completa do backend passou no CI com PostgreSQL descartável.
+
 Durante o CI foram corrigidos problemas reais da esteira: ação Android antiga solicitava o pacote removido `tools`; `JWT_SECRET` de teste era menor que a validação mínima; faltava semear o banco temporário; alguns testes não refletiam a exigência atual de confirmação para gravar memória e deixavam transporte HTTP mockado incompleto; o scanner de segredo dava falso positivo em fixture de teste e na própria expressão regular. A suíte foi executada novamente e passou.
 
 ## Entrega e estado de produção
 - Repositório: `juninnzx21/meujarvis`; base `main` estava em `ee4f987` quando comparada.
 - Branch: `codex/jarvis-2.0-platform-20261015`; contém o sincronismo das implementações JARVIS 2.0, ajustes de versão/documentação e workflow de CI.
 - A branch `main` e a VPS de produção não foram alteradas.
+- A comparação da cópia de produção com a branch encontrou 15 arquivos de código diferentes. As diferenças incluem a versão exibida, proteção para exigir confirmação antes de criar memória/tarefa, validação do endpoint Brain, seleção do provedor local Ollama e ajustes de voz/instalação. A cópia do servidor não é um checkout Git; o compose e a aplicação estão implantados por imagem Docker.
+- A base PostgreSQL de produção ocupa aproximadamente 14 MB e o diretório JARVIS cerca de 109 MB. Há 36 GB livres na raiz. Ainda não foi feito backup de produção nesta rodada nem deploy; a implantação permanece pendente de backup externo verificável e revisão final da divergência de código/configuração para permitir rollback seguro.
+- `npm audit --omit=dev` identificou 7 avisos em dependências de produção do backend (1 crítico, 2 altos, 3 moderados e 1 baixo; entre elas `proxy-addr`, `axios` e `express`). O frontend não apresentou vulnerabilidades em dependências de produção. As atualizações não foram aplicadas; precisam de atualização de lockfile e novo CI antes do deploy.
 - A integração do GitHub negou a criação do PR com HTTP 403 (`Resource not accessible by integration`). Comparação pronta para abrir/criar PR: `https://github.com/juninnzx21/meujarvis/compare/main...codex/jarvis-2.0-platform-20261015?expand=1`.
 - O CI roda em pushes de branches para validar a entrega antes do PR.
 
 ## Próximas etapas
 1. Abrir e revisar o PR acima; a integração atual não tem permissão para criá-lo.
-2. Após integrar a mudança revisada, planejar deploy com backup verificado e rollback. O ambiente efetivo ainda precisa ser conferido, inclusive `APP_VERSION`; nenhuma implantação foi feita nesta etapa.
-3. Validar TTS, IA, WhatsApp e Home Assistant com credenciais/cotas reais, sem registrar segredos.
-4. Preparar releases assinados para Windows e Android, instalar em dispositivos e seguir os processos de publicação das lojas.
+2. Atualizar dependências de produção do backend e executar novamente o CI.
+3. Revisar com segurança as 15 diferenças contra a imagem atual, fazer backup externo verificável de fonte/configuração/base e só então implantar com rollback documentado. O ambiente efetivo ainda precisa ser conferido, inclusive `APP_VERSION`; nenhuma implantação foi feita nesta etapa.
+4. Validar TTS, IA, WhatsApp e Home Assistant com credenciais/cotas reais, sem registrar segredos.
+5. Preparar releases assinados para Windows e Android, instalar em dispositivos e seguir os processos de publicação das lojas.
