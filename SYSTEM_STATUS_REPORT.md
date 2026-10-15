@@ -430,3 +430,7 @@ Commit `c3899e0`; CI `38775757022` verde nos jobs validate, desktop e android. R
 ## Diagnóstico do teste de voz — 2026-10-15
 
 O botão **Testar voz** agora mostra a mensagem segura do backend quando a geração remota falha, incluindo status HTTP quando disponível. Se o servidor gerar o áudio mas o dispositivo não conseguir tocá-lo, a interface informa esse cenário separadamente. A seleção do navegador continua recusando fallback para a voz Google genérica.
+
+Deploy da tela de diagnóstico de voz — 2026-10-15
+
+A release `13cf8af` está publicada na VPS. CI `38783407549` passou em validate, desktop e android. Somente `jarvis-frontend` foi recriado; a imagem anterior está preservada com tag de rollback. Site/API retornaram 200, health da aplicação e banco está `ok`, e Piper continua saudável.
