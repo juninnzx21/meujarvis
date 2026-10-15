@@ -69,7 +69,11 @@ async function quotaFor(provider: RemoteTtsProvider, value: Awaited<ReturnType<t
       return { status: remaining > 0 ? "available" : "exhausted", remaining, limit, used, message: str(response.data?.tier) || "Cota de caracteres" };
     }
     if (!value.fishAudioApiKey) return { ...unavailable("Chave não configurada"), status: "not_configured" };
-    const response = await axios.get("https://api.fish.audio/wallet/self/api-credit", { headers: { Authorization: `Bearer ${value.fishAudioApiKey}` }, timeout: 12000 });
+    const response = await axios.get("https://api.fish.audio/wallet/self/api-credit", {
+      params: { check_free_credit: true },
+      headers: { Authorization: `Bearer ${value.fishAudioApiKey}` },
+      timeout: 12000
+    });
     return parseFishAudioQuota(response.data);
   } catch (error) {
     const status = axios.isAxiosError(error) ? error.response?.status : undefined;
