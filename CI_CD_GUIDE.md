@@ -1,6 +1,6 @@
 # CI/CD do JARVIS
 
-Status: CI configurado para validar e gerar artefatos de web, Windows e Android a cada push/PR para `main`. Deploy VPS e submissao das lojas continuam pendentes de acesso e credenciais do publicador.
+Status: CI valida web/API/desktop/Android debug por push. A tag `v2.0.0` aciona uma release pública com APK Android assinado e instalador Windows x64. O deploy da página para a VPS e submissões nas lojas são etapas separadas.
 
 ## O que o CI deve validar
 
@@ -19,7 +19,9 @@ Status: CI configurado para validar e gerar artefatos de web, Windows e Android 
 
 Quando o workflow estiver no repositorio GitHub e um commit chegar a `main`, o GitHub Actions valida backend/frontend/desktop e compila o frontend, o instalador Windows e um APK Android de teste. Os artefatos ficam anexados a execucao daquele commit por 30 dias. Em pull requests os mesmos checks rodam, mas isso nao publica nada.
 
-O APK gerado pelo CI e somente para validacao e nao pode ser enviado a Play Store. O AAB de loja exige a chave de upload protegida e a identidade do aplicativo na Play Console. O instalador Windows atual tambem ainda nao possui assinatura confiavel nem identidade MSIX do Partner Center. Nao coloque keystore, senhas, certificado ou JSON de conta de servico no codigo; configure-os como GitHub Actions Secrets quando a publicacao for habilitada.
+O APK de release é produzido localmente com keystore protegida e enviado como asset versionado `release-assets/JARVIS-2.0.0-Android.apk`; a senha e o keystore não entram no Git. O EXE é compilado no workflow de release e permanece sem assinatura Authenticode, então o Windows pode exibir SmartScreen. O APK serve para instalação direta e não substitui o AAB necessário para Play Console. Não coloque keystore, senhas, certificados ou JSON de conta de serviço no código.
+
+Para publicar os downloads, envie a tag `v2.0.0`. O workflow `release-downloads.yml` compila o instalador, gera `SHA256SUMS.txt` e cria a release pública no GitHub. A página `/downloads` usa esses URLs versionados. Mudanças na página ainda precisam ser implantadas no frontend de produção.
 
 ## Atualizacao dos clientes
 

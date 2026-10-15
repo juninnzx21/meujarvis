@@ -396,6 +396,10 @@ Validação frontend: `npm run validate` passou, 8 arquivos/43 testes e build. B
 
 O teste em Configurações > Voz agora exibe a mensagem segura retornada pela API TTS quando a geração falha, incluindo status HTTP quando disponível. Se o navegador bloquear a reprodução ou o dispositivo não conseguir tocar o áudio gerado, a interface apresenta essa causa separadamente. A seleção do navegador continua recusando fallback para a voz Google genérica. Frontend `npm run validate` passou com 45 testes e build; backend Prisma/typechecks/build e 26 testes sem a suíte de integração passaram. A suíte integrada local exige `DATABASE_URL` e `JWT_SECRET`; a CI executada no push valida com PostgreSQL descartável.
 
+### Downloads JARVIS 2.0.0 — 2026-10-15
+
+A Central de Downloads foi preparada para oferecer o EXE Windows x64 e o APK Android assinado como assets da release pública `v2.0.0`, com checksums e QR code direto para o APK. O APK recompilado a partir desta revisão foi validado com apksigner; package `br.com.juninnzxtec.jarvis.twa`, versão `2.0.0` (code `20000`) e fingerprint compatível com o `assetlinks.json`. O workflow de release compila o instalador Windows e publica os arquivos no GitHub. Frontend foi validado com 47 testes e build; backend typecheck/build e 3 testes focados passaram. A suíte de integração backend depende de `DATABASE_URL` e `JWT_SECRET`. A página ainda precisa de deploy na VPS; SSH de produção não autenticou nesta sessão.
+
 Deploy da melhoria de diagnóstico — commit `13cf8af`, CI `38783407549` concluída com sucesso nos jobs validate, desktop e android. Release criada em `/opt/jarvis-home-assistant/releases/jarvis-13cf8af`; apenas o frontend foi compilado e recriado. A imagem anterior foi preservada como `jarvis-home-assistant-frontend:rollback-13cf8af`. Site e API pública retornaram HTTP 200; health reportou aplicação, banco e scheduler `ok`; Piper permaneceu saudável; backend, PostgreSQL e n8n não foram recriados. O bundle publicado contém os diagnósticos de falha de TTS e bloqueio de reprodução pelo navegador.
 # Revisão de prosódia TTS — 15/10/2026
 

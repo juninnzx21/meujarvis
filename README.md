@@ -449,7 +449,7 @@ No JARVIS Desktop atualizado, o botao **Ativar conversa por voz** libera uma jan
 Consulte [PROJECT_AUDIT_MULTIPLATFORM.md](PROJECT_AUDIT_MULTIPLATFORM.md) para o estado verificado de Windows, Android/PWA, voz, Home Assistant, Waze e serviços. A tela `/mobile-assistant` inclui navegação para Waze por endereço ou favoritos pessoais.
 ## Central de Downloads
 
-A rota autenticada `/downloads` lista os artefatos verificados e deixa explícito quando uma plataforma não tem pacote nativo publicado. Consulte [DOWNLOADS_CENTER_GUIDE.md](DOWNLOADS_CENTER_GUIDE.md) para versão, hash, assinatura e procedimento Android/PWA. Gerenciamento administrativo de releases, assinatura e envio automático ainda não estão disponíveis.
+A rota autenticada `/downloads` oferece o instalador Windows x64 e o APK Android assinado da release JARVIS 2.0.0. O workflow `.github/workflows/release-downloads.yml` gera o instalador e publica ambos os arquivos e seus checksums em uma release pública do GitHub ao enviar a tag `v2.0.0`. Consulte [DOWNLOADS_CENTER_GUIDE.md](DOWNLOADS_CENTER_GUIDE.md) para hashes, assinatura, instalação e limitações.
 
 ### Abrir programas e jogos no Windows
 
@@ -459,11 +459,11 @@ O companion abre aplicativos pelo nome exato do atalho do Menu Iniciar, após co
 
 O companion Windows 2.0.0 foi validado e o instalador x64 e gerado em `desktop/release/`. O Android agora tem um projeto TWA em `android/` e os artefatos assinados são preparados por `android/build-release.ps1`; o AAB de Play Console fica em `android/release/`. Esses artefatos são locais e ainda não foram publicados em nenhuma loja.
 
-O Android depende do site JARVIS e da associação em `/.well-known/assetlinks.json`. O arquivo-fonte está em `frontend/public/.well-known/assetlinks.json`, mas o endpoint público ainda serve a página HTML de fallback. O certificado de assinatura do Play Console também deve ser acrescentado depois que o app for criado na conta.
+O Android depende do site JARVIS e da associação em `/.well-known/assetlinks.json`. O APK direto está assinado com o certificado associado no arquivo-fonte `frontend/public/.well-known/assetlinks.json`. A assinatura do Google Play poderá ser diferente e deverá ser adicionada após criar o app na Play Console.
 
 ## Builds automaticos por commit
 
-O workflow `.github/workflows/ci.yml` valida e arquiva builds de web, Windows e Android de teste para cada commit em `main`/pull request quando o projeto está conectado ao GitHub. Isso ainda não faz deploy na VPS nem publica em lojas. O Companion e o Android TWA usam o site hospedado, então mudanças web chegam após deploy da interface; mudanças nativas exigem nova versão e distribuição pelas lojas. Leia [CI_CD_GUIDE.md](CI_CD_GUIDE.md) para o fluxo e os itens necessários para habilitar publicação contínua com segurança.
+O workflow `.github/workflows/ci.yml` valida e arquiva builds de web, Windows e Android de teste por push/pull request. A release `v2.0.0` publica os instaladores Windows e Android assinados como assets públicos. Isso não implanta a interface na VPS nem publica o app nas lojas; mudanças web precisam de deploy e mudanças nativas exigem nova release. Leia [CI_CD_GUIDE.md](CI_CD_GUIDE.md) para os detalhes.
 
 ### IA local híbrida — 2026-10-14
 

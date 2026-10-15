@@ -261,9 +261,9 @@ Desde 2026-10-14, os pacotes frontend, backend e desktop usam a versao de releas
 # Auditoria de dispositivos e navegação — 2026-10-14
 
 O estado implementado e as lacunas de pareamento autenticado, Android nativo, Home Assistant e Waze estão em [PROJECT_AUDIT_MULTIPLATFORM.md](PROJECT_AUDIT_MULTIPLATFORM.md). A navegação Waze do PWA usa deep links oficiais sem armazenar destino no backend. O bridge Electron continua local; ainda não há protocolo de agente remoto/dispositivo no backend.
-# Central de Downloads — 2026-10-14
+# Central de Downloads — 2026-10-15
 
-`/downloads` é um catálogo frontend autenticado da release Windows validada e do PWA Android. Não há persistência ou API administrativa de releases; novos arquivos não podem ser publicados pelo painel. A assinatura é exibida como ausente. QR code é gerado no cliente para a página oficial `/install`. Envio por e-mail/WhatsApp e atualização automática ainda não fazem parte do fluxo. Manual em [DOWNLOADS_CENTER_GUIDE.md](DOWNLOADS_CENTER_GUIDE.md).
+`/downloads` lista o instalador Windows x64 e o APK Android assinado JARVIS 2.0.0; os botões e QR apontam para os arquivos de uma release pública GitHub e o checksum acompanha os dois pacotes. A tag `v2.0.0` aciona `.github/workflows/release-downloads.yml`, que compila o EXE e publica os artefatos. O APK usa o certificado que corresponde ao `assetlinks.json` do domínio. O EXE continua sem assinatura Authenticode. O deploy do frontend para a VPS é separado e não é feito por esse workflow. Manual em [DOWNLOADS_CENTER_GUIDE.md](DOWNLOADS_CENTER_GUIDE.md).
 
 ### Abertura de aplicativos e jogos
 
@@ -272,12 +272,12 @@ O estado implementado e as lacunas de pareamento autenticado, Android nativo, Ho
 
 - Windows: companion Electron x64, instalador NSIS por usuário, autenticado pelo site JARVIS. A janela abre o origin HTTPS remoto e exige internet.
 - Android: aplicativo TWA com package `br.com.juninnzxtec.jarvis.twa`, versão 2.0.0, Android mínimo 24 e target 36. O conteúdo é servido pelo mesmo site; a chave de upload fica local e fora do Git.
-- A associação TWA é servida por `frontend/public/.well-known/assetlinks.json`; a produção ainda precisa publicar esse recurso e incluir a impressão digital da chave App Signing do Google Play.
+- O APK de instalação direta foi assinado com a chave local, e o fingerprint está configurado em `frontend/public/.well-known/assetlinks.json`. A publicação na Play Store usa uma identidade/certificado App Signing diferente e exige atualização da associação após cadastro na loja.
 - A publicação em Microsoft Store/Play Console depende da conta do publicador, identidade reservada, ficha da loja, declarações legais e certificação da loja.
 
 ## CI multiplataforma — 2026-10-14
 
-O workflow `.github/workflows/ci.yml` valida web/API e, por commit em `main` ou pull request, também compila o companion Windows e um APK Android de validação. Os artefatos de web, Windows e APK ficam anexados à execução do commit por 30 dias. O APK de CI é de teste, não um pacote de Play Store. O deploy VPS e upload às lojas dependem de repositório remoto, credenciais/identidades e configuração de release ainda ausentes neste checkout; ver `CI_CD_GUIDE.md`.
+O workflow `.github/workflows/ci.yml` valida e arquiva builds de web, Windows e Android debug. O workflow `.github/workflows/release-downloads.yml`, ao receber uma tag `v*`, publica o instalador Windows e o APK Android assinado em GitHub Releases. O deploy do frontend na VPS e o envio às lojas continuam separados; veja `CI_CD_GUIDE.md`.
 
 Web, Windows e TWA Android carregam a interface do domínio JARVIS. Uma publicação do frontend/API na VPS propaga as mudanças web para esses clientes ao recarregar. Alterações no companion nativo ou no wrapper Android requerem uma nova release e aprovação/distribuição pelas respectivas lojas.
 

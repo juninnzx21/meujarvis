@@ -1,9 +1,14 @@
-param([string]$AndroidSdkPath = $env:ANDROID_HOME)
+param(
+  [string]$AndroidSdkPath = $env:ANDROID_HOME,
+  [string]$SigningMaterialPath
+)
 
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $javaHome = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { Join-Path $root '.tools\jdk17\jdk-17.0.20.1+1' }
-$passwordFile = Join-Path $root '.private-release\keystore-password.dpapi'
+$signingDirectory = if ([string]::IsNullOrWhiteSpace($SigningMaterialPath)) { Join-Path $root '.private-release' } else { (Resolve-Path $SigningMaterialPath).Path }
+$passwordFile = Join-Path $signingDirectory 'keystore-password.dpapi'
+$keystorePath = Join-Path $signingDirectory 'JARVIS-upload-key.jks'
 
 if (-not (Test-Path (Join-Path $javaHome 'bin\java.exe'))) { throw 'JDK 17 was not found in the local toolchain.' }
 $javaRelease = Get-Content (Join-Path $javaHome 'release') -Raw
@@ -11,11 +16,13 @@ if ($javaRelease -notmatch 'JAVA_VERSION="17\.') { throw 'JDK 17 is required for
 if ([string]::IsNullOrWhiteSpace($AndroidSdkPath)) { throw 'Set ANDROID_HOME or pass -AndroidSdkPath.' }
 if (-not (Test-Path (Join-Path $AndroidSdkPath 'platforms\android-36\android.jar'))) { throw 'Android SDK Platform 36 is required.' }
 if (-not (Test-Path $passwordFile)) { throw 'The local DPAPI-protected signing password is missing.' }
+if (-not (Test-Path $keystorePath)) { throw 'The local Android upload keystore is missing.' }
 
 $env:JAVA_HOME = (Resolve-Path $javaHome).Path
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 $env:ANDROID_HOME = (Resolve-Path $AndroidSdkPath).Path
 $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+$env:JARVIS_ANDROID_KEYSTORE_PATH = (Resolve-Path $keystorePath).Path
 $env:GRADLE_USER_HOME = Join-Path $root '.tools\gradle-cache'
 $sdkPropertyPath = $env:ANDROID_HOME.Replace('\', '\\')
 Set-Content -Path (Join-Path $PSScriptRoot 'local.properties') -Value "sdk.dir=$sdkPropertyPath"
@@ -36,6 +43,7 @@ try {
 } finally {
   Remove-Item Env:JARVIS_ANDROID_KEYSTORE_PASSWORD -ErrorAction SilentlyContinue
   Remove-Item Env:JARVIS_ANDROID_KEY_PASSWORD -ErrorAction SilentlyContinue
+  Remove-Item Env:JARVIS_ANDROID_KEYSTORE_PATH -ErrorAction SilentlyContinue
   Remove-Variable credential, securePassword -ErrorAction SilentlyContinue
 }
 

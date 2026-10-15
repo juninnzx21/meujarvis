@@ -152,7 +152,8 @@ android {
     }
     signingConfigs {
         release {
-            storeFile rootProject.file('../.private-release/JARVIS-upload-key.jks')
+            def configuredKeystore = System.getenv('JARVIS_ANDROID_KEYSTORE_PATH')
+            storeFile configuredKeystore ? file(configuredKeystore) : rootProject.file('../.private-release/JARVIS-upload-key.jks')
             storePassword System.getenv('JARVIS_ANDROID_KEYSTORE_PASSWORD')
             keyAlias 'jarvisupload'
             keyPassword System.getenv('JARVIS_ANDROID_KEY_PASSWORD')

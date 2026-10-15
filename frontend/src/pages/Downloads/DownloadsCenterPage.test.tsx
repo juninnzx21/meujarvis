@@ -11,17 +11,17 @@ describe("DownloadsCenterPage", () => {
     vi.restoreAllMocks();
   });
 
-  it("publishes the verified Windows artifact and checksum", async () => {
+  it("links to the Windows release installer and its checksums", async () => {
     render(<MemoryRouter><DownloadsCenterPage /></MemoryRouter>);
-    expect(screen.getByRole("link", { name: /baixar instalador/i })).toHaveAttribute("href", "/downloads/JARVIS-Desktop-Setup-x64.exe");
+    expect(screen.getByRole("link", { name: /baixar instalador/i })).toHaveAttribute("href", "https://github.com/juninnzx21/meujarvis/releases/download/v2.0.0/JARVIS-2.0.0-Desktop-Setup-x64.exe");
     expect(screen.getByText(/não assinada/i)).toBeInTheDocument();
-    expect(screen.getByText("0248fb9d25173d54b882c1d410c6964e174de00597971925db2b1d13e27d4291")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("img", { name: /qr code da página oficial/i })).toHaveAttribute("src", "data:image/png;base64,verified-qr"));
+    expect(screen.getByRole("link", { name: /abrir checksums sha-256/i })).toHaveAttribute("href", "https://github.com/juninnzx21/meujarvis/releases/download/v2.0.0/SHA256SUMS.txt");
+    await waitFor(() => expect(screen.getByRole("img", { name: /qr code para baixar o apk/i })).toHaveAttribute("src", "data:image/png;base64,verified-qr"));
   });
 
-  it("does not offer a download link for an unpublished Android package", () => {
+  it("offers the signed Android APK as a direct download", () => {
     render(<MemoryRouter><DownloadsCenterPage /></MemoryRouter>);
-    expect(screen.getByText("APK/AAB não publicado")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /baixar apk/i })).not.toBeInTheDocument();
+    expect(screen.getByText("APK assinado e verificado")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /baixar apk/i })).toHaveAttribute("href", "https://github.com/juninnzx21/meujarvis/releases/download/v2.0.0/JARVIS-2.0.0-Android.apk");
   });
 });

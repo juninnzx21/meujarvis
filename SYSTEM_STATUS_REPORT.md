@@ -441,3 +441,7 @@ O fluxo ElevenLabs agora aceita parâmetros ajustáveis de estabilidade, semelha
 ## Diagnóstico de interações — 15/10/2026
 
 Health público consultado: app e banco retornaram `ok`; OpenAI e Gemini constam como configurados no servidor; n8n, WhatsApp e Home Assistant constam como não configurados no health público. Isso não substitui o status autenticado por usuário. Corrigido o encaminhamento do usuário autenticado para consultas do Brain ao Home Assistant/n8n/health. Chat e voz agora aguardam até 90 segundos; o chat apresenta erros em vez de ocultá-los e permite repetir a mensagem. A VPS não foi atualizada: acesso SSH por chave/senha não autenticou neste ambiente.
+
+## Central de downloads JARVIS 2.0.0 — 15/10/2026
+
+O APK TWA assinado foi compilado nesta revisão e validado pelo `apksigner`; o certificado coincide com o fingerprint configurado em `assetlinks.json`. A Central foi atualizada para apontar para os assets de uma release pública do GitHub. O workflow `release-downloads.yml` compila o EXE Windows, cria checksums e publica APK e EXE ao enviar a tag `v2.0.0`. O instalador Windows não tem assinatura Authenticode. O repositório não tem deploy automático do frontend e SSH recusou a autenticação; portanto, o site online ainda precisa receber o build do frontend para exibir os novos botões.

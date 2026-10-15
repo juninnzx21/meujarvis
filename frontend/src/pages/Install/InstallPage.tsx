@@ -3,6 +3,10 @@ import { ArrowRight, Bot, Check, Download, ExternalLink, Monitor, ShieldCheck, S
 import { Link } from "react-router-dom";
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
+const releaseBaseUrl = "https://github.com/juninnzx21/meujarvis/releases/download/v2.0.0";
+const androidApkUrl = `${releaseBaseUrl}/JARVIS-2.0.0-Android.apk`;
+const windowsInstallerUrl = `${releaseBaseUrl}/JARVIS-2.0.0-Desktop-Setup-x64.exe`;
+const checksumsUrl = `${releaseBaseUrl}/SHA256SUMS.txt`;
 
 function getPlatform() {
   const agent = navigator.userAgent.toLowerCase();
@@ -56,7 +60,8 @@ export function InstallPage() {
           <p className="install-lede">Instale o app no celular ou computador para abrir mais rápido, usar tela cheia e falar com seu assistente em uma interface feita para cada dispositivo.</p>
           <div className="install-hero__actions">
             {promptEvent && <button type="button" className="install-primary" onClick={() => void install()}><Download size={18} /> Instalar neste dispositivo</button>}
-            {platform === "desktop" && <><a className="install-primary" href="/downloads/JARVIS-Desktop-Setup-x64.exe" download><Download size={18} /> Baixar JARVIS Desktop para Windows</a><a className="install-secondary" href="/downloads/JARVIS-Desktop-Setup-x64.exe.sha256.txt" target="_blank" rel="noreferrer">Verificar SHA-256</a></>}
+            {platform === "desktop" && <><a className="install-primary" href={windowsInstallerUrl}><Download size={18} /> Baixar instalador Windows · 2.0.0</a><a className="install-secondary" href={checksumsUrl} target="_blank" rel="noreferrer">Verificar SHA-256</a></>}
+            {platform === "android" && <><a className="install-primary" href={androidApkUrl}><Download size={18} /> Baixar APK Android · 2.0.0</a><a className="install-secondary" href={checksumsUrl} target="_blank" rel="noreferrer">Verificar SHA-256</a></>}
             {installed && <span className="install-success"><Check size={17} /> Instalado neste dispositivo</span>}
             <Link to="/login" className="install-secondary">Usar no navegador <ArrowRight size={16} /></Link>
           </div>
