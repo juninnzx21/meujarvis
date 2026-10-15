@@ -35,7 +35,7 @@ router.get("/logs", asyncHandler(async (req, res) => res.json(await integrationC
 router.get("/setup-wizard", asyncHandler(async (req, res) => res.json(await integrationSetupService.wizard(req.user!.id))));
 router.get("/events", asyncHandler(async (req, res) => res.json(await integrationConfigService.events(req.user!.id))));
 router.get("/tts/voices/:provider", asyncHandler(async (req, res) => {
-  if (req.params.provider !== "speechma" && req.params.provider !== "elevenlabs") return res.status(400).json({ message: "Provedor de voz inválido." });
+  if (req.params.provider !== "elevenlabs") return res.status(400).json({ message: "Provedor de voz inválido." });
   res.json(await ttsService.voices(req.user!.id, req.params.provider));
 }));
 router.get("/tts/quotas", asyncHandler(async (req, res) => res.json(await ttsService.quotas(req.user!.id))));

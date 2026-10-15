@@ -23,7 +23,7 @@ router.post("/speech", validate(z.object({ text: z.string().min(1).max(5000) }))
   try {
     const result = await ttsService.synthesize(req.user!.id, req.body.text);
     if (result.status === "browser") return res.status(204).end();
-    res.set({ "Content-Type": "audio/mpeg", "Content-Length": String(result.audio.length), "Cache-Control": "no-store", "X-Jarvis-TTS-Provider": result.provider });
+    res.set({ "Content-Type": result.contentType, "Content-Length": String(result.audio.length), "Cache-Control": "no-store", "X-Jarvis-TTS-Provider": result.provider });
     return res.status(200).send(result.audio);
   } catch (error) {
     const message = error instanceof Error && !error.message.includes("Request failed") ? error.message : "O provedor de voz não concluiu a síntese. Verifique a chave, a voz e os créditos da conta.";

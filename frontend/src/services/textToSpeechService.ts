@@ -11,7 +11,7 @@ export type JarvisVoiceSettings = {
 };
 
 const storageKey = "jarvis_voice_settings";
-type RemoteTtsProvider = "auto" | "browser" | "speechma" | "elevenlabs" | "fish_audio" | "none";
+type RemoteTtsProvider = "auto" | "browser" | "piper" | "elevenlabs" | "fish_audio" | "none";
 let remoteProviderCache: { provider: RemoteTtsProvider; expiresAt: number } | null = null;
 let activeAudio: HTMLAudioElement | null = null;
 let speechGeneration = 0;

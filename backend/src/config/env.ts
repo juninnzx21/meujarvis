@@ -35,6 +35,7 @@ const envSchema = z.object({
   WHATSAPP_AUTO_REPLY: booleanFromEnv.default(false),
   HOME_ASSISTANT_URL: optionalTrimmedString,
   HOME_ASSISTANT_TOKEN: optionalTrimmedString,
+  PIPER_TTS_URL: optionalTrimmedString,
   LOG_LEVEL: trimmedString.default("info"),
   SETTINGS_ENCRYPTION_KEY: optionalTrimmedString,
   ALLOW_DEMO_LOGIN: booleanFromEnv.default(process.env.NODE_ENV === "production" ? false : true),

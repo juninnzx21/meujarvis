@@ -105,9 +105,9 @@ export function VoiceSettingsPage() {
         <h3 className="mb-3 mt-6 font-bold text-white">Limites reais</h3>
         <p>A qualidade depende das vozes instaladas no navegador/sistema. Este preset nao clona voz de ator, filme ou personagem.</p>
         <div className="mt-6 rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-4">
-          <h3 className="font-bold text-white">Quer usar Speechma ou ElevenLabs?</h3>
-          <p className="mt-2">As chaves de API e a seleção do provedor ficam em Configurações de Integrações.</p>
-          <a className="btn btn-primary mt-3 inline-flex" href="/settings/integrations">Configurar voz premium</a>
+          <h3 className="font-bold text-white">Quer usar Piper, Fish Audio ou ElevenLabs?</h3>
+          <p className="mt-2">A seleção do motor e as integrações de voz ficam em Configurações de Integrações.</p>
+          <a className="btn btn-primary mt-3 inline-flex" href="/settings/integrations">Configurar voz do JARVIS</a>
         </div>
       </aside>
     </section>

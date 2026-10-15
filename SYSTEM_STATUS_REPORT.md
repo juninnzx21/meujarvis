@@ -418,3 +418,9 @@ Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. R
 Causa: uma voz Google pt-BR salva tinha prioridade; se nenhuma voz masculina fosse identificada, o seletor escolhia a primeira voz pt-BR genérica. Agora uma voz salva só é aceita se o nome identifica uma voz masculina; o seletor prioriza pt-BR e não reproduz fallback Google genérico. A página corrige preferência antiga, lista vozes masculinas identificáveis e o teste aguarda o fim da fala para exibir o resultado.
 
 Commit `73dec7f`; CI `38772235880` verde nos jobs validate, desktop e android. Release `/opt/jarvis-home-assistant/releases/jarvis-73dec7f` implantada na VPS, recriando somente frontend. Página e bundle públicos HTTP 200, bundle conferido com a proteção contra fallback e mensagem de teste; health público e backend interno HTTP 200. Frontend, backend, PostgreSQL e n8n seguem ativos. Os testes simulados de Web Speech passam. Não foi possível ouvir áudio nesta sessão, que está deslogada; provedores remotos seguem sem credenciais/voice IDs configurados.
+
+## Piper local e remoção do Speechma — em implementação
+
+Foi adicionada uma integração TTS Piper isolada e interna, com o modelo PT-BR pt_BR-cadu-medium (aprox. 63 MB), limite Docker de 1 CPU/512 MB, health check e síntese WAV autenticada pela API JARVIS. Speechma foi retirado da interface e endpoints ativos; configurações históricas não são removidas. O modo automático prioriza Piper, Fish Audio pode ser usado com cota confirmada e ElevenLabs requer autorização explícita para fallback.
+
+A VPS tem 4 vCPUs, 7.8 GiB de RAM, nenhum GPU, 3.7 GiB disponíveis no diagnóstico e 2.1 GiB em swap usada. Kokoro e Chatterbox ainda não foram instalados ou testados; aguardam benchmark seguro devido ao uso de recursos dos outros serviços. Falta validar o container na VPS e ouvir áudio gerado na interface autenticada antes de declarar a voz pronta.
