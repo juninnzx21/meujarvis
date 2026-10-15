@@ -156,11 +156,18 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
   }
   if (provider === "whatsapp" || provider === "evolution") {
     const data = providers.whatsapp || {};
-    const evolutionState = provider === "evolution" ? await evolutionManagerService.getSafeStatus(userId) : null;
-    const state = evolutionState?.connectionState || data.connectionState || "unknown";
+    const evolutionState = await evolutionManagerService.getSafeStatus(userId);
+    const state = evolutionState.connectionState || data.connectionState || "unknown";
+    const status: SetupStatus = !data.configured
+      ? "not_configured"
+      : state === "connected"
+        ? "configured"
+        : state === "unknown" && evolutionState.status === "error"
+          ? "error"
+          : "degraded";
     return {
       ...providerBase(provider, provider === "whatsapp" ? "WhatsApp" : "Evolution API", "Conexao WhatsApp por QR, webhook e comandos seguros com wake phrase."),
-      status: statusFrom(evolutionState?.status || data),
+      status,
       configured: Boolean(data.configured),
       maskedFields: {
         apiUrlConfigured: Boolean(data.apiUrlConfigured),

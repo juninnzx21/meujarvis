@@ -535,11 +535,17 @@ describe("JARVIS Home AI API", () => {
     expect(saved.body.status).toBe("configured");
     expect(JSON.stringify(saved.body)).not.toContain("secret-key");
 
-    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { instance: "open" } });
+    vi.mocked(axios.get)
+      .mockResolvedValueOnce({ status: 200, data: { instance: { state: "open" } } })
+      .mockResolvedValueOnce({ status: 200, data: { instance: { state: "close" } } });
     vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, apikey: "secret-key" } });
 
     const test = await request(app).post("/api/whatsapp/test-connection").set(auth()).expect(200);
-    expect(test.body.status).toBe("success");
+    expect(test.body).toMatchObject({ status: "connected", connectionState: "connected", reachable: true });
+
+    const disconnected = await request(app).post("/api/whatsapp/test-connection").set(auth()).expect(200);
+    expect(disconnected.body).toMatchObject({ status: "disconnected", connectionState: "disconnected", reachable: true });
+    expect(disconnected.body.message).toMatch(/sessão.*desconectada/i);
 
     const send = await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "5511999999999", content: "teste", confirmed: true }).expect(200);
     expect(send.body.status).toBe("success");

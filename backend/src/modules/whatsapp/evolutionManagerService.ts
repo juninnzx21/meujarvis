@@ -157,7 +157,7 @@ export const evolutionManagerService = {
     const config = await this.getConfig(userId);
     const state = isConfigured(config) ? await this.getConnectionState(userId, config.instance) : null;
     return {
-      status: isConfigured(config) ? "configured" : "not_configured",
+      status: !isConfigured(config) ? "not_configured" : state?.status === "error" ? "error" : "configured",
       configured: isConfigured(config),
       apiUrlConfigured: Boolean(config.apiUrl),
       apiKeyConfigured: Boolean(config.apiKey),

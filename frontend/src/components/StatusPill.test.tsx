@@ -8,6 +8,11 @@ describe("StatusPill", () => {
     expect(screen.getByText("operacional")).toBeInTheDocument();
   });
 
+  it("shows a disconnected WhatsApp as disconnected instead of operational", () => {
+    render(<StatusPill status="disconnected" />);
+    expect(screen.getByText("desconectado")).toBeInTheDocument();
+  });
+
   it("renders pending state for not configured services", () => {
     render(<StatusPill status="nao configurado" />);
     expect(screen.getByText("nao configurado")).toBeInTheDocument();

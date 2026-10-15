@@ -5,6 +5,7 @@ import { prisma } from "../prisma/client.js";
 import { openAiService } from "./openAiService.js";
 import { writeSystemLog } from "./systemLogService.js";
 import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
+import { normalizeWhatsAppConnectionState } from "../modules/whatsapp/connectionState.js";
 
 const keys = {
   apiUrl: "whatsapp_evolution_api_url",
@@ -248,8 +249,20 @@ export const whatsappService = {
         headers: { apikey: config.apiKey },
         timeout: 15000
       });
-      await writeSystemLog({ userId, module: "whatsapp", action: "test_connection", message: "Conexao Evolution API testada", metadata: { status: response.status } });
-      return { status: "success", data: response.data };
+      const connectionState = normalizeWhatsAppConnectionState(response.data);
+      await writeSystemLog({ userId, module: "whatsapp", action: "test_connection", message: "Estado da sessao WhatsApp consultado", metadata: { httpStatus: response.status, connectionState } });
+      return {
+        status: connectionState,
+        connectionState,
+        reachable: true,
+        message: connectionState === "connected"
+          ? "WhatsApp conectado à Evolution API."
+          : connectionState === "disconnected"
+            ? "Evolution API respondeu, mas a sessão do WhatsApp está desconectada. Leia o QR Code para reconectar."
+            : connectionState === "connecting"
+              ? "Evolution API respondeu; o WhatsApp ainda está conectando."
+              : "Evolution API respondeu, mas não foi possível confirmar a sessão do WhatsApp."
+      };
     } catch (error) {
       const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
       const message = statusCode === 404

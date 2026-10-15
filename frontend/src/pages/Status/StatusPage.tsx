@@ -13,10 +13,25 @@ function formatUptime(seconds?: number) {
 
 export function StatusPage() {
   const [health, setHealth] = useState<Record<string, any>>({});
+  const [whatsappConnection, setWhatsappConnection] = useState("unknown");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.get("/health/full").then((res) => setHealth(res.data)).catch(() => setError("Nao foi possivel carregar o status do sistema."));
+    let active = true;
+    const load = async () => {
+      const [healthResult, whatsappResult] = await Promise.allSettled([
+        api.get("/health/full"),
+        api.get("/whatsapp/evolution/status")
+      ]);
+      if (!active) return;
+      if (healthResult.status === "fulfilled") setHealth(healthResult.value.data);
+      else setError("Nao foi possivel carregar o status do sistema.");
+      if (whatsappResult.status === "fulfilled") setWhatsappConnection(whatsappResult.value.data.connectionState || "unknown");
+      else setWhatsappConnection("unknown");
+    };
+    void load();
+    const interval = window.setInterval(() => void load(), 15000);
+    return () => { active = false; window.clearInterval(interval); };
   }, []);
 
   const integrations = health.integrations || {};
@@ -44,7 +59,7 @@ export function StatusPage() {
           ["OpenAI", integrations.openai?.status],
           ["Gemini", integrations.gemini?.status],
           ["n8n", integrations.n8n?.status],
-          ["WhatsApp", integrations.whatsapp?.status],
+          ["WhatsApp", whatsappConnection],
           ["Home Assistant", integrations.homeAssistant?.status]
         ].map(([label, status]) => (
           <div key={label} className="glass rounded-2xl p-5">
