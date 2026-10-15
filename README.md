@@ -468,3 +468,7 @@ Na Central de Integrações, configure a chave Fish Audio e use **Selecionar MP3
 
 ### Diagnóstico autenticado
 `GET /api/health/public` fornece somente o estado básico de disponibilidade. `GET /api/health/full` exige autenticação e lê as configurações do usuário autenticado para mostrar n8n, WhatsApp/Evolution e Home Assistant. O endpoint completo pode incluir contagens financeiras e registros recentes; mantenha-o atrás da sessão do JARVIS e use a rota pública para monitores externos.
+
+## Atualizacao de producao 2026-10-15 — release d9487c4
+
+O health detalhado passou a exigir JWT e usa status de integrações do usuário autenticado. CI verde para backend/testes, companion Windows e APK de validação Android. Em produção, frontend 200, health público 200, health detalhado 401 sem sessão e 200 autenticado, banco e scheduler saudáveis. O teste GET da Evolution retornou sessão `open`; webhook e workflows não foram executados. Home Assistant está sem configuração e precisa de URL alcançável pela VPS e token de acesso.
