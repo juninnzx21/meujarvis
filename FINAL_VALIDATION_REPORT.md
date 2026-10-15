@@ -337,3 +337,9 @@ Validado/preparado:
 - E2E Playwright: plano atualizado; script ainda nao ativo.
 
 Ressalvas: credenciais reais, deploy remoto, Caddy/DNS, Home Assistant, backup offsite e monitoramento externo exigem acao manual segura.
+
+## 2026-10-15 - Health detalhado protegido
+
+- Implementado middleware JWT em `/api/health/full` e status das integrações por usuário.
+- Teste cobre HTTP 401 sem sessão e HTTP 200 autenticado. `npm run validate` executado: typecheck passou; teste de integração local não iniciou por ausência de `DATABASE_URL` e `JWT_SECRET`; frontend passou typecheck, 35 testes e build.
+- O pipeline CI fornece PostgreSQL e executa os testes de integração completos antes do deploy.

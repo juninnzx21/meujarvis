@@ -465,3 +465,6 @@ A Central de Integrações agora permite configurar Ollama em `/integrations`, d
 
 ### Voz personalizada do JARVIS
 Na Central de Integrações, configure a chave Fish Audio e use **Selecionar MP3 e clonar voz** para enviar uma amostra MP3 diretamente à Fish Audio. O modelo é criado com visibilidade privada; o arquivo não é persistido pelo JARVIS. Após o clone, Fish Audio fica selecionado como provedor TTS. O endpoint aceita MP3 de até 8 MB e exige administrador autenticado.
+
+### Diagnóstico autenticado
+`GET /api/health/public` fornece somente o estado básico de disponibilidade. `GET /api/health/full` exige autenticação e lê as configurações do usuário autenticado para mostrar n8n, WhatsApp/Evolution e Home Assistant. O endpoint completo pode incluir contagens financeiras e registros recentes; mantenha-o atrás da sessão do JARVIS e use a rota pública para monitores externos.

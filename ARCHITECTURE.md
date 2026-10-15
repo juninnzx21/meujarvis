@@ -1,5 +1,11 @@
 # Arquitetura
 
+## Health e status de integracoes
+
+- `/api/health/public` e a interface para monitores sem sessao e retorna somente disponibilidade resumida.
+- `/api/health/full` exige JWT e calcula n8n, WhatsApp/Evolution e Home Assistant com as configuracoes do usuario autenticado; chaves permanecem redigidas.
+- Dados detalhados de operacao, como contagens financeiras e mensagens de falhas recentes, nao devem ser publicados em endpoints de monitoramento publico.
+
 ## Visao geral
 
 O sistema e dividido em frontend React/Vite e backend Express/TypeScript. O backend expoe API REST em `/api`, usa Prisma para persistencia em PostgreSQL e centraliza integracoes em servicos isolados.
@@ -279,3 +285,14 @@ O roteador central `openAiService.complete()` agora tenta Ollama primeiro no mod
 
 ### TTS Fish Audio com referência de voz
 O serviço `ttsService` armazena a chave Fish Audio criptografada e o ID da voz. O endpoint administrativo `/api/integrations/tts/fish-audio/clone` recebe somente áudio MP3 (limite de 8 MB), valida o cabeçalho, envia a amostra ao endpoint oficial `/model` com visibilidade privada e grava o ID retornado. A síntese usa `/v1/tts` com `reference_id`; o MP3 não é salvo em disco nem em logs.
+# Health e status de integrações
+
+- `/api/health/public` é a interface para monitores sem sessão e retorna somente disponibilidade resumida.
+- `/api/health/full` exige JWT e calcula n8n, WhatsApp/Evolution e Home Assistant com as configurações do usuário autenticado; chaves permanecem redigidas.
+- Dados detalhados de operação, como contagens financeiras e mensagens de falhas recentes, não devem ser publicados em endpoints de monitoramento público.
+
+## Health detalhado protegido — 2026-10-15
+
+- `/api/health/full` agora exige JWT e reporta n8n, WhatsApp/Evolution e Home Assistant usando as configurações do usuário autenticado.
+- O health completo deixa de ser uma rota pública, pois inclui eventos recentes e contagens operacionais. Monitores sem sessão devem usar `/api/health/public`.
+- Tokens e chaves seguem mascarados; a validação autenticada é feita no CI porque esta cópia não tem banco local configurado.

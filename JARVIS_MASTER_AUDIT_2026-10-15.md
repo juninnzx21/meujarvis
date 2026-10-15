@@ -54,3 +54,7 @@ Durante o CI foram corrigidos problemas reais da esteira: ação Android antiga 
 4. Configurar e validar n8n, Evolution/WhatsApp e Home Assistant no próprio painel, usando endpoints e tokens válidos.
 5. Validar chamadas reais de IA/TTS com credenciais e cotas disponíveis, sem registrar segredos.
 6. Preparar releases assinados para Windows e Android, instalar em dispositivos e seguir os processos de publicação das lojas.
+
+## Revisao de segurança operacional — 2026-10-15
+
+O endpoint de health detalhado foi protegido por sessão autenticada, passou a usar o estado das integrações salvas para o usuário atual e mantém os segredos mascarados. O monitor público deve consultar `/api/health/public`. Validação completa de backend depende do PostgreSQL de CI; o frontend passou 35 testes e build local.

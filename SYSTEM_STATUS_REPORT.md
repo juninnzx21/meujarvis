@@ -378,3 +378,9 @@ Status: **APROVADO COM RESSALVAS**.
 - Monitoramento: health endpoints e checklist externo preparados.
 - Backup offsite: plano criptografado preparado; destino externo pendente.
 - E2E: plano atualizado; Playwright completo ainda pendente.
+
+## Atualizacao 2026-10-15 - Protecao do health detalhado
+
+- `/api/health/full` exige JWT e reflete integrações persistidas para o usuário autenticado.
+- `/api/health/public` continua disponível com resposta resumida para monitoramento externo.
+- n8n, WhatsApp/Evolution e Home Assistant seguem realmente não configurados na conta de produção, conforme health atual; essa alteração corrige a leitura por usuário, não adiciona credenciais.

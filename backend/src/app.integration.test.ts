@@ -147,7 +147,8 @@ describe("JARVIS Home AI API", () => {
     expect(health.body.app).toBe("ok");
     expect(health.body.database).toBe("ok");
 
-    const full = await request(app).get("/api/health/full").expect(200);
+    await request(app).get("/api/health/full").expect(401);
+    const full = await request(app).get("/api/health/full").set(auth()).expect(200);
     expect(full.body.integrations.n8n.status).toMatch(/configured|not_configured/);
     expect(full.body.integrations.whatsapp.autoReply).toBe(false);
     expect(full.body.observability.uptimeSeconds).toEqual(expect.any(Number));
