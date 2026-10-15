@@ -352,3 +352,7 @@ Ressalvas: credenciais reais, deploy remoto, Caddy/DNS, Home Assistant, backup o
 - n8n e WhatsApp/Evolution estão configurados nas preferências persistidas do usuário autenticado; a conectividade desses provedores não foi chamada nesta verificação. Home Assistant ainda não configurado e seu hostname público não resolve.
 
 Verificação segura da Evolution: GET de estado da instância retornou sucesso e sessão `open`, sem enviar mensagem. Esse teste confirma a conexão atual; não valida webhook, resposta automática ou execução de workflows.
+
+### Voz no navegador — seleção masculina
+
+A seleção local não considera mais “Brasil” como indicador de voz masculina e prioriza nomes masculinos pt-BR como Antonio/Antônio. Um teste garante que a voz Google genérica não tenha prioridade sobre uma voz masculina brasileira instalada. No estado atual da VPS, não há chave nem voice ID salvos nos três provedores remotos; a consulta real de cotas retornou `not_configured` para Fish Audio, ElevenLabs e Speechma. A aplicação não consegue criar a voz natural do JARVIS até que uma credencial válida e um ID de voz sejam configurados em `/settings/integrations`.

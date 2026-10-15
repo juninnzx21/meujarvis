@@ -390,3 +390,7 @@ Status: **APROVADO COM RESSALVAS**.
 Commit `d9487c4` implantado no backend da VPS após CI verde (validate, desktop e android). Health público HTTP 200; health detalhado retorna 401 anonimamente e 200 com sessão autenticada. Smoke autenticado confirmou que a tela agora lê as configurações persistidas do admin: n8n e WhatsApp/Evolution estão configurados; Home Assistant não está. Isso atesta apenas configuração no painel, não teste de conexão dos provedores. A resposta não retornou padrões de segredo. Só o container JARVIS backend foi recriado; os demais containers e banco continuaram ativos.
 
 - Teste real de conexão Evolution (somente GET, sem disparo de mensagem): sucesso, instância com sessão `open`.
+
+## Voz local do navegador — 2026-10-15
+
+A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identificáveis e deixou de tratar “Brasil” no nome como indicador de gênero. A suíte frontend inclui teste de regressão para Google Português do Brasil e Microsoft Antonio. A VPS não possui chaves/IDs de voz salvos para Fish Audio, ElevenLabs e Speechma; suas cotas retornaram `not_configured`.

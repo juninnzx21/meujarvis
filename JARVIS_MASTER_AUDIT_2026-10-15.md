@@ -70,3 +70,7 @@ O endpoint de health detalhado foi protegido por sessão autenticada, passou a u
 ### Verificação Evolution — 2026-10-15
 
 A chamada real de teste de conexão executou somente o GET de estado da instância Evolution (sem enviar WhatsApp). Resultado `success`, sessão `open`; nenhuma API key foi impressa. Isso confirma conectividade da Evolution e sessão WhatsApp ativa neste instante.
+
+### Seleção da voz local do navegador — 2026-10-15
+
+Corrigida a seleção automática do preset JARVIS: a palavra “Brasil” deixou de ser usada como sinal de voz masculina, e nomes masculinos comuns em pt-BR (incluindo Antonio/Antônio) são priorizados. Se o dispositivo não tiver uma voz masculina identificável, a seleção ainda pode cair na voz pt-BR disponível; para uma voz masculina natural consistente, configure um provedor remoto e voice ID na Central de Integrações. Na produção auditada, Fish Audio, ElevenLabs e Speechma estão sem credencial/voice ID salvos, então nenhuma cota remota pode ser consultada ou sintetizada.

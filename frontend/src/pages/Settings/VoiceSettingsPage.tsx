@@ -42,7 +42,7 @@ export function VoiceSettingsPage() {
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-cyan-200">Voz original</p>
           <h2 className="text-3xl font-black text-white">JARVIS BR Premium</h2>
-          <p className="mt-2 text-slate-400">Configure uma voz calma, grave, elegante e tecnologica usando SpeechSynthesis local do navegador.</p>
+          <p className="mt-2 text-slate-400">O preset prioriza uma voz masculina pt-BR quando o Windows ou navegador disponibiliza uma voz identificável. A seleção local depende das vozes instaladas; para manter a mesma voz em todos os dispositivos, configure um provedor premium em Integrações.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button className="btn btn-primary" type="button" onClick={applyPreset}>Aplicar preset</button>

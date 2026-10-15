@@ -49,7 +49,8 @@ export function getAvailableVoices(): SpeechSynthesisVoice[] {
 }
 
 export function selectBestJarvisVoice(voices = getAvailableVoices()) {
-  const preferred = voices.find((voice) => /pt-BR/i.test(voice.lang) && /male|mascul|homem|brasil/i.test(voice.name));
+  const masculine = /\b(?:male|mascul|homem|antonio|antônio|daniel|bruno|carlos|felipe|ricardo|thiago|tiago|rafael|luiz|lucas|paulo|pedro|arthur|david|george|ryan)\b/i;
+  const preferred = voices.find((voice) => /pt-BR/i.test(voice.lang) && masculine.test(voice.name));
   const ptBr = voices.find((voice) => /pt-BR/i.test(voice.lang));
   const pt = voices.find((voice) => /^pt/i.test(voice.lang));
   const neutral = voices.find((voice) => /en-GB/i.test(voice.lang) && /male|daniel|george|ryan|arthur/i.test(voice.name));
