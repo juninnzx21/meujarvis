@@ -25,7 +25,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://jarvis:jarvis_password@localhost:5432/jarvis_db?schema=public
-      JWT_SECRET: ci_only_change_me
+      JWT_SECRET: ci_only_change_me_not_for_production_123
       CORS_ORIGIN: http://localhost:5173
       SETTINGS_ENCRYPTION_KEY: ci_only_32_chars_minimum_value
       ALLOW_DEMO_LOGIN: "true"
