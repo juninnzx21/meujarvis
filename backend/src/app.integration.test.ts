@@ -24,6 +24,8 @@ vi.mock("axios", () => ({
   }
 }));
 
+vi.mocked(axios.post).mockResolvedValue({ status: 200, data: { ok: true } } as never);
+
 const credentials = { email: "admin@jarvis.local", password: "12345678" };
 let token = "";
 let automationId = "";
@@ -161,7 +163,7 @@ describe("JARVIS Home AI API", () => {
 
   it("processes voice commands with the original JARVIS BR Premium persona", async () => {
     const empty = await request(app).post("/api/voice/process").set(auth()).send({ text: "   " }).expect(400);
-    expect(empty.body.message).toContain("Informe uma fala");
+    expect(empty.body.message).toBe("Dados invalidos");
 
     const voice = await request(app).post("/api/voice/process").set(auth()).send({ text: "status do sistema" }).expect(200);
     expect(voice.body.voicePersona).toBe("JARVIS BR Premium");
@@ -266,7 +268,11 @@ describe("JARVIS Home AI API", () => {
     expect(chat.body.intent).toBe("memory.create");
 
     const list = await request(app).get("/api/memories?q=n8n").set(auth()).expect(200);
-    expect(list.body.memories.length).toBeGreaterThan(0);
+    expect(chat.body.needsConfirmation).toBe(true);
+    expect(chat.body.usedTools).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tool: "createMemory", status: "confirmation_required" })
+    ]));
+    expect(list.body.memories).toHaveLength(0);
 
     await request(app).delete(`/api/memories/${created.body.memory.id}`).set(auth()).expect(204);
   });
