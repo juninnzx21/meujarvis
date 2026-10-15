@@ -384,3 +384,9 @@ Status: **APROVADO COM RESSALVAS**.
 - `/api/health/full` exige JWT e reflete integrações persistidas para o usuário autenticado.
 - `/api/health/public` continua disponível com resposta resumida para monitoramento externo.
 - n8n, WhatsApp/Evolution e Home Assistant seguem realmente não configurados na conta de produção, conforme health atual; essa alteração corrige a leitura por usuário, não adiciona credenciais.
+
+## Deploy 2026-10-15 — health seguro
+
+Commit `d9487c4` implantado no backend da VPS após CI verde (validate, desktop e android). Health público HTTP 200; health detalhado retorna 401 anonimamente e 200 com sessão autenticada. Smoke autenticado confirmou que a tela agora lê as configurações persistidas do admin: n8n e WhatsApp/Evolution estão configurados; Home Assistant não está. Isso atesta apenas configuração no painel, não teste de conexão dos provedores. A resposta não retornou padrões de segredo. Só o container JARVIS backend foi recriado; os demais containers e banco continuaram ativos.
+
+- Teste real de conexão Evolution (somente GET, sem disparo de mensagem): sucesso, instância com sessão `open`.

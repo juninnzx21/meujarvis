@@ -343,3 +343,12 @@ Ressalvas: credenciais reais, deploy remoto, Caddy/DNS, Home Assistant, backup o
 - Implementado middleware JWT em `/api/health/full` e status das integrações por usuário.
 - Teste cobre HTTP 401 sem sessão e HTTP 200 autenticado. `npm run validate` executado: typecheck passou; teste de integração local não iniciou por ausência de `DATABASE_URL` e `JWT_SECRET`; frontend passou typecheck, 35 testes e build.
 - O pipeline CI fornece PostgreSQL e executa os testes de integração completos antes do deploy.
+
+### Deploy e smoke em produção — 2026-10-15
+
+- GitHub Actions CI `38732564543`: validate, desktop e android concluídos com sucesso.
+- Deploy `d9487c4` em release isolada da VPS; imagem anterior retida para rollback. Apenas `jarvis-backend` foi recriado.
+- Verificações públicas: site 200, health resumido 200; health detalhado 401 sem sessão. Teste interno autenticado do health detalhado 200, banco/app OK, versão 2.0.0 e sem segredo detectado na resposta.
+- n8n e WhatsApp/Evolution estão configurados nas preferências persistidas do usuário autenticado; a conectividade desses provedores não foi chamada nesta verificação. Home Assistant ainda não configurado e seu hostname público não resolve.
+
+Verificação segura da Evolution: GET de estado da instância retornou sucesso e sessão `open`, sem enviar mensagem. Esse teste confirma a conexão atual; não valida webhook, resposta automática ou execução de workflows.

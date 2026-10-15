@@ -58,3 +58,15 @@ Durante o CI foram corrigidos problemas reais da esteira: ação Android antiga 
 ## Revisao de segurança operacional — 2026-10-15
 
 O endpoint de health detalhado foi protegido por sessão autenticada, passou a usar o estado das integrações salvas para o usuário atual e mantém os segredos mascarados. O monitor público deve consultar `/api/health/public`. Validação completa de backend depende do PostgreSQL de CI; o frontend passou 35 testes e build local.
+
+## Deploy confirmado — 2026-10-15
+
+- Commit `d9487c4` implantado em `/opt/jarvis-home-assistant/releases/jarvis-d9487c4`; apenas `jarvis-backend` foi recriado. A imagem anterior foi preservada com a tag local `rollback-health-auth-20261015`.
+- CI do GitHub Actions `38732564543` concluiu com sucesso nos jobs `validate`, `desktop` e `android`.
+- Em produção: `/api/health/public` HTTP 200 (`app`, banco e scheduler OK); `/api/health/full` HTTP 401 sem JWT e HTTP 200 com JWT temporário gerado internamente para smoke test; nenhum token/chave apareceu na resposta.
+- Com o usuário autenticado, os status de integração lidos do banco são n8n `configured`, WhatsApp/Evolution `configured` e Home Assistant `not_configured`. `configured` confirma presença de configuração, não conectividade real; a URL do Home Assistant não resolve no DNS público.
+- Frontend público continua HTTP 200. PostgreSQL e n8n não foram reiniciados e nenhum volume/migration foi alterado.
+
+### Verificação Evolution — 2026-10-15
+
+A chamada real de teste de conexão executou somente o GET de estado da instância Evolution (sem enviar WhatsApp). Resultado `success`, sessão `open`; nenhuma API key foi impressa. Isso confirma conectividade da Evolution e sessão WhatsApp ativa neste instante.
