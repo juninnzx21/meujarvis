@@ -67,9 +67,10 @@ export type IntentClassification = {
 };
 
 export type BrainSourceItem = {
-  type: "memory" | "document" | "system" | "finance" | "task" | "integration" | "feedback";
+  type: "memory" | "document" | "system" | "finance" | "task" | "integration" | "feedback" | "web";
   title: string;
   excerpt: string;
+  url?: string;
   score?: number;
   id?: string;
 };
@@ -99,6 +100,7 @@ export type BrainAskInput = {
   mode?: BrainMode;
   allowExternalAI?: boolean;
   allowTools?: boolean;
+  history?: { role: "user" | "assistant"; content: string }[];
 };
 
 export type BrainAskResponse = {

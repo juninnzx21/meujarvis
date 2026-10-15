@@ -25,6 +25,7 @@ export const brainTools: BrainToolDefinition[] = [
   { name: "listPendingImports", description: "Lista importacoes pendentes de revisao.", safety: "safe", category: "Financeiro" },
   { name: "detectDuplicates", description: "Resume duplicatas de importacao.", safety: "safe", category: "Financeiro" },
   { name: "searchDocuments", description: "Busca documentos e trechos redigidos.", safety: "safe", category: "Documentos" },
+  { name: "searchInternet", description: "Pesquisa a web com fontes citadas para perguntas de conhecimento e informações atuais.", safety: "safe", category: "Internet" },
   { name: "listDocuments", description: "Lista documentos do usuario.", safety: "safe", category: "Documentos" },
   { name: "getN8nStatus", description: "Consulta status do n8n.", safety: "safe", category: "n8n" },
   { name: "listWorkflows", description: "Lista workflows locais conhecidos.", safety: "safe", category: "n8n" },

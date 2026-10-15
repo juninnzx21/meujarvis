@@ -5,12 +5,15 @@ import { AutomationsPage } from "./pages/Automations/AutomationsPage";
 import { BrainAgentsPage, BrainFeedbackPage, BrainMemoryPage, BrainPage, BrainToolsPage } from "./pages/Brain/BrainPages";
 import { ChatPage } from "./pages/Chat/ChatPage";
 import { CommandsPage } from "./pages/Commands/CommandsPage";
+import { ComputerPage } from "./pages/Computer/ComputerPage";
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { DocumentsPage } from "./pages/Documents/DocumentsPage";
+import { DownloadsCenterPage } from "./pages/Downloads/DownloadsCenterPage";
 import { IntegrationEventsPage } from "./pages/Integrations/IntegrationEventsPage";
 import { IntegrationSettingsPage } from "./pages/Integrations/IntegrationSettingsPage";
 import { IntegrationSetupSummaryPage } from "./pages/Integrations/IntegrationSetupSummaryPage";
 import { IntegrationWizardPage } from "./pages/Integrations/IntegrationWizardPage";
+import { HomeAssistantSetupPage } from "./pages/Integrations/HomeAssistantSetupPage";
 import { IntegrationsPage } from "./pages/Integrations/IntegrationsPage";
 import { JarvisModePage } from "./pages/JarvisMode/JarvisModePage";
 import { FinancePage } from "./pages/Finance/FinancePage";
@@ -20,6 +23,7 @@ import { FinanceImportPage } from "./pages/Finance/FinanceImportPage";
 import { FinanceReportsPage } from "./pages/Finance/FinanceReportsPage";
 import { FinanceReviewPage } from "./pages/Finance/FinanceReviewPage";
 import { FinanceTransactionsPage } from "./pages/Finance/FinanceTransactionsPage";
+import { InstallPage } from "./pages/Install/InstallPage";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { LogsPage } from "./pages/Logs/LogsPage";
 import { MemoryPage } from "./pages/Memory/MemoryPage";
@@ -47,6 +51,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/install" element={<InstallPage />} />
       <Route element={<Private><AppLayout /></Private>}>
         <Route index element={<DashboardPage />} />
         <Route path="mobile-assistant" element={<MobileAssistantPage />} />
@@ -59,6 +64,8 @@ export default function App() {
         <Route path="chat" element={<ChatPage />} />
         <Route path="voice" element={<VoicePage />} />
         <Route path="commands" element={<CommandsPage />} />
+        <Route path="computer" element={<ComputerPage />} />
+        <Route path="downloads" element={<DownloadsCenterPage />} />
         <Route path="routines" element={<RoutinesPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="documents" element={<DocumentsPage />} />
@@ -82,6 +89,7 @@ export default function App() {
         <Route path="n8n" element={<N8nPage />} />
         <Route path="whatsapp" element={<WhatsAppPage />} />
         <Route path="smart-home" element={<SmartHomePage />} />
+        <Route path="smart-home/setup" element={<HomeAssistantSetupPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/voice" element={<VoiceSettingsPage />} />
         <Route path="logs" element={<LogsPage />} />

@@ -11,10 +11,17 @@ frontend/.env.*
 node_modules/
 backend/node_modules/
 frontend/node_modules/
+desktop/node_modules/
 
 dist/
 backend/dist/
 frontend/dist/
+desktop/dist/
+desktop/release/
+desktop/.npm-cache/
+desktop/.tmp/
+frontend/public/downloads/*.exe
+frontend/public/downloads/*.sha256.txt
 
 build/
 coverage/
@@ -50,3 +57,16 @@ Thumbs.db
 backend/prisma/dev.db
 *.sqlite
 *.sqlite3
+
+# Local Android signing material and toolchain
+.private-release/
+.tools/
+android/android.keystore
+android/keystore.properties
+android/local.properties
+android/build/
+android/app/build/
+android/.gradle/
+android/*.apk
+android/*.aab
+android/release/

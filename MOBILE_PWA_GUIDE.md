@@ -14,6 +14,16 @@ API oficial: `https://apijarvis.juninnzxtec.com.br/api`
 4. Toque em `Adicionar a tela inicial` ou `Instalar app`.
 5. Abra o JARVIS pelo icone instalado.
 
+## Como instalar no iPhone
+
+1. Abra o Safari e acesse `https://jarvis.juninnzxtec.com.br`.
+2. Toque em **Compartilhar** e depois em **Adicionar à Tela de Início**.
+3. Confirme **Adicionar** e abra pelo novo ícone.
+
+## Como abrir neste PC
+
+No Chrome ou Edge, acesse `https://jarvis.juninnzxtec.com.br`, entre com sua conta e use **Instalar JARVIS** no menu do navegador, se aparecer. A conexão com o Financeiro fica em **Integrações → Configurações → Controle Financeiro**; os dados da conta não são sincronizados nem salvos no navegador.
+
 ## Como usar no celular
 
 - `Inicio`: dashboard principal.
@@ -68,3 +78,9 @@ Arquivos OFX/CSV enviados pelo WhatsApp criam previa para revisao. O JARVIS nao 
 O `/mobile-assistant` usa a voz original `JARVIS BR Premium` via SpeechSynthesis local do navegador. O microfone so e ativado por toque/click explicito, nao existe escuta continua oculta e audio bruto nao deve ser salvo em logs.
 
 Para ajustar a voz no celular, abra `/settings/voice`, aplique o preset e teste rate entre `0.90` e `0.95`, pitch entre `0.75` e `0.88` e volume `1`.
+
+## Atualizacao do instalador e modo flutuante — 2026-10-14
+
+- PC, Android e iPhone: instalar pelo navegador na rota `/install`; nesta fase e um PWA universal, sem APK ou EXE nativo publicado.
+- Avatar holografico em todas as telas autenticadas. Para falar, abra o JARVIS, clique em **Ativar conversa por voz** e conceda permissao ao microfone. O modo para ao fechar o painel ou deixar a aba oculta.
+- A conversa por voz usa o mesmo Brain, endpoint, historico e TTS configurado. O app nao fica aguardando a palavra de ativacao com a tela fechada.

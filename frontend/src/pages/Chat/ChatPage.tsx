@@ -8,6 +8,7 @@ type BrainMeta = {
   intent?: string;
   confidence?: number;
   needsConfirmation?: boolean;
+  usedSources?: Array<{ type: string; title: string; excerpt?: string; url?: string }>;
 };
 
 export function ChatPage() {
@@ -66,6 +67,12 @@ export function ChatPage() {
                   {message.metadata.needsConfirmation && <span className="rounded-full bg-yellow-400/10 px-2 py-1 text-yellow-100">confirmacao</span>}
                   <button type="button" onClick={() => sendFeedback("good")} className="rounded-full bg-white/5 px-2 py-1 hover:bg-white/10"><ThumbsUp size={12} /></button>
                   <button type="button" onClick={() => sendFeedback("bad")} className="rounded-full bg-white/5 px-2 py-1 hover:bg-white/10"><ThumbsDown size={12} /></button>
+                </div>
+              )}
+              {message.role === "assistant" && message.metadata?.usedSources?.some((source) => source.type === "web" && source.url) && (
+                <div className="mt-3 border-t border-white/10 pt-2 text-xs text-cyan-100">
+                  <p className="mb-1 font-semibold">Fontes consultadas</p>
+                  {message.metadata.usedSources.filter((source) => source.type === "web" && source.url).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="mr-3 inline-block underline">{source.title}</a>)}
                 </div>
               )}
             </div>

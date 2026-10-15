@@ -54,3 +54,13 @@ Rotas principais:
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+# Configurar voz Speechma ou ElevenLabs
+
+Entre no JARVIS como administrador e abra **Configurações → Integrações** (`/settings/integrations`). Na seção **Voz premium: Speechma e ElevenLabs**:
+
+1. Gere a chave API no painel da Speechma ou ElevenLabs e cole no campo correspondente. Não coloque a chave no código nem em mensagens.
+2. Clique em **Salvar configuração de voz**. O backend criptografa a chave; o painel só mostra uma versão mascarada.
+3. Clique em **Carregar vozes**, selecione a voz em português que preferir e salve novamente.
+4. Escolha Speechma ou ElevenLabs no campo **Provedor usado nas respostas faladas** e pressione **Testar voz**.
+
+As respostas faladas do JARVIS passam a usar o provedor ativo. Se a API estiver indisponível, o navegador assume como alternativa. Speechma anuncia plano Starter por US$ 9/mês na documentação de sua API; a voz do navegador continua disponível sem chave.

@@ -30,6 +30,9 @@ services:
       DATABASE_URL: postgresql://jarvis:jarvis_password@postgres:5432/jarvis_db?schema=public
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-3001}:3001"
+    networks:
+      - default
+      - homeassistant_private
 
   frontend:
     build:
@@ -92,3 +95,8 @@ volumes:
   jarvis_postgres_data:
   jarvis_n8n_postgres_data:
   jarvis_n8n_data:
+
+networks:
+  homeassistant_private:
+    external: true
+    name: homeassistant_private

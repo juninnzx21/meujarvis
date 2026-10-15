@@ -74,6 +74,11 @@ export function VoiceSettingsPage() {
         <p>Use velocidade entre 0.90 e 0.95, pitch entre 0.75 e 0.88 e volume em 1. Prefira voz masculina/neutra pt-BR; se nao houver, teste en-GB.</p>
         <h3 className="mb-3 mt-6 font-bold text-white">Limites reais</h3>
         <p>A qualidade depende das vozes instaladas no navegador/sistema. Este preset nao clona voz de ator, filme ou personagem.</p>
+        <div className="mt-6 rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+          <h3 className="font-bold text-white">Quer usar Speechma ou ElevenLabs?</h3>
+          <p className="mt-2">As chaves de API e a seleção do provedor ficam em Configurações de Integrações.</p>
+          <a className="btn btn-primary mt-3 inline-flex" href="/settings/integrations">Configurar voz premium</a>
+        </div>
       </aside>
     </section>
   );

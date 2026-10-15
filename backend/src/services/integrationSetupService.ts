@@ -124,7 +124,7 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       configured: Boolean(data.configured),
       maskedFields: { model: data.model || "", keyConfigured: Boolean(data.configured) },
       actions: ["test"],
-      manualSteps: ["Chaves de IA devem ficar em .env/secret manager da VPS; o painel mostra somente status e diagnostico."],
+      manualSteps: ["Cadastre ou troque a chave e o modelo em Configuracoes > Integracoes; a chave fica criptografada no backend e nao e devolvida ao navegador."],
       lastError: data.lastError || null,
       docsPath: "INTEGRATIONS_SETUP.md"
     };

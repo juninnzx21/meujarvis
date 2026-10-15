@@ -37,7 +37,13 @@ export function onError(callback: ErrorCallback) {
   errorHandler = callback;
 }
 
-export function startListening(options: { lang?: string; onStart?: () => void; onEnd?: () => void } = {}) {
+export function startListening(options: {
+  lang?: string;
+  onStart?: () => void;
+  onEnd?: () => void;
+  onTranscript?: RecognitionCallback;
+  onError?: ErrorCallback;
+} = {}) {
   if (!isSpeechRecognitionSupported()) {
     errorHandler?.("Reconhecimento de voz indisponivel neste navegador. Use o campo de texto.");
     return false;
@@ -50,11 +56,11 @@ export function startListening(options: { lang?: string; onStart?: () => void; o
   activeRecognition.onstart = options.onStart;
   activeRecognition.onend = options.onEnd;
   activeRecognition.onerror = (event) => {
-    errorHandler?.(event.error === "not-allowed" ? "Permissao do microfone negada pelo navegador." : "Nao foi possivel capturar o audio agora.");
+    (options.onError || errorHandler)?.(event.error === "not-allowed" ? "Permissao do microfone negada pelo navegador." : "Nao foi possivel capturar o audio agora.");
   };
   activeRecognition.onresult = (event) => {
     const transcript = event.results?.[0]?.[0]?.transcript || "";
-    transcriptHandler?.(transcript);
+    (options.onTranscript || transcriptHandler)?.(transcript);
   };
   activeRecognition.start();
   return true;

@@ -228,7 +228,7 @@ export const whatsappService = {
       buffer = Buffer.from(response.data);
     }
     if (!buffer || buffer.length === 0) return { status: "audio_unavailable", text: "", message: "Recebi o audio, mas nao consegui baixar/transcrever. Envie em texto ou reenvie o audio." };
-    const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" });
+    const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" }, userId);
     if (transcribed.text) {
       await writeSystemLog({ userId, module: "whatsapp", action: "audio_transcribed", message: "Audio WhatsApp transcrito com sucesso", metadata: { phone: inbound.cleanPhone, bytes: buffer.length } });
     }

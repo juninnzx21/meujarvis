@@ -1,11 +1,11 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { History, Mic, ShieldCheck, SlidersHorizontal, Square, Volume2, Waves } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api, friendlyError } from "../../services/api";
 import { isSpeechRecognitionSupported, onError, onTranscript, startListening, stopListening } from "../../services/speechRecognitionService";
 import { loadVoiceSettings, speakJarvis, stopSpeaking, testVoice } from "../../services/textToSpeechService";
 
-type VoiceHistoryItem = { text: string; reply: string; at: string };
+type VoiceHistoryItem = { text: string; reply: string; at: string; sources: Array<{ type: string; title: string; url?: string }> };
 
 export function VoicePage() {
   const [text, setText] = useState("");
@@ -14,6 +14,8 @@ export function VoicePage() {
   const [history, setHistory] = useState<VoiceHistoryItem[]>([]);
   const [error, setError] = useState("");
   const [conversationMode, setConversationMode] = useState(false);
+  const conversationModeRef = useRef(false);
+  const conversationIdRef = useRef("");
   const available = isSpeechRecognitionSupported();
   const voiceSettings = loadVoiceSettings();
 
@@ -34,13 +36,25 @@ export function VoicePage() {
     setError("");
     setStatus("processando");
     try {
-      const res = await api.post("/voice/process", { text: command });
+      const res = await api.post("/voice/process", { text: command, ...(conversationIdRef.current ? { conversationId: conversationIdRef.current } : {}) });
+      conversationIdRef.current = res.data.conversationId || conversationIdRef.current;
       const response = res.data.reply;
       setReply(response);
-      setHistory((items) => [{ text: command, reply: response, at: new Date().toLocaleTimeString("pt-BR") }, ...items].slice(0, 8));
+      const sources = Array.isArray(res.data.usedSources) ? res.data.usedSources : [];
+      setHistory((items) => [{ text: command, reply: response, at: new Date().toLocaleTimeString("pt-BR"), sources }, ...items].slice(0, 8));
       setStatus("falando");
-      speakJarvis(response);
-      window.setTimeout(() => setStatus(conversationMode ? "conversa pronta" : "pronto"), 900);
+      const finishResponse = () => {
+        if (conversationModeRef.current) {
+          setStatus("conversa pronta");
+          window.setTimeout(() => {
+            if (conversationModeRef.current) listen();
+          }, 250);
+        } else {
+          setStatus("pronto");
+        }
+      };
+      const started = await speakJarvis(response, undefined, { onEnd: finishResponse });
+      if (!started) finishResponse();
     } catch (err) {
       setError(friendlyError(err) || "Nao foi possivel processar o comando de voz agora.");
       setStatus("erro");
@@ -66,6 +80,8 @@ export function VoicePage() {
   }
 
   function stopAll() {
+    conversationModeRef.current = false;
+    setConversationMode(false);
     stopListening();
     stopSpeaking();
     setStatus("parado");
@@ -100,7 +116,13 @@ export function VoicePage() {
           <button type="button" className="btn btn-ghost" onClick={() => testVoice()}><Volume2 size={18} /> Testar voz</button>
           <button type="button" className="btn btn-ghost" onClick={stopAll}><Square size={18} /> Parar fala</button>
           <label className="flex items-center gap-2 rounded-xl bg-white/5 px-3 text-sm text-slate-200">
-            <input type="checkbox" checked={conversationMode} onChange={(event) => setConversationMode(event.target.checked)} />
+            <input type="checkbox" checked={conversationMode} onChange={(event) => {
+              const enabled = event.target.checked;
+              conversationModeRef.current = enabled;
+              setConversationMode(enabled);
+              if (enabled && status === "conversa pronta") listen();
+              if (!enabled) stopListening();
+            }} />
             Modo conversa com consentimento
           </label>
         </div>
@@ -122,6 +144,7 @@ export function VoicePage() {
             <div key={`${item.at}-${item.text}`} className="rounded-xl bg-white/5 p-3 text-sm">
               <p className="text-cyan-100">{item.at} - {item.text}</p>
               <p className="mt-1 text-slate-300">{item.reply}</p>
+              {item.sources.filter((source) => source.type === "web" && source.url).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="mt-2 mr-3 inline-block text-cyan-200 underline">{source.title}</a>)}
             </div>
           ))}
         </div>

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Bot, Lock } from "lucide-react";
+import { Bot, Download, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { friendlyError } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -32,13 +33,14 @@ export function LoginPage() {
       <motion.form initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} onSubmit={submit} className="glass w-full max-w-md rounded-3xl p-8">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-cyan-400/15 text-cyanx shadow-glow"><Bot size={34} /></div>
-          <h1 className="text-3xl font-black text-white">JARVIS Home AI</h1>
+          <h1 className="text-3xl font-black text-white">JARVIS 2.0</h1>
           <p className="mt-2 text-slate-300">Seu assistente inteligente para casa, rotina e automações.</p>
         </div>
         <label className="mb-4 block text-sm font-semibold text-slate-300">Email<input className="input mt-2" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
         <label className="mb-4 block text-sm font-semibold text-slate-300">Senha<input className="input mt-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
         {error && <p className="mb-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{error}</p>}
         <button disabled={loading} className="btn btn-primary w-full"><Lock size={18} /> {loading ? "Autenticando..." : "Entrar"}</button>
+        <Link to="/install" className="install-login-link"><Download size={16} /> Instalar JARVIS no PC ou Android</Link>
         <p className="mt-5 rounded-xl bg-white/5 p-3 text-sm text-slate-300">Demo: admin@jarvis.local / 12345678</p>
       </motion.form>
     </main>

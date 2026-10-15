@@ -1,10 +1,11 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
 import { integrationConfigService, integrationProviders } from "../../services/integrationConfigService.js";
 import { integrationSetupService, setupProviders } from "../../services/integrationSetupService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ttsService } from "../../services/ttsService.js";
 
 const router = Router();
 router.use(authMiddleware);
@@ -23,6 +24,9 @@ const providerSchema = z.object({
 const setupProviderSchema = z.object({
   provider: z.enum(setupProviders)
 });
+const aiModelProviderSchema = z.object({
+  provider: z.enum(["openai", "gemini", "ollama"])
+});
 
 router.get("/", asyncHandler(async (req, res) => res.json(await integrationConfigService.status(req.user!.id))));
 router.get("/status", asyncHandler(async (req, res) => res.json(await integrationConfigService.status(req.user!.id))));
@@ -30,6 +34,23 @@ router.get("/config", asyncHandler(async (req, res) => res.json(await integratio
 router.get("/logs", asyncHandler(async (req, res) => res.json(await integrationConfigService.logs(req.user!.id))));
 router.get("/setup-wizard", asyncHandler(async (req, res) => res.json(await integrationSetupService.wizard(req.user!.id))));
 router.get("/events", asyncHandler(async (req, res) => res.json(await integrationConfigService.events(req.user!.id))));
+router.get("/tts/voices/:provider", asyncHandler(async (req, res) => {
+  if (req.params.provider !== "speechma" && req.params.provider !== "elevenlabs") return res.status(400).json({ message: "Provedor de voz inválido." });
+  res.json(await ttsService.voices(req.user!.id, req.params.provider));
+}));
+router.get("/tts/quotas", asyncHandler(async (req, res) => res.json(await ttsService.quotas(req.user!.id))));
+router.post("/tts/fish-audio/clone", express.raw({ type: "audio/mpeg", limit: "8mb" }), asyncHandler(async (req, res) => {
+  assertAdmin(req.user!.role);
+  if (!Buffer.isBuffer(req.body) || req.body.length < 4) return res.status(400).json({ message: "Envie um arquivo MP3 para criar a voz personalizada." });
+  const hasMp3Header = req.body.subarray(0, 3).toString("ascii") === "ID3" || (req.body[0] === 0xff && (req.body[1] & 0xe0) === 0xe0);
+  if (!hasMp3Header) return res.status(415).json({ message: "O arquivo enviado não parece ser um MP3 válido." });
+  const title = typeof req.query.title === "string" ? req.query.title : "JARVIS - Voz personalizada";
+  res.json(await ttsService.cloneFishAudioVoice(req.user!.id, req.body, "audio/mpeg", title));
+}));
+router.get("/models/:provider", validate(aiModelProviderSchema, "params"), asyncHandler(async (req, res) => {
+  assertAdmin(req.user!.role);
+  res.json(await integrationConfigService.listAiModels(req.user!.id, req.params.provider as "openai" | "gemini" | "ollama"));
+}));
 router.get("/setup/summary", asyncHandler(async (req, res) => res.json(await integrationSetupService.summary(req.user!.id))));
 router.get("/setup", asyncHandler(async (req, res) => res.json(await integrationSetupService.list(req.user!.id))));
 router.get("/setup/:provider", validate(setupProviderSchema, "params"), asyncHandler(async (req, res) => {

@@ -107,7 +107,7 @@ describe("JARVIS Home AI API", () => {
     await prisma.assistantDraftAction.deleteMany({ where: { userId } });
     await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
-    await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token", "n8n_webhook_url", "n8n_api_key"] } } });
+    await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token", "n8n_webhook_url", "n8n_api_key", "openai_api_key", "openai_model", "gemini_api_key", "gemini_model", "ai_primary_provider", "ollama_base_url", "ollama_model"] } } });
     if (schedulerTaskIds.length > 0) {
       await prisma.task.deleteMany({ where: { id: { in: schedulerTaskIds } } });
     }
@@ -212,6 +212,31 @@ describe("JARVIS Home AI API", () => {
 
     const draft = await request(app).post("/api/brain/execute-draft").set(auth()).send({ draftAction: { type: "home.action", entity: "lock.front_door" } }).expect(200);
     expect(draft.body.status).toBe("confirmation_required");
+
+    const memoryTitle = "memória de regressão não persistida";
+    const memoryBefore = await prisma.memory.count({ where: { userId, title: memoryTitle } });
+    const memoryDraft = await request(app)
+      .post("/api/brain/ask")
+      .set(auth())
+      .send({ message: `lembre que ${memoryTitle}`, allowExternalAI: false, allowTools: false })
+      .expect(200);
+    expect(memoryDraft.body.needsConfirmation).toBe(true);
+    expect(memoryDraft.body.usedTools).toContainEqual(expect.objectContaining({ tool: "createMemory", status: "confirmation_required" }));
+    expect(await prisma.memory.count({ where: { userId, title: memoryTitle } })).toBe(memoryBefore);
+
+    const taskTitle = "tarefa de regressão não persistida";
+    const taskBefore = await prisma.task.count({ where: { userId, title: taskTitle } });
+    const taskDraft = await request(app)
+      .post("/api/brain/ask")
+      .set(auth())
+      .send({ message: `crie uma tarefa ${taskTitle}`, allowExternalAI: false, allowTools: false })
+      .expect(200);
+    expect(taskDraft.body.needsConfirmation).toBe(true);
+    expect(taskDraft.body.usedTools).toContainEqual(expect.objectContaining({ tool: "createTask", status: "confirmation_required" }));
+    expect(await prisma.task.count({ where: { userId, title: taskTitle } })).toBe(taskBefore);
+
+    await request(app).post("/api/brain/execute-draft").set(auth()).send({ unexpected: true }).expect(400);
+    await request(app).post("/api/brain/execute-draft").set(auth()).send({ draftAction: {} }).expect(400);
 
     const feedback = await request(app).post("/api/brain/feedback").set(auth()).send({ message: "prefiro respostas curtas e praticas", savePreference: true }).expect(201);
     expect(feedback.body.status).toBe("success");
@@ -350,6 +375,32 @@ describe("JARVIS Home AI API", () => {
 
     const cleared = await request(app).delete("/api/finance/config").set(auth()).expect(200);
     expect(cleared.body.status).toBe("not_configured");
+
+    vi.mocked(axios.request)
+      .mockResolvedValueOnce({ status: 200, data: { data: { requires_2fa: true, challenge_token: "temporary-finance-challenge-token" } } })
+      .mockResolvedValueOnce({ status: 200, data: { data: { token: "fake-finance-token-after-2fa", user: { email: "finance@example.com" } } } })
+      .mockResolvedValueOnce({ status: 200, data: { data: [{ id: "acc-primary", name: "PJ DO INTER" }] } });
+    const login = await request(app)
+      .post("/api/finance/auth/login")
+      .set(auth())
+      .send({ apiUrl: "https://controlefinanceiro.test", email: "finance@example.com", password: "fake-password" })
+      .expect(200);
+    expect(login.body.status).toBe("requires_2fa");
+    expect(login.body.challengeToken).toBe("temporary-finance-challenge-token");
+
+    const linked = await request(app)
+      .post("/api/finance/auth/challenge")
+      .set(auth())
+      .send({ apiUrl: "https://controlefinanceiro.test", email: "finance@example.com", challengeToken: login.body.challengeToken, code: "123456" })
+      .expect(200);
+    expect(linked.body.status).toBe("configured");
+    expect(JSON.stringify(linked.body)).not.toContain("fake-finance-token-after-2fa");
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 200, data: { data: { id: "finance-user", email: "finance@example.com" } } });
+    const connected = await request(app).post("/api/finance/test-connection").set(auth()).expect(200);
+    expect(connected.body.status).toBe("success");
+
+    await request(app).delete("/api/finance/auth").set(auth()).expect(200);
   });
 
   it("uses OpenAI fallback safely when the provider returns quota errors", async () => {
@@ -907,7 +958,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: {
             documentMessage: {
               fileName: "Extrato-17-10-2024-a-16-05-2026-CSV.csv",
@@ -928,7 +979,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: { conversation: "entrada pix recebido R$ 120,00 cliente Joao" }
         }
       })
@@ -940,7 +991,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: {
             documentMessage: {
               fileName: "extrato.csv",
@@ -960,7 +1011,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: {
             documentMessage: {
               fileName: "Extrato-17-10-2024-a-16-05-2026-OFX.ofx",
@@ -1053,6 +1104,85 @@ describe("JARVIS Home AI API", () => {
     expect(safeReset.body.status).toBe("confirmation_required");
 
     await prisma.setting.deleteMany({ where: { userId, key: { startsWith: "home_assistant" } } });
+  });
+
+  it("stores AI provider keys encrypted and routes user chat through the selected model", async () => {
+    const openAiKey = `sk-proj-test-${"a".repeat(36)}`;
+    const geminiKey = `AIza${"b".repeat(36)}`;
+    await request(app).put("/api/integrations/config/openai").set(auth()).send({ apiKey: openAiKey, model: "gpt-4o-mini" }).expect(200)
+      .expect((res) => {
+        expect(res.body.providers.openai).toMatchObject({ configured: true, keyConfigured: true, source: "painel", model: "gpt-4o-mini" });
+        expect(JSON.stringify(res.body)).not.toContain(openAiKey);
+      });
+    await request(app).put("/api/integrations/config/gemini").set(auth()).send({ apiKey: geminiKey, model: "gemini-2.5-flash" }).expect(200)
+      .expect((res) => {
+        expect(res.body.providers.gemini).toMatchObject({ configured: true, keyConfigured: true, source: "painel", model: "gemini-2.5-flash" });
+        expect(JSON.stringify(res.body)).not.toContain(geminiKey);
+      });
+
+    const storedOpenAi = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "openai_api_key" } } });
+    const storedGemini = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "gemini_api_key" } } });
+    expect(String(storedOpenAi.value)).toMatch(/^enc:v1:/);
+    expect(String(storedGemini.value)).toMatch(/^enc:v1:/);
+    expect(String(storedOpenAi.value)).not.toContain(openAiKey);
+    expect(String(storedGemini.value)).not.toContain(geminiKey);
+
+    const completion = vi.fn().mockResolvedValue({ choices: [{ message: { content: "Resposta via modelo da conta." } }] });
+    const openAiModelsList = vi.fn().mockResolvedValue({ data: [{ id: "gpt-4o-mini" }, { id: "text-embedding-3-small" }] });
+    openAiService.setClientForTests({ chat: { completions: { create: completion } }, models: { list: openAiModelsList } } as never);
+    const reply = await openAiService.complete([{ role: "user", content: "teste seguro" }], userId);
+    expect(reply).toContain("modelo da conta");
+    expect(completion).toHaveBeenCalledWith(expect.objectContaining({ model: "gpt-4o-mini" }));
+    const openAiTest = await request(app).post("/api/integrations/test/openai").set(auth()).expect(200);
+    expect(openAiTest.body.status).toBe("success");
+    expect(openAiModelsList).toHaveBeenCalledOnce();
+    const openAiModels = await request(app).get("/api/integrations/models/openai").set(auth()).expect(200);
+    expect(openAiModels.body).toMatchObject({ status: "success", models: ["gpt-4o-mini"] });
+    expect(openAiModelsList).toHaveBeenCalledTimes(2);
+    openAiService.setClientForTests(null);
+
+    vi.mocked(axios.get)
+      .mockResolvedValueOnce({ status: 200, data: { name: "models/gemini-2.5-flash" } } as never)
+      .mockResolvedValueOnce({ status: 200, data: { models: [
+        { name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] },
+        { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }
+      ] } } as never);
+    const geminiTest = await request(app).post("/api/integrations/test/gemini").set(auth()).expect(200);
+    expect(geminiTest.body.status).toBe("success");
+    const geminiModels = await request(app).get("/api/integrations/models/gemini").set(auth()).expect(200);
+    expect(geminiModels.body).toMatchObject({ status: "success", models: ["gemini-2.5-flash"] });
+
+    const selection = await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "gemini" }).expect(200);
+    expect(selection.body.providers.ai_selection.primaryProvider).toBe("gemini");
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { candidates: [{ content: { parts: [{ text: "Resposta via Gemini selecionado." }] } }] } } as never);
+    const selectedReply = await openAiService.complete([{ role: "user", content: "teste provedor escolhido" }], userId);
+    expect(selectedReply).toContain("Gemini selecionado");
+    const restoredSelection = await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "auto" }).expect(200);
+    expect(restoredSelection.body.providers.ai_selection.primaryProvider).toBe("auto");
+
+    await request(app).put("/api/integrations/config/ollama").set(auth()).send({ baseUrl: "https://example.com", model: "llama3.2:3b" }).expect(400);
+    const localOllama = await request(app).put("/api/integrations/config/ollama").set(auth()).send({ baseUrl: "http://100.96.1.2:11434", model: "llama3.2:3b" }).expect(200);
+    expect(localOllama.body.providers.ollama).toMatchObject({ configured: true, model: "llama3.2:3b", baseUrl: "http://100.96.1.2:11434" });
+    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { models: [{ name: "llama3.2:3b" }, { name: "qwen3:4b" }] } } as never);
+    const localModels = await request(app).get("/api/integrations/models/ollama").set(auth()).expect(200);
+    expect(localModels.body).toMatchObject({ status: "success", models: ["llama3.2:3b", "qwen3:4b"] });
+    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { models: [{ name: "llama3.2:3b" }] } } as never);
+    const localTest = await request(app).post("/api/integrations/test/ollama").set(auth()).expect(200);
+    expect(localTest.body).toMatchObject({ status: "success", model: "llama3.2:3b" });
+    const selectedLocal = await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "ollama" }).expect(200);
+    expect(selectedLocal.body.providers.ai_selection.primaryProvider).toBe("ollama");
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { message: { content: "Resposta local do Ollama." } } } as never);
+    const localReply = await openAiService.complete([{ role: "user", content: "responda em português" }], userId);
+    expect(localReply).toBe("Resposta local do Ollama.");
+    expect(vi.mocked(axios.post).mock.calls.at(-1)?.[0]).toBe("http://100.96.1.2:11434/api/chat");
+    await request(app).put("/api/integrations/config/ollama").set(auth()).send({ baseUrl: "", model: "llama3.2:3b" }).expect(200);
+    await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "auto" }).expect(200);
+
+    const status = await request(app).get("/api/integrations/status").set(auth()).expect(200);
+    expect(status.body.providers.openai.source).toBe("painel");
+    expect(status.body.providers.gemini.source).toBe("painel");
+    expect(JSON.stringify(status.body)).not.toContain(openAiKey);
+    expect(JSON.stringify(status.body)).not.toContain(geminiKey);
   });
 
   it("lists local n8n workflows and returns manual webhook guidance safely", async () => {
