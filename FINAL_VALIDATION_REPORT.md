@@ -356,3 +356,7 @@ Verificação segura da Evolution: GET de estado da instância retornou sucesso 
 ### Voz no navegador — seleção masculina
 
 A seleção local não considera mais “Brasil” como indicador de voz masculina e prioriza nomes masculinos pt-BR como Antonio/Antônio. Um teste garante que a voz Google genérica não tenha prioridade sobre uma voz masculina brasileira instalada. No estado atual da VPS, não há chave nem voice ID salvos nos três provedores remotos; a consulta real de cotas retornou `not_configured` para Fish Audio, ElevenLabs e Speechma. A aplicação não consegue criar a voz natural do JARVIS até que uma credencial válida e um ID de voz sejam configurados em `/settings/integrations`.
+
+### Confirmação de produção da seleção de voz
+
+Frontend da release `91d297c` publicado após CI verde. Página e bundle públicos HTTP 200; bundle conferido com o seletor novo e sem a regra antiga de gênero baseada em “Brasil”. Health público permanece 200 e health detalhado 401 sem autenticação. Em tempo de execução, o usuário ainda está selecionado em `browser`; a consulta de cotas retornou `not_configured` para os três serviços externos porque faltam as chaves e os voice IDs. Não foi possível validar síntese premium. Configure em `/settings/integrations` e use `auto`; a chave Fish Audio anteriormente compartilhada precisa ser rotacionada antes de voltar a ser usada.

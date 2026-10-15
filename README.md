@@ -472,3 +472,7 @@ Na Central de Integrações, configure a chave Fish Audio e use **Selecionar MP3
 ## Atualizacao de producao 2026-10-15 — release d9487c4
 
 O health detalhado passou a exigir JWT e usa status de integrações do usuário autenticado. CI verde para backend/testes, companion Windows e APK de validação Android. Em produção, frontend 200, health público 200, health detalhado 401 sem sessão e 200 autenticado, banco e scheduler saudáveis. O teste GET da Evolution retornou sessão `open`; webhook e workflows não foram executados. Home Assistant está sem configuração e precisa de URL alcançável pela VPS e token de acesso.
+
+## Voz do navegador e disponibilidade dos provedores — 2026-10-15
+
+A seleção automática foi atualizada para priorizar vozes masculinas pt-BR identificadas pelo nome; “Brasil” não é mais tratado como marcador masculino. Dois testes cobrem o caso de Google Português do Brasil versus Microsoft Antonio. CI da release `91d297c` passou em validate, desktop e android; o frontend foi recompilado sem cache e o bundle público confirmado contém o seletor novo. O estado real do usuário na VPS está definido como `browser`, e nenhum provedor Fish Audio, ElevenLabs ou Speechma tem chave/voice ID configurados. Por isso, ainda não há TTS premium nem consulta de cota disponível. Configure em `/settings/integrations` e escolha `auto` para habilitar preferência por quota disponível.

@@ -296,3 +296,7 @@ O serviço `ttsService` armazena a chave Fish Audio criptografada e o ID da voz.
 - `/api/health/full` agora exige JWT e reporta n8n, WhatsApp/Evolution e Home Assistant usando as configurações do usuário autenticado.
 - O health completo deixa de ser uma rota pública, pois inclui eventos recentes e contagens operacionais. Monitores sem sessão devem usar `/api/health/public`.
 - Tokens e chaves seguem mascarados; a validação autenticada é feita no CI porque esta cópia não tem banco local configurado.
+
+## Selecao da voz local e estado de provedores
+
+`selectBestJarvisVoice` prefere uma voz com nome masculino explícito em pt-BR (ex.: Antonio) antes de usar uma voz pt-BR genérica. O nome/idioma “Brasil” não é usado para inferir gênero. A lista depende do sistema operacional e navegador do usuário; configuração remota em `ttsService` continua sendo o meio para voz consistente entre dispositivos. No runtime, o modo `auto` consulta cota dos provedores configurados antes de sintetizar.

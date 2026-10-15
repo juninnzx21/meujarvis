@@ -394,3 +394,7 @@ Commit `d9487c4` implantado no backend da VPS após CI verde (validate, desktop 
 ## Voz local do navegador — 2026-10-15
 
 A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identificáveis e deixou de tratar “Brasil” no nome como indicador de gênero. A suíte frontend inclui teste de regressão para Google Português do Brasil e Microsoft Antonio. A VPS não possui chaves/IDs de voz salvos para Fish Audio, ElevenLabs e Speechma; suas cotas retornaram `not_configured`.
+
+## Publicacao da correcao de voz — 2026-10-15
+
+A release `91d297c` está publicada. A página e o bundle público retornaram 200 e o bundle contém o seletor corrigido. A VPS segue saudável (app, banco e scheduler `ok`) com todos os cinco containers JARVIS/n8n em execução. A seleção local agora procura primeiro nomes masculinos pt-BR; o modo premium ainda está bloqueado porque não há chaves/IDs de Fish Audio, ElevenLabs ou Speechma salvos. O usuário pode configurar credenciais novas em `/settings/integrations` e selecionar `auto`. A credencial Fish Audio compartilhada na conversa não deve ser reutilizada; gere uma nova antes de salvar.

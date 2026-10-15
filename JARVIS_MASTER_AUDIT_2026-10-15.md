@@ -74,3 +74,11 @@ A chamada real de teste de conexão executou somente o GET de estado da instânc
 ### Seleção da voz local do navegador — 2026-10-15
 
 Corrigida a seleção automática do preset JARVIS: a palavra “Brasil” deixou de ser usada como sinal de voz masculina, e nomes masculinos comuns em pt-BR (incluindo Antonio/Antônio) são priorizados. Se o dispositivo não tiver uma voz masculina identificável, a seleção ainda pode cair na voz pt-BR disponível; para uma voz masculina natural consistente, configure um provedor remoto e voice ID na Central de Integrações. Na produção auditada, Fish Audio, ElevenLabs e Speechma estão sem credencial/voice ID salvos, então nenhuma cota remota pode ser consultada ou sintetizada.
+
+### Bundle de voz publicado — 2026-10-15
+
+- CI `38733694806` concluiu com sucesso para `91d297c` nos três jobs. Frontend: 37 testes locais e build aprovados.
+- Build da interface foi feito sem cache após detectar que a primeira imagem manteve o bundle antigo. A imagem antiga permanece em `rollback-voice-20261015`.
+- Só `jarvis-frontend` foi recriado; o backend, PostgreSQL e n8n continuaram ativos. Site e health público HTTP 200; health completo sem autenticação HTTP 401.
+- Bundle público HTTP 200 contém a nova prioridade masculina e não contém a regra antiga que interpretava “Brasil” como voz masculina.
+- A VPS ainda está em `browser`; quotas reais retornaram `not_configured` para Fish Audio, ElevenLabs e Speechma por ausência de chaves e IDs. A voz remota depende de nova credencial e voice ID salvos em `/settings/integrations`, e então selecionar `auto`.
