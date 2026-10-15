@@ -134,6 +134,14 @@ describe("JARVIS Home AI API", () => {
     env.ALLOW_DEMO_LOGIN = previous;
   });
 
+  it("exposes the selected TTS provider header to the configured frontend", async () => {
+    const response = await request(app)
+      .options("/api/voice/speech")
+      .set("Origin", "http://localhost:5173")
+      .set("Access-Control-Request-Method", "POST")
+      .expect(204);
+    expect(response.headers["access-control-expose-headers"]).toContain("X-Jarvis-TTS-Provider");
+  });
   it("reports health and safe integration fallback status", async () => {
     const health = await request(app).get("/api/health").expect(200);
     expect(health.body.app).toBe("ok");

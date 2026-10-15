@@ -11,7 +11,7 @@ export const app = express();
 
 app.set("trust proxy", 1);
 app.use(helmet());
-app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()), credentials: true }));
+app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()), credentials: true, exposedHeaders: ["X-Jarvis-TTS-Provider"] }));
 app.use(express.json({ limit: "1mb" }));
 app.use((req, res, next) => {
   res.on("finish", () => logger.info({ method: req.method, url: req.originalUrl, statusCode: res.statusCode }, "http request"));
