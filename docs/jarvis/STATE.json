@@ -136,12 +136,12 @@
     "A cópia principal E:/jarvis-home-assistant não tem metadados Git; fonte versionada continua isolada no worktree até reconciliar a raiz.",
     "Repositório JARVIS não aparece na lista de projetos Codex disponível para associar automação cron."
   ],
-  "lastCommit": "2932b70f91dd9f81a089d9e014e0c36f606c88e0",
+  "lastCommit": "10f76ff23091f3baca633f00ad4274895ff92a49",
   "nextTaskId": "SEC-002",
   "checkpoint": {
     "branch": "codex/sec-001-004-webhook-media-20261016",
     "initialSha": "eec24a6f01cd2b60da358a198da3ba32641afe1e",
-    "finalSha": "2932b70f91dd9f81a089d9e014e0c36f606c88e0",
+    "finalSha": "10f76ff23091f3baca633f00ad4274895ff92a49",
     "workingTreeChanges": "integrated migration and 82 backend tests validated; frontend 47 and desktop 4 passed; runner expiry parsing fixed and isolated lock/gate tests passed; temporary PostgreSQL stopped and removed; production unchanged",
     "status": "IN_REVIEW",
     "worktree": "E:/jarvis-home-assistant/.codex-worktrees/jarvis-sec-20261016"

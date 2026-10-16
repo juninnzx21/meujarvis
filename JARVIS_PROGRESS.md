@@ -79,3 +79,6 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Backend (82 testes), frontend (47), desktop (4), typechecks e builds permanecem aprovados conforme execução anterior; mudança adicional do runner foi validada por testes de comportamento acima. Android depende da CI (JDK/SDK ausentes localmente).
 - Nenhuma alteração na VPS, produção, DNS, containers ou serviços; nenhum segredo real foi usado. SEC-001/SEC-004 continuam `IN_REVIEW`, aguardando E2E autenticado em staging Evolution.
 - Próximo passo: revisar diff final, atualizar estado e preparar commits; push de branch para executar CI remota. Só criar PR separado para a branch head do PR #1 se toda CI terminar verde; sem merge/deploy.
+
+- Commit local da implementação e evidências: `10f76ff23091f3baca633f00ad4274895ff92a49` (`test: validate webhook security with isolated postgres`); branch continua isolada e sem deploy.
+
