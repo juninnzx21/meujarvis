@@ -45,3 +45,11 @@
 - **Contexto:** a pasta principal indicada por `AGENTS.md` não contém `.git`; a cópia versionada é o head do PR #1. O webhook não tinha autenticação visível e o download podia encaminhar a chave Evolution a URL de mídia do evento.
 - **Decisão:** usar worktree `E:/jarvis-home-assistant/.codex-worktrees/jarvis-sec-20261016`, branch `codex/sec-001-004-webhook-media-20261016`, base `eec24a6f01cd2b60da358a198da3ba32641afe1e`. Segredo aleatório criptografado e configurado em header, allowlist de remetentes, validações de evento/instância/ID, rate limit, ID idempotente persistido. Não requisitar URL de mídia arbitrária; limitar base64 inline a 8 MiB.
 - **Consequência:** migration e integração real dependem de PostgreSQL descartável. Tarefas permanecem IN_REVIEW; nenhum commit/push/deploy; automação horária permanece pausada.
+
+## ADR-0006 — PostgreSQL temporário local em diretório isolado
+
+- **Data:** 2026-10-16 UTC
+- **Status:** aceita para testes locais
+- **Contexto:** Docker Desktop estava parado e não foi iniciado para não reativar os containers existentes. A instalação local PostgreSQL 15.19 estava sem `dict_snowball.dll` e o `initdb` falhou.
+- **Decisão:** usar binários portáteis PostgreSQL 15.19 da EDB extraídos em pasta própria de `%TEMP%`; criar cluster fictício com trust local, escutando somente em `127.0.0.1:55432`, e removê-lo após validação. Sem alterar instalação de sistema, serviços, firewall ou arquivos de produção.
+- **Consequência:** migration, compatibilidade com linhas legadas, rollback/reaplicação e suíte backend foram validados; E2E Evolution/staging permanece pendente.

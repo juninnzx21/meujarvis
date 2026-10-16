@@ -316,4 +316,8 @@ As rotas de conversa do chat e da voz têm timeout de cliente de 90 segundos par
 
 ## Webhook Evolution — branch de revisão
 
-Na branch local `codex/sec-001-004-webhook-media-20261016`, o webhook recebe segredo aleatório em header configurado por instância, exige evento/instância/ID e remetente allowlisted, aplica rate limit e deduplica IDs no banco. URLs de mídia do payload não são requisitadas; áudio/anexo aceitam apenas base64 inline limitado a 8 MiB. Migration e integração PostgreSQL não testadas; produção inalterada.
+Na branch `codex/sec-001-004-webhook-media-20261016`, o endpoint verifica o segredo no header com comparação em tempo constante; valida evento `MESSAGES_UPSERT`, instância, ID da mensagem, remetente permitido e origem individual; aplica rate limit antes do processamento e salva o ID externo sob índice único para impedir replay mesmo entre reinícios/workers. Os segredos de webhook e Evolution são armazenados cifrados em `Setting`.
+
+O conteúdo de mídia fornecido como URL nunca é buscado. Áudio/anexo só aceitam base64 inline; o decodificador limita o tamanho bruto antes de remover espaços, validar e decodificar. Seu teto interno é 8 MiB; o middleware JSON comum do Express rejeita requests acima de 1 MiB antes da rota, portanto o máximo efetivamente aceito via webhook é menor. O limite global foi mantido para controlar consumo de memória.
+
+A migration `20261016170000_whatsapp_webhook_replay_guard` adiciona um campo nullable e índice único. Em banco PostgreSQL temporário, duas mensagens legadas sem ID sobreviveram à aplicação e à sequência rollback/reaplicação. Testes integrados locais passaram; a branch não está implantada e ainda requer E2E autenticado com Evolution em staging.

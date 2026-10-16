@@ -448,6 +448,9 @@ O APK TWA assinado foi compilado nesta revisão e validado pelo `apksigner`; o c
 
 ## Segurança WhatsApp — 16/10/2026
 
-- SEC-001/SEC-004: código em revisão na branch codex/sec-001-004-webhook-media-20261016; proteção do webhook e remoção de downloads por URL externa implementadas localmente. Não publicado nem validado em produção.
-- Backend typecheck/build e 34 testes sem DB passaram; testes focados 5/5; frontend validate 47/47; schema Prisma válido.
-- Integração/migration bloqueadas pela ausência de PostgreSQL descartável (Docker daemon inativo, porta 5432 indisponível). Consulte docs/jarvis/TEST_EVIDENCE.md.
+- SEC-001/SEC-004 estão em revisão local na branch `codex/sec-001-004-webhook-media-20261016`; produção não foi alterada.
+- PostgreSQL 15.19 descartável: migration aplicada, dados legados preservados, rollback SQL e reexecução validados. Backend `npm run validate` passou com 82 testes; frontend com 47; desktop com 4; typechecks e builds passaram.
+- Integração webhook validada com Supertest e banco local, não com sessão real da Evolution. E2E em staging continua pendente.
+- Parser global Express limita JSON a 1 MiB enquanto o limite interno de mídia é 8 MiB; requests acima de 1 MiB são recusados antes da rota. Nenhum aumento foi feito.
+- `npm ci` do desktop reportou 8 vulnerabilidades moderadas em dependências de desenvolvimento; auditoria somente de produção (`npm audit --omit=dev`) retornou zero no backend, frontend e desktop. Nenhuma dependência foi atualizada.
+- Docker Desktop ficou parado para evitar religar serviços locais. Agendamento Codex mantém PAUSED e XML Windows disabled. Consulte `docs/jarvis/TEST_EVIDENCE.md`.

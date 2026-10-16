@@ -44,8 +44,11 @@ function asPhoneList(value: unknown): string[] {
 }
 
 function decodeInboundBase64(value: string, maxBytes = 8 * 1024 * 1024) {
+  const maxEncodedLength = Math.ceil(maxBytes / 3) * 4;
+  // Reject oversized input before normalization allocates another large string.
+  if (value.length > maxEncodedLength + 128) return null;
   const normalized = value.replace(/^data:[^;]+;base64,/, "").replace(/\s/g, "");
-  if (!normalized || normalized.length > Math.ceil(maxBytes / 3) * 4 + 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(normalized)) return null;
+  if (!normalized || normalized.length > maxEncodedLength + 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(normalized)) return null;
   const buffer = Buffer.from(normalized, "base64");
   return buffer.length > 0 && buffer.length <= maxBytes ? buffer : null;
 }

@@ -417,4 +417,8 @@ Deploy da melhoria de diagnóstico — commit `13cf8af`, CI `38783407549` conclu
 
 ## Validação isolada SEC-001/SEC-004 — 16/10/2026
 
-Implementação local em revisão; não implantada. Backend typecheck/build passaram; testes sem DB 34/34, focados 5/5; frontend validate 47/47; schema Prisma válido; auditorias de produção sem vulnerabilidades reportadas. A validação backend completa parou por EPERM na primeira tentativa de prisma generate (repetição isolada passou); integração não rodou por falta de PostgreSQL descartável. Nada comprova funcionamento em Evolution/produção. Evidências em docs/jarvis/TEST_EVIDENCE.md.
+Implementação local em revisão; não implantada. PostgreSQL 15.19 temporário aplicou a migration sobre uma base com duas mensagens legadas; rollback e reaplicação preservaram os dois registros. Schema Prisma válido. Backend `npm run validate` passou (9 arquivos/82 testes), frontend passou (8/47) e desktop passou (4); builds e typechecks passaram.
+
+Os casos verificam segredo ausente/incorreto/correto, evento inválido, instância e remetente, replay/idempotência persistida, rate limit, segredo cifrado, isolamento de usuário, base64 válida/excessiva e rejeição de URL externa sem fetch. Não houve mensagem WhatsApp real, chamada a provedor de IA, E2E Evolution ou teste na VPS. O parser HTTP do Express permanece com limite JSON de 1 MiB; o teto de 8 MiB pertence ao decodificador interno.
+
+Auditoria `npm audit --omit=dev --audit-level=moderate` retornou zero vulnerabilidades de produção em backend, frontend e desktop. `npm ci` do desktop reportou oito advisories moderados na árvore de desenvolvimento; dependências não foram atualizadas. Android não foi validado localmente por falta de JDK/SDK e depende da CI. A automação horária permanece PAUSED. Evidências completas em `docs/jarvis/TEST_EVIDENCE.md`.

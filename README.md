@@ -505,4 +505,6 @@ Em **Configurações > Voz**, o botão **Testar voz** mostra a mensagem segura r
 
 ## Auditoria de segurança WhatsApp — 2026-10-16
 
-SEC-001/SEC-004 têm implementação local em revisão na branch `codex/sec-001-004-webhook-media-20261016`, worktree `E:/jarvis-home-assistant/.codex-worktrees/jarvis-sec-20261016`. Webhook exige header secreto, evento/instância/ID e remetente configurado; mídia por URL externa não é baixada e base64 tem limite de 8 MiB. Nada foi implantado. Integração de banco aguarda PostgreSQL descartável; evidências em `docs/jarvis/TEST_EVIDENCE.md`.
+SEC-001/SEC-004 seguem em revisão local na branch `codex/sec-001-004-webhook-media-20261016`. O webhook valida o segredo no header, evento, instância, ID e remetente permitido; limita requisições e persiste IDs externos para ignorar replay. Mídia nunca é buscada por URL fornecida no evento e o decodificador rejeita base64 acima do limite antes de normalizar ou alocar o buffer.
+
+Em validação isolada, PostgreSQL 15.19 temporário aplicou a migration sobre dados legados, preservou duas mensagens sem ID externo e passou por rollback/reaplicação. Backend: 82 testes; frontend: 47; desktop: 4; typechecks e builds passaram. O teto interno do decodificador é 8 MiB, mas o parser JSON global do Express limita cada request a 1 MiB; não aumentar sem revisão de memória/DoS. Esta branch não foi implantada, e a integração real com Evolution/staging segue pendente. Consulte `docs/jarvis/TEST_EVIDENCE.md`.

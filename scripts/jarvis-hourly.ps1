@@ -23,7 +23,11 @@ $lockDir = Join-Path $env:LOCALAPPDATA 'JARVIS/CodexAutomation'
 $lockPath = Join-Path $lockDir 'run.lock'
 if (Test-Path $lockPath) {
     $existing = Get-Content $lockPath -Raw | ConvertFrom-Json
-    $expiry = [DateTime]::Parse($existing.expiresUtc).ToUniversalTime()
+    if ($existing.expiresUtc -is [DateTime]) {
+        $expiry = $existing.expiresUtc.ToUniversalTime()
+    } else {
+        $expiry = [DateTimeOffset]::Parse([string]$existing.expiresUtc, [Globalization.CultureInfo]::InvariantCulture).UtcDateTime
+    }
     if ($expiry -gt [DateTime]::UtcNow) {
         Write-Output "SKIPPED_LOCKED runId=$($existing.runId) expiresUtc=$($existing.expiresUtc)"
         exit 0

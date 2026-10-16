@@ -23,6 +23,20 @@
 
 Use `docs/audits/jarvis-v2-functional/` como auditoria baseline da versão 2.0.0. Checkup da VPS da mesma data está em local externo referenciado em `TEST_EVIDENCE.md`; não confundir snapshot com estado atual.
 
+## 2026-10-16 — validação PostgreSQL isolada e limite de mídia
+
+- `decodeInboundBase64` rejeita strings acima do tamanho bruto permitido antes de normalizar, com regressões para anexos e áudio acima de 8 MiB.
+- A suíte integrada prepara configuração WhatsApp apenas nos casos de webhook, evitando contaminação de testes que esperam integração desativada.
+- Acrescentados testes de segredo errado, evento inválido, segredo cifrado no banco, isolamento de usuário e rate limit; replay continua verificado no PostgreSQL.
+- Migration aplicada sobre duas mensagens legadas e testada por rollback/reaplicação no banco descartável; ambas preservadas.
+- Backend 82 testes, frontend 47 e desktop 4; typechecks e builds passaram. Nenhuma dependência foi atualizada e nenhuma mudança chegou à produção.
+
 ## Modelo para entradas futuras
 
 `<UTC date> — <TASK-ID> — <resumo>`: componentes, arquivos, comportamento antes/depois, flags/env e migrações, testes/evidências, commit/PR/release, status deploy separado e instruções de rollback.
+
+## 2026-10-16 — robustez do runner e fechamento de teste isolado
+
+- Runner horário agora lê expirations convertidas em `DateTime` pelo PowerShell e strings ISO sem depender da cultura regional.
+- Dry-run, lock concorrente e bloqueio de execução sem gates foram validados em diretório temporário isolado.
+- PostgreSQL descartável foi encerrado e seus artefatos temporários removidos; produção permaneceu inalterada.

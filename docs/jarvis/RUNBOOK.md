@@ -50,3 +50,13 @@ Não alterar produção. Para mudanças futuras, reverter somente commit atômic
 - A raiz não versionada e a cópia de auditoria não foram sobrescritas. Revisar diferenças entre snapshots antes de integrar código ou estabelecer raiz definitiva.
 - Automação Codex segue PAUSED/projectless; Scheduled Task segue template disabled. Não ativar sem associação correta e ciclo supervisionado completo.
 - Testes DB usam somente PostgreSQL descartável. Não apontar suíte ou migration para produção.
+
+## Validação integrada SEC-001/SEC-004 — 2026-10-16
+
+- PostgreSQL temporário executado em `127.0.0.1:55432` com dados sob `%TEMP%`; não é serviço registrado nem deve ficar ligado. Docker permaneceu parado.
+- Após validar, encerre `pg_ctl` do diretório temporário com `pg_ctl -D <TEMP\jarvis-pg15-test-*\data> -m fast -w stop`. Só remova o diretório gerado quando o caminho absoluto estiver sob `%TEMP%` e o nome começar por `jarvis-pg15-test-`. Nunca remova outro diretório.
+- Não há rollback versionado para a migration. A reversão foi testada manualmente somente na base descartável; em banco real, exija backup verificado e plano aprovado. Coluna nullable, índice único e reaplicação foram validados.
+- Backend `npm run validate` (82 testes), frontend `npm run validate` (47) e desktop `npm run validate` (4) passaram. Android depende da CI por ausência de JDK/SDK local.
+- Parser `express.json` limita request a 1 MiB. Decodificador inline rejeita input bruto acima do teto de 8 MiB antes de normalizar; envelope HTTP é mais restritivo. Não aumentar o parser global sem sizing e proteção DoS.
+- A automação `jarvis-revis-o-hor-ria-pausada` continua PAUSED e `scheduler/JARVIS-Hourly-Disabled.xml` continua disabled.
+- Validação do runner (2026-10-16): `-DryRun` retorna `DRY_RUN_OK`; lock futuro retorna `SKIPPED_LOCKED`; `-Execute` bloqueia quando scheduler ou executionEnabled estão desativados. A leitura de expiry aceita `DateTime` parseado ou texto ISO.

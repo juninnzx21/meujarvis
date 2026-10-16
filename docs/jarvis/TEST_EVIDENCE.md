@@ -63,3 +63,26 @@ Comandos de diagnóstico incluíram `git status --short`, `git branch --show-cur
 - Não executado: `src/app.integration.test.ts`, migration real, teste E2E Evolution. Docker daemon inacessível e `127.0.0.1:5432` recusou conexão; nenhum PostgreSQL descartável local. Banco de produção não foi acessado.
 - CI remoto, Evolution real e produção não verificados; nenhuma credencial de produção lida.
 - Commit local da implementação: `2932b70` (`fix(security): secure evolution webhook and media`); sem push/PR/merge/deploy.
+
+## Validação integrada isolada — 2026-10-16 19:14 UTC
+
+- Ambiente: cluster PostgreSQL 15.19 extraído do arquivo de binários EDB para uma pasta temporária local; dados sob `%TEMP%`, processo em `127.0.0.1:55432`, autenticação trust limitada ao acesso local. Credenciais eram fictícias e existiram apenas nos processos de teste. Docker Desktop não foi iniciado; VPS e produção não foram acessadas.
+- Diagnóstico: `initdb` da instalação existente falhou porque faltava `dict_snowball.dll`. Foi usada distribuição portátil correspondente PostgreSQL 15.19 sem instalar ou alterar arquivos em `Program Files`.
+- Compatibilidade/migration: migrations anteriores aplicadas numa base limpa; duas linhas `WhatsAppMessage` antigas inseridas sem ID externo; migration `20261016170000_whatsapp_webhook_replay_guard` aplicada e ambos registros permaneceram com campo nulo. Rollback foi simulado apenas no banco descartável (índice/coluna/histórico da migration) e a reaplicação passou; as linhas continuaram preservadas. Schema Prisma válido.
+- Seed de demonstração executado apenas nessa base descartável.
+- Backend `npm run validate`: Prisma generate, typecheck, typecheck do seed, 9 arquivos/82 testes e build passaram. A integração `src/app.integration.test.ts` passou com 46 testes, incluindo segredo, instância/remetente, evento inválido, replay, rate limit, cifragem e isolamento de usuário.
+- Testes de mídia: URL externa de anexo/áudio sem chamada Axios, base64 pequena aceita e base64 acima de 8 MiB rejeitada antes de fetch/transcrição.
+- Frontend `npm run validate`: typecheck, 8 arquivos/47 testes e build passaram. Aviso existente: bundle JavaScript minificado 635.84 kB.
+- Desktop `npm ci` seguido de `npm run validate`: typecheck/build e 4 testes passaram. npm reportou 8 advisories moderados na árvore de desenvolvimento; `npm audit --omit=dev --audit-level=moderate` retornou zero vulnerabilidades de produção em backend, frontend e desktop.
+- Android não testado localmente por falta de Java/Android SDK. A CI GitHub precisa validar todos os jobs para o commit novo.
+- Limite HTTP: `express.json` restringe o JSON total a 1 MiB. O decodificador limita 8 MiB e pré-checa o tamanho bruto antes de normalizar; o envelope HTTP é mais restritivo. O limite global não foi aumentado.
+- Evolution real, número de teste, chamada real de IA, status da VPS e produção continuam sem validação; nenhum segredo ou payload real foi usado.
+
+## Validação do runner horário — 2026-10-16 19:21 UTC
+
+- Corrigido parse de `expiresUtc`: aceita o `DateTime` que `ConvertFrom-Json` produz no Windows e strings ISO com cultura invariável.
+- Dry-run isolado: `DRY_RUN_OK`, exit 0; lock liberado ao final.
+- Concorrência: lock válido retornou `SKIPPED_LOCKED`, exit 0, sem iniciar Codex.
+- Gate de execução: `-Execute` foi bloqueado por `scheduler.enabled=false` e `executionEnabled=false`; nenhum subprocesso Codex foi iniciado.
+- A automação Codex permaneceu PAUSED e o template do Task Scheduler disabled. Testes executados sob `%TEMP%`; diretórios de teste removidos após verificação.
+- PostgreSQL temporário foi parado e `127.0.0.1:55432` confirmou `no response`; cluster descartável removido. VPS e produção não foram acessadas.

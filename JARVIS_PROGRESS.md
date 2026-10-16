@@ -52,3 +52,30 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Frontend build avisa bundle JS de 635.84 kB minificado (gzip 190.13 kB); fora de escopo.
 - Runner parseado novamente; XML válido e tarefa/trigger retornam disabled. Automação Codex revisitada e continua mantida como PAUSED/projectless.
 - Status: SEC-001/SEC-004 `IN_REVIEW`, TEST-001 `BLOCKED`. Commit local de implementação `2932b70` (`fix(security): secure evolution webhook and media`) criado nesta branch para revisão; não enviado ao GitHub. Próximo: PostgreSQL descartável, migration e integração, depois revisão. Automação horária segue PAUSED/disabled; VPS/produção inalteradas.
+
+## RUN 2026-10-16T19:14:42Z | 1fa33f0b-66dd-4a09-a35d-1487c5a6b1b9
+
+- Branch/SHA inicial: `codex/sec-001-004-webhook-media-20261016` / `7cc9e274274ec0b9eb1be3dd0a630939acb7231e`; árvore limpa antes das mudanças desta execução.
+- Plano, progresso, STATE, runbook, decisões, evidências, registro de segurança, changelog e `AGENTS.md` lidos. PR #1 consultado de novo: aberto, mergeable, head `codex/jarvis-2.0-platform-20261015` em `eec24a6`; sem review. Nenhum merge ou alteração no PR #1.
+- Tarefa: `TEST-001` concluir banco descartável/migration/testes; continuar SEC-001/SEC-004 e preparar revisão remota somente depois dos testes.
+- Diagnóstico: Docker Desktop estava parado e não foi iniciado para evitar religar containers/volumes locais. A instalação PostgreSQL 15.19 falhou no `initdb` porque faltava `dict_snowball.dll`.
+- Ambiente de teste: binários portáteis PostgreSQL 15.19 da EDB extraídos somente sob `%TEMP%`; cluster temporário `jarvis_test`, porta 55432, bind apenas em `127.0.0.1`; sem credenciais reais ou acesso de produção. Nenhuma alteração em `Program Files`, serviços, firewall ou VPS.
+- Migration: migrations anteriores aplicadas; duas linhas legadas sem `externalMessageId` inseridas; migration de replay aplicada; ambas linhas permaneceram com campo nulo. Rollback isolado (índice/coluna/histórico), reaplicação e preservação passaram. Seed executado apenas nessa base descartável.
+- Código/testes: pré-checagem de tamanho base64 bruto antes da normalização; regressões para anexos/áudio >8 MiB; configuração WhatsApp de teste movida para cada caso pertinente. Integration ganhou segredo errado, evento inválido, persistência cifrada e isolamento por usuário; rate limit confirmado.
+- Validação: backend `npm run validate` — 9 arquivos, 82 testes, Prisma, typechecks/seed e build passaram; frontend — 8 arquivos/47 testes, typecheck/build passaram; desktop — 4 testes, typecheck/build passaram. `npm audit --omit=dev --audit-level=moderate` retornou zero nos três projetos. `npm ci` desktop reportou 8 advisories moderados de desenvolvimento, sem atualizar dependências.
+- Android não validado localmente por falta de JDK/SDK; workflow CI precisa cobrir. Aviso de bundle existente: 635.84 kB minificado. Limite HTTP segue 1 MiB embora o decodificador tenha teto interno 8 MiB; não foi alterado.
+- Revisão: segredo comparado constant-time; evento/instância/remetente validados; URL externa nunca requisitada; índice único persiste idempotência; nenhuma chamada a IA antes da autenticação. Falta E2E Evolution/staging e confirmação da versão em produção.
+- Arquivos: serviço e testes unitários/integrados, plano/progresso/STATE, runbook/decisões/evidências/segurança/changelog, README, arquitetura, relatório de estado e validação. Nenhum segredo real ou payload foi adicionado.
+- Estado: `TEST-001 DONE_VERIFIED`; `SEC-001/SEC-004 IN_REVIEW`, sem deploy. Próximo item elegível selecionado: `SEC-002`. Runner horário Codex segue PAUSED; XML Scheduled Task segue disabled.
+- GitHub: Android e CI de todos os jobs aguardam validação no commit novo. Não mesclar nem implantar; PR separado será criado somente depois da CI verde e com base no head do PR #1 para manter diff isolado.
+- Rollback: parar o PostgreSQL temporário e remover somente a pasta exclusiva `jarvis-pg15-test-*` sob `%TEMP%`. Nenhum rollback de produção necessário.
+
+## RUN 2026-10-16T19:21:09Z | 96dece7e-25c9-44d3-bf14-82a2f0d3c684
+
+- Continuação após TEST-001: branch `codex/sec-001-004-webhook-media-20261016`, baseline `7cc9e274274ec0b9eb1be3dd0a630939acb7231e`; mantidas as alterações locais pendentes e nenhum merge/deploy.
+- Corrigido `scripts/jarvis-hourly.ps1`: `ConvertFrom-Json` pode converter `expiresUtc` ISO em `DateTime` no Windows; o runner agora aceita `DateTime` e string ISO usando cultura invariável.
+- Validação do runner isolada em `%TEMP%`: dry-run `DRY_RUN_OK` exit 0 e lock liberado; lock ativo retornou `SKIPPED_LOCKED` exit 0; execução `-Execute` foi bloqueada antes de iniciar Codex porque `scheduler.enabled=false` e `executionEnabled=false`. Automação horária continua PAUSED/disabled.
+- PostgreSQL descartável encerrado com `pg_ctl -m fast`; porta 55432 confirmou `no response`. Diretórios temporários exclusivos dos testes foram removidos após verificação dos caminhos.
+- Backend (82 testes), frontend (47), desktop (4), typechecks e builds permanecem aprovados conforme execução anterior; mudança adicional do runner foi validada por testes de comportamento acima. Android depende da CI (JDK/SDK ausentes localmente).
+- Nenhuma alteração na VPS, produção, DNS, containers ou serviços; nenhum segredo real foi usado. SEC-001/SEC-004 continuam `IN_REVIEW`, aguardando E2E autenticado em staging Evolution.
+- Próximo passo: revisar diff final, atualizar estado e preparar commits; push de branch para executar CI remota. Só criar PR separado para a branch head do PR #1 se toda CI terminar verde; sem merge/deploy.

@@ -20,9 +20,9 @@ Status permitidos: `TODO`, `READY`, `IN_PROGRESS`, `BLOCKED`, `FAILED`, `IN_REVI
 | BASE-000 | P0 | — | Baseline local, remoto, produção pública, auditorias e checkup registrados; sem alterar app | IN_REVIEW |
 | BASE-001 | P0 | BASE-000 | Comparar branches/commits; preservar Android, desktop, TTS, release e trabalho não commitado. PR #1 (aberto, mergeable) documenta integração do head local para main; revisão/merge continuam decisão humana | IN_REVIEW |
 | BASE-002 | P0 | BASE-001 | Mapear 12 auditorias e checkup VPS por IDs sem publicar dados operacionais sensíveis | IN_REVIEW |
-| TEST-001 | P0 | BASE-001 | Ambiente PostgreSQL descartável e segredo de teste; suíte de integração completa e isolamento entre usuários | BLOCKED — Docker/PostgreSQL indisponíveis |
-| SEC-001 | P1 | BASE-001, TEST-001 | Autenticar webhook Evolution, instância/remetente, rate limit, replay/idempotência | IN_REVIEW — código/unit tests; falta integração DB/staging |
-| SEC-004 | P1 | SEC-001, TEST-001 | Eliminar URL arbitrária de mídia com chave Evolution; aceitar mídia segura e testar regressões | IN_REVIEW — código/regressões mockadas; falta integração/staging |
+| TEST-001 | P0 | BASE-001 | Ambiente PostgreSQL descartável e segredo de teste; suíte de integração completa e isolamento entre usuários | DONE_VERIFIED — PostgreSQL temporário local, migration/rollback, backend 82 testes |
+| SEC-001 | P1 | BASE-001, TEST-001 | Autenticar webhook Evolution, instância/remetente, rate limit, replay/idempotência | IN_REVIEW — teste PostgreSQL concluído; falta validação Evolution/staging |
+| SEC-004 | P1 | SEC-001, TEST-001 | Eliminar URL arbitrária de mídia com chave Evolution; aceitar mídia segura e testar regressões | IN_REVIEW — teste PostgreSQL e limites base64; falta validação Evolution/staging |
 | SEC-002 | P1 | BASE-001, TEST-001 | Chave de cifragem independente de JWT, versão e rotação/re-encriptação com backup testado | TODO |
 | SEC-003 | P1 | BASE-001, acesso de leitura à VPS | Confirmar Compose efetivo e eliminar defaults inseguros em produção; teste de fail-closed, sem expor valores | BLOCKED |
 | AUTH-001 | P1 | TEST-001 | MFA/TOTP administrativo, recuperação verificada, revogação de sessões, política de papéis e testes | TODO |
@@ -67,3 +67,12 @@ Status permitidos: `TODO`, `READY`, `IN_PROGRESS`, `BLOCKED`, `FAILED`, `IN_REVI
 - Worktree persistente: `E:/jarvis-home-assistant/.codex-worktrees/jarvis-sec-20261016`; branch `codex/sec-001-004-webhook-media-20261016`, no head do PR #1. `E:/jarvis-home-assistant` não tem `.git`; não sobrescrever o código não versionado.
 - SEC-001/SEC-004 implementadas localmente e em revisão, sem deploy. TEST-001 bloqueada sem PostgreSQL descartável; ver evidências em `docs/jarvis/TEST_EVIDENCE.md`.
 - Commit local de implementação `2932b70` foi criado para revisão; não publicado. Próximo passo: disponibilizar DB isolado, executar migration e integração; revisar antes de push/merge/deploy. Automação segue pausada.
+
+## Atualização da validação integrada — 2026-10-16 19:14 UTC
+
+- Docker Desktop permaneceu parado para proteger containers/volumes existentes. O PostgreSQL instalado localmente estava incompleto (faltava `dict_snowball.dll`); a validação usou binários portáteis PostgreSQL 15.19 da EDB, extraídos em `%TEMP%`, cluster temporário na porta 55432 e bind em `127.0.0.1`.
+- Migration aplicada, testada sobre duas mensagens legadas sem `externalMessageId`, revertida apenas no banco descartável e reaplicada. Os registros legados permaneceram e os IDs nulos passaram pelo índice único.
+- Backend `npm run validate`: Prisma generate, typechecks, 9 arquivos/82 testes e build passaram; frontend `npm run validate`: 8 arquivos/47 testes e build passaram; desktop `npm run validate`: 4 testes, typecheck e build passaram.
+- Mídia não é buscada por URL externa. O parser HTTP global do Express limita JSON a 1 MiB; portanto, o limite de 8 MiB da mídia é apenas um teto interno e requests maiores que o limite HTTP são rejeitados antes da rota. Não ampliar esse limite sem revisão de memória/DoS.
+- SEC-001/SEC-004 permanecem IN_REVIEW até E2E autenticado em Evolution/staging. VPS/produção inalteradas. Agendamento Codex segue PAUSED e template Windows disabled.
+- Próximo item elegível: SEC-002 (chave de cifragem dedicada e rotação), após registrar a revisão desta branch.
