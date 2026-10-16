@@ -40,3 +40,5 @@ Use `docs/audits/jarvis-v2-functional/` como auditoria baseline da versão 2.0.0
 - Runner horário agora lê expirations convertidas em `DateTime` pelo PowerShell e strings ISO sem depender da cultura regional.
 - Dry-run, lock concorrente e bloqueio de execução sem gates foram validados em diretório temporário isolado.
 - PostgreSQL descartável foi encerrado e seus artefatos temporários removidos; produção permaneceu inalterada.
+
+- GitHub Actions run #53 passou com 3/3 checks; PR separado não criado porque a integração recusou a criação com 403 e a sessão web não estava autenticada.

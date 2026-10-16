@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "runId": "96dece7e-25c9-44d3-bf14-82a2f0d3c684",
-  "lastRunUtc": "2026-10-16T19:21:09Z",
+  "lastRunUtc": "2026-10-16T19:24:55Z",
   "activeTaskId": "SEC-001",
   "tasks": [
     {
@@ -134,7 +134,8 @@
     "Não há acesso SSH autenticado para verificar configuração/logs/métricas atuais da VPS.",
     "SEC-001/SEC-004 aguardam E2E autenticado em Evolution/staging; produção não foi alterada.",
     "A cópia principal E:/jarvis-home-assistant não tem metadados Git; fonte versionada continua isolada no worktree até reconciliar a raiz.",
-    "Repositório JARVIS não aparece na lista de projetos Codex disponível para associar automação cron."
+    "Repositório JARVIS não aparece na lista de projetos Codex disponível para associar automação cron.",
+    "PR separado aguardando criação manual/autenticação: GitHub connector retornou HTTP 403 Resource not accessible by integration; branch publicada e CI 3/3 verde."
   ],
   "lastCommit": "10f76ff23091f3baca633f00ad4274895ff92a49",
   "nextTaskId": "SEC-002",
@@ -162,5 +163,13 @@
     "codexCli": "0.163.0-alpha.10.2",
     "codexAppCron": "created PAUSED as projectless local automation; automationId jarvis-revis-o-hor-ria-pausada; repo path is explicit in prompt",
     "gate": "Do not unpause until JARVIS is safely associated with the right project, dry-run and supervised cycle are reviewed, source divergence is reconciled, and activation is approved; never deploy automatically."
+  },
+  "githubCi": {
+    "run": 53,
+    "head": "1508ff6eab281cdee611ad195ac365bffc8a54b0",
+    "status": "SUCCESS",
+    "checks": "3/3",
+    "pullRequest": "NOT_CREATED_PERMISSION_403",
+    "pullRequestCompareUrl": "https://github.com/juninnzx21/meujarvis/compare/codex/jarvis-2.0-platform-20261015...codex/sec-001-004-webhook-media-20261016?expand=1"
   }
 }
