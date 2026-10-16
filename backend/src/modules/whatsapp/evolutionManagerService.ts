@@ -360,22 +360,26 @@ export const evolutionManagerService = {
     const config = await this.getConfig(userId);
     const instance = instanceName || config.instance;
     if (!isConfigured({ ...config, instance })) return { status: "not_configured", message: "Evolution API nao configurada.", webhookUrl };
+    const webhookSecret = await whatsappService.ensureWebhookSecret(userId);
+    const webhookHeaders = { "x-jarvis-webhook-secret": webhookSecret };
     const payloads = [
       {
         webhook: {
           enabled: true,
           url: webhookUrl,
-          webhook_by_events: true,
+          webhook_by_events: false,
           webhook_base64: true,
-          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "SEND_MESSAGE", "CONNECTION_UPDATE"]
+          headers: webhookHeaders,
+          events: ["MESSAGES_UPSERT"]
         }
       },
       {
         enabled: true,
         url: webhookUrl,
-        webhook_by_events: true,
+        webhook_by_events: false,
         webhook_base64: true,
-        events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "SEND_MESSAGE", "CONNECTION_UPDATE"]
+        headers: webhookHeaders,
+        events: ["MESSAGES_UPSERT"]
       }
     ];
     try {

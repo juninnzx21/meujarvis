@@ -1,4 +1,5 @@
 import axios from "axios";
+import { randomBytes } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
@@ -11,7 +12,9 @@ const keys = {
   apiUrl: "whatsapp_evolution_api_url",
   apiKey: "whatsapp_evolution_api_key",
   instance: "whatsapp_evolution_instance",
-  autoReply: "whatsapp_auto_reply"
+  autoReply: "whatsapp_auto_reply",
+  allowedSenders: "whatsapp_evolution_allowed_senders",
+  webhookSecret: "whatsapp_evolution_webhook_secret"
 };
 
 type WhatsAppRuntimeConfig = {
@@ -19,6 +22,8 @@ type WhatsAppRuntimeConfig = {
   apiKey: string;
   instance: string;
   autoReply: boolean;
+  allowedSenders: string[];
+  webhookSecret: string;
   source: "settings" | "env";
 };
 
@@ -28,6 +33,21 @@ function asString(value: unknown) {
 
 function asBoolean(value: unknown) {
   return typeof value === "boolean" ? value : value === "true";
+}
+
+function asPhoneList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((phone): phone is string => typeof phone === "string")
+    .map((phone) => normalizePhone(phone))
+    .filter((phone) => /^\d{10,15}$/.test(phone));
+}
+
+function decodeInboundBase64(value: string, maxBytes = 8 * 1024 * 1024) {
+  const normalized = value.replace(/^data:[^;]+;base64,/, "").replace(/\s/g, "");
+  if (!normalized || normalized.length > Math.ceil(maxBytes / 3) * 4 + 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(normalized)) return null;
+  const buffer = Buffer.from(normalized, "base64");
+  return buffer.length > 0 && buffer.length <= maxBytes ? buffer : null;
 }
 
 function findFirstString(value: unknown, keysToMatch: RegExp[]): string {
@@ -89,6 +109,8 @@ export const whatsappService = {
           apiKey,
           instance,
           autoReply: asBoolean(settings[keys.autoReply]),
+          allowedSenders: asPhoneList(settings[keys.allowedSenders]),
+          webhookSecret: asString(decryptSettingValue(keys.webhookSecret, settings[keys.webhookSecret])),
           source: "settings"
         };
       }
@@ -98,6 +120,8 @@ export const whatsappService = {
       apiKey: env.EVOLUTION_API_KEY,
       instance: env.EVOLUTION_INSTANCE,
       autoReply: env.WHATSAPP_AUTO_REPLY,
+      allowedSenders: [],
+      webhookSecret: "",
       source: "env"
     };
   },
@@ -116,19 +140,23 @@ export const whatsappService = {
       instanceConfigured: Boolean(config.instance),
       instance: config.instance || "",
       apiUrl: config.apiUrl || "",
-      apiKeyMasked: maskSecret(config.apiKey)
+      apiKeyMasked: maskSecret(config.apiKey),
+      allowedSenders: config.allowedSenders,
+      allowedSendersConfigured: config.allowedSenders.length > 0,
+      webhookAuthenticationConfigured: Boolean(config.webhookSecret)
     };
   },
   async getConfig(userId: string) {
     return this.status(userId);
   },
-  async saveConfig(userId: string, input: { apiUrl: string; apiKey?: string; instance: string; autoReply: boolean }) {
+  async saveConfig(userId: string, input: { apiUrl: string; apiKey?: string; instance: string; autoReply: boolean; allowedSenders?: string[] }) {
     const current = await this.runtimeConfig(userId);
     const apiKey = input.apiKey?.trim() ? input.apiKey.trim() : current.apiKey;
     const entries: Array<[string, Prisma.InputJsonValue]> = [
       [keys.apiUrl, input.apiUrl.trim()],
       [keys.instance, input.instance.trim()],
       [keys.autoReply, input.autoReply],
+      [keys.allowedSenders, asPhoneList(input.allowedSenders ?? current.allowedSenders)],
       [keys.apiKey, encryptSettingValue(keys.apiKey, apiKey) as Prisma.InputJsonValue]
     ];
     await Promise.all(entries.map(([key, value]) => prisma.setting.upsert({
@@ -149,6 +177,22 @@ export const whatsappService = {
     await prisma.setting.deleteMany({ where: { userId, key: { in: Object.values(keys) } } });
     await writeSystemLog({ userId, module: "whatsapp", action: "config_clear", message: "Configuracao WhatsApp/Evolution removida" });
     return this.status(userId);
+  },
+  async ensureWebhookSecret(userId: string) {
+    const config = await this.runtimeConfig(userId);
+    if (config.webhookSecret) return config.webhookSecret;
+    const webhookSecret = randomBytes(32).toString("base64url");
+    try {
+      await prisma.setting.create({
+        data: { userId, key: keys.webhookSecret, value: encryptSettingValue(keys.webhookSecret, webhookSecret) as Prisma.InputJsonValue }
+      });
+      return webhookSecret;
+    } catch (error) {
+      if ((error as { code?: string })?.code !== "P2002") throw error;
+      const latestConfig = await this.runtimeConfig(userId);
+      if (latestConfig.webhookSecret) return latestConfig.webhookSecret;
+      throw new Error("Nao foi possivel preparar a autenticacao segura do webhook.");
+    }
   },
   isValidPhone(phone: string) {
     return /^\d{10,15}$/.test(phone);
@@ -176,7 +220,10 @@ export const whatsappService = {
     const isGroup = phone.includes("@g.us");
     const attachment = detectAttachment(message, body);
     const hasAudio = Boolean(audio || (mimeType && mimeType.startsWith("audio/") && !attachment.hasAttachment));
-    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio, attachment };
+    const event = String(body?.event ?? body?.data?.event ?? "");
+    const instance = String(body?.instance ?? body?.instanceName ?? body?.data?.instance ?? "").trim();
+    const messageId = String(body?.data?.key?.id ?? body?.key?.id ?? body?.data?.message?.key?.id ?? "").trim();
+    return { phone, cleanPhone: normalizePhone(phone), text, mediaUrl, base64, mimeType, fromJarvis, isGroup, hasAudio, attachment, event, instance, messageId };
   },
   hasWakePhrase(text: string) {
     return normalizeWakeText(text).includes("ei jarvis");
@@ -184,7 +231,7 @@ export const whatsappService = {
   stripWakePhrase(text: string) {
     return text.replace(/(^|\b)ei\s+jarvis[,\s:;-]*/i, "").trim();
   },
-  async downloadInboundAttachment(payload: unknown, userId?: string) {
+  async downloadInboundAttachment(payload: unknown) {
     const inbound = this.extractInbound(payload);
     const attachment = inbound.attachment;
     if (!attachment.hasAttachment) return { status: "no_attachment" as const };
@@ -192,19 +239,7 @@ export const whatsappService = {
     if (!allowed) return { status: "unsupported_attachment" as const, message: "Formato de arquivo nao suportado." };
     let buffer: Buffer | null = null;
     if (attachment.base64) {
-      const normalizedBase64 = attachment.base64.replace(/^data:[^;]+;base64,/, "");
-      if (/^[A-Za-z0-9+/=\s]+$/.test(normalizedBase64) && normalizedBase64.length > 16) {
-        buffer = Buffer.from(normalizedBase64, "base64");
-      }
-    } else if (attachment.mediaUrl && /^https?:\/\//i.test(attachment.mediaUrl)) {
-      const config = await this.runtimeConfig(userId);
-      const response = await axios.get<ArrayBuffer>(attachment.mediaUrl, {
-        responseType: "arraybuffer",
-        headers: config.apiKey ? { apikey: config.apiKey } : undefined,
-        timeout: 30000,
-        maxContentLength: 8 * 1024 * 1024
-      });
-      buffer = Buffer.from(response.data);
+      buffer = decodeInboundBase64(attachment.base64);
     }
     if (!buffer || buffer.length === 0) return { status: "attachment_unavailable" as const, message: "Arquivo recebido, mas a midia nao veio disponivel." };
     if (buffer.length > 8 * 1024 * 1024) return { status: "too_large" as const, message: "Arquivo acima do limite seguro." };
@@ -215,19 +250,9 @@ export const whatsappService = {
     if (!inbound.hasAudio) return { status: "no_audio", text: "" };
     let buffer: Buffer | null = null;
     if (inbound.base64) {
-      const normalizedBase64 = inbound.base64.replace(/^data:[^;]+;base64,/, "");
-      if (/^[A-Za-z0-9+/=\s]+$/.test(normalizedBase64) && normalizedBase64.length > 64) {
-        buffer = Buffer.from(normalizedBase64, "base64");
-      }
-    } else if (inbound.mediaUrl && /^https?:\/\//i.test(inbound.mediaUrl)) {
-      const config = await this.runtimeConfig(userId);
-      const response = await axios.get<ArrayBuffer>(inbound.mediaUrl, {
-        responseType: "arraybuffer",
-        headers: config.apiKey ? { apikey: config.apiKey } : undefined,
-        timeout: 30000
-      });
-      buffer = Buffer.from(response.data);
+      buffer = decodeInboundBase64(inbound.base64);
     }
+    if (buffer && buffer.length > 8 * 1024 * 1024) return { status: "audio_unavailable", text: "", message: "O audio excede o limite seguro de 8 MB." };
     if (!buffer || buffer.length === 0) return { status: "audio_unavailable", text: "", message: "Recebi o audio, mas nao consegui baixar/transcrever. Envie em texto ou reenvie o audio." };
     const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" }, userId);
     if (transcribed.text) {

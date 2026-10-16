@@ -366,6 +366,7 @@ model Setting {
 
 model WhatsAppMessage {
   id         String            @id @default(cuid())
+  externalMessageId String?    @unique
   userId     String?
   phone      String
   direction  WhatsAppDirection
