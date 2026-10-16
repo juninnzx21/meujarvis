@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "runId": "1a20d993-8f4d-4959-9308-414c1fcf6e2b",
+  "lastRunUtc": "2026-10-16T17:20:23Z",
+  "activeTaskId": "SEC-001",
+  "tasks": [
+    {"id":"BASE-000","status":"IN_REVIEW"},
+    {"id":"BASE-001","status":"IN_REVIEW"},
+    {"id":"BASE-002","status":"IN_REVIEW"},
+    {"id":"TEST-001","status":"BLOCKED"},
+    {"id":"SEC-001","status":"IN_REVIEW"},
+    {"id":"SEC-004","status":"IN_REVIEW"},
+    {"id":"SEC-002","status":"TODO"},
+    {"id":"SEC-003","status":"BLOCKED"},
+    {"id":"AUTH-001","status":"TODO"},
+    {"id":"OBS-001","status":"TODO"},
+    {"id":"AI-001","status":"TODO"},
+    {"id":"AI-002","status":"TODO"},
+    {"id":"WEB-001","status":"TODO"},
+    {"id":"MEM-001","status":"TODO"},
+    {"id":"MEM-002","status":"TODO"},
+    {"id":"VOICE-001","status":"TODO"},
+    {"id":"VOICE-002","status":"TODO"},
+    {"id":"AGENT-001","status":"TODO"},
+    {"id":"VPS-001","status":"TODO"},
+    {"id":"INT-001","status":"TODO"},
+    {"id":"INT-002","status":"TODO"},
+    {"id":"INT-003","status":"TODO"},
+    {"id":"INT-004","status":"TODO"},
+    {"id":"DEV-001","status":"TODO"},
+    {"id":"DEV-002","status":"TODO"},
+    {"id":"DEV-003","status":"TODO"},
+    {"id":"PERF-001","status":"BLOCKED"},
+    {"id":"PERF-002","status":"TODO"},
+    {"id":"AUTO-001","status":"IN_PROGRESS"},
+    {"id":"QA-001","status":"TODO"},
+    {"id":"REL-001","status":"TODO"}
+  ],
+  "blockers": [
+    "O PR #1 está aberto/mergeable do head local para main; revisão e eventual merge continuam pendentes. Não mesclar automaticamente.",
+    "Não há acesso SSH autenticado para verificar configuração/logs/métricas atuais da VPS.",
+    "Integração PostgreSQL de SEC-001/SEC-004 aguarda banco descartável; Docker daemon e porta local 5432 indisponíveis.",
+    "A cópia principal E:/jarvis-home-assistant não tem metadados Git; fonte versionada continua isolada no worktree até reconciliar a raiz.",
+    "Repositório JARVIS não aparece na lista de projetos Codex disponível para associar automação cron."
+  ],
+  "lastCommit": "2932b70f91dd9f81a089d9e014e0c36f606c88e0",
+  "nextTaskId": "TEST-001",
+  "checkpoint": {
+    "branch": "codex/sec-001-004-webhook-media-20261016",
+    "initialSha": "eec24a6f01cd2b60da358a198da3ba32641afe1e",
+    "finalSha": "2932b70f91dd9f81a089d9e014e0c36f606c88e0",
+    "workingTreeChanges": "clean after local implementation and documentation commits; production unchanged",
+    "status": "IN_REVIEW",
+    "worktree": "E:/jarvis-home-assistant/.codex-worktrees/jarvis-sec-20261016"
+  },
+  "lastRunnerCheck": {
+    "dryRun": "DRY_RUN_OK, exit 0",
+    "executeGate": "BLOCKED while scheduler.enabled=false and executionEnabled=false",
+    "runId": "399d05ca-db8a-484f-9d59-49e276b64a4a",
+    "productionTouched": false
+  },
+  "scheduler": {
+    "requestedCadence": "hourly",
+    "status": "PREPARED_DISABLED",
+    "enabled": false,
+    "executionEnabled": false,
+    "executor": "Codex CLI via local Windows Task Scheduler template",
+    "codexCli": "0.163.0-alpha.10.2",
+    "codexAppCron": "created PAUSED as projectless local automation; automationId jarvis-revis-o-hor-ria-pausada; repo path is explicit in prompt",
+    "gate": "Do not unpause until JARVIS is safely associated with the right project, dry-run and supervised cycle are reviewed, source divergence is reconciled, and activation is approved; never deploy automatically."
+  }
+}

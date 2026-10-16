@@ -502,3 +502,7 @@ Piper usa licença GPL-3.0; consulte `tts/piper/NOTICE.md` antes de redistribuir
 Na VPS compartilhada, Kokoro e Chatterbox ainda não foram instalados: há 4 vCPUs, nenhum GPU e já existe uso de swap enquanto outros sites estão ativos. Esses dois motores permanecem pendentes de benchmark isolado e não são apresentados como disponíveis até uma geração de áudio validada.
 
 Em **Configurações > Voz**, o botão **Testar voz** mostra a mensagem segura retornada pelo TTS quando a geração falha. O JARVIS não substitui a voz local/remota pela voz Google genérica.
+
+## Auditoria de segurança WhatsApp — 2026-10-16
+
+SEC-001/SEC-004 têm implementação local em revisão na branch `codex/sec-001-004-webhook-media-20261016`, worktree `E:/jarvis-home-assistant/.codex-worktrees/jarvis-sec-20261016`. Webhook exige header secreto, evento/instância/ID e remetente configurado; mídia por URL externa não é baixada e base64 tem limite de 8 MiB. Nada foi implantado. Integração de banco aguarda PostgreSQL descartável; evidências em `docs/jarvis/TEST_EVIDENCE.md`.

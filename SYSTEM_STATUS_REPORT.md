@@ -445,3 +445,9 @@ Health público consultado: app e banco retornaram `ok`; OpenAI e Gemini constam
 ## Central de downloads JARVIS 2.0.0 — 15/10/2026
 
 O APK TWA assinado foi compilado nesta revisão e validado pelo `apksigner`; o certificado coincide com o fingerprint configurado em `assetlinks.json`. A Central foi atualizada para apontar para os assets de uma release pública do GitHub. O workflow `release-downloads.yml` compila o EXE Windows, cria checksums e publica APK e EXE ao enviar a tag `v2.0.0`. O instalador Windows não tem assinatura Authenticode. O repositório não tem deploy automático do frontend e SSH recusou a autenticação; portanto, o site online ainda precisa receber o build do frontend para exibir os novos botões.
+
+## Segurança WhatsApp — 16/10/2026
+
+- SEC-001/SEC-004: código em revisão na branch codex/sec-001-004-webhook-media-20261016; proteção do webhook e remoção de downloads por URL externa implementadas localmente. Não publicado nem validado em produção.
+- Backend typecheck/build e 34 testes sem DB passaram; testes focados 5/5; frontend validate 47/47; schema Prisma válido.
+- Integração/migration bloqueadas pela ausência de PostgreSQL descartável (Docker daemon inativo, porta 5432 indisponível). Consulte docs/jarvis/TEST_EVIDENCE.md.

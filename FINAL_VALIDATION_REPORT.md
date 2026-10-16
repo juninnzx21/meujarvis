@@ -414,3 +414,7 @@ Deploy da melhoria de diagnóstico — commit `13cf8af`, CI `38783407549` conclu
 - O chat não engole mais erros de solicitação; o texto fica disponível para nova tentativa. Chat e voz recebem timeout específico de 90 segundos.
 - A suíte completa do backend local precisa de `DATABASE_URL` e `JWT_SECRET`, ausentes neste ambiente. Os testes locais de integração autenticada com IA/Home Assistant não puderam ser executados.
 - SSH de produção recusou autenticação; alterações ainda não implantadas.
+
+## Validação isolada SEC-001/SEC-004 — 16/10/2026
+
+Implementação local em revisão; não implantada. Backend typecheck/build passaram; testes sem DB 34/34, focados 5/5; frontend validate 47/47; schema Prisma válido; auditorias de produção sem vulnerabilidades reportadas. A validação backend completa parou por EPERM na primeira tentativa de prisma generate (repetição isolada passou); integração não rodou por falta de PostgreSQL descartável. Nada comprova funcionamento em Evolution/produção. Evidências em docs/jarvis/TEST_EVIDENCE.md.

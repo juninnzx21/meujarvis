@@ -313,3 +313,7 @@ O serviço `ttsService` mantém credenciais remotas criptografadas e envia os pa
 ## Conversas e integrações por usuário
 
 As rotas de conversa do chat e da voz têm timeout de cliente de 90 segundos para acomodar pesquisas e integrações lentas. Falhas do envio textual são apresentadas ao usuário e mantêm o prompt disponível para nova tentativa. Ferramentas do Brain que consultam status ou entidades do Home Assistant, n8n ou health recebem o `userId` autenticado para resolver as credenciais/configurações daquele usuário.
+
+## Webhook Evolution — branch de revisão
+
+Na branch local `codex/sec-001-004-webhook-media-20261016`, o webhook recebe segredo aleatório em header configurado por instância, exige evento/instância/ID e remetente allowlisted, aplica rate limit e deduplica IDs no banco. URLs de mídia do payload não são requisitadas; áudio/anexo aceitam apenas base64 inline limitado a 8 MiB. Migration e integração PostgreSQL não testadas; produção inalterada.
