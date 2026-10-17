@@ -21,7 +21,7 @@ type EvolutionState = {
 export function WhatsAppPage() {
   const [status, setStatus] = useState<any>({});
   const [evolution, setEvolution] = useState<EvolutionState>({});
-  const [config, setConfig] = useState({ apiUrl: "", apiKey: "", instance: "", autoReply: false });
+  const [config, setConfig] = useState({ apiUrl: "", apiKey: "", instance: "", autoReply: false, allowedSenders: "" });
   const [phone, setPhone] = useState("");
   const [content, setContent] = useState("ei jarvis status do sistema");
   const [message, setMessage] = useState("");
@@ -42,7 +42,8 @@ export function WhatsAppPage() {
       apiUrl: configRes.data.apiUrl || "",
       apiKey: "",
       instance: configRes.data.instance || "",
-      autoReply: Boolean(configRes.data.autoReply)
+      autoReply: Boolean(configRes.data.autoReply),
+      allowedSenders: Array.isArray(configRes.data.allowedSenders) ? configRes.data.allowedSenders.join(", ") : ""
     });
   }
 
@@ -65,7 +66,12 @@ export function WhatsAppPage() {
       setMessage("O campo API Key recebeu uma URL. Cole a chave da Evolution API, nao o webhook.");
       return;
     }
-    const res = await api.put("/whatsapp/config", config);
+    const allowedSenders = config.allowedSenders.split(/[;,\n]/).map((phone) => phone.replace(/\D/g, "")).filter(Boolean);
+    if (allowedSenders.some((phone) => !/^\d{10,15}$/.test(phone))) {
+      setMessage("Cada remetente autorizado deve ter de 10 a 15 digitos, incluindo DDI.");
+      return;
+    }
+    const res = await api.put("/whatsapp/config", { ...config, allowedSenders });
     setStatus(res.data);
     setConfig((current) => ({ ...current, apiKey: "" }));
     setMessage("Configuracao WhatsApp/Evolution salva com seguranca.");
@@ -77,7 +83,7 @@ export function WhatsAppPage() {
       const res = await api.delete("/whatsapp/config");
       setStatus(res.data);
       setEvolution({});
-      setConfig({ apiUrl: "", apiKey: "", instance: "", autoReply: false });
+      setConfig({ apiUrl: "", apiKey: "", instance: "", autoReply: false, allowedSenders: "" });
       setMessage("Configuracao removida.");
     } catch (error) {
       setMessage(friendlyError(error));
@@ -230,6 +236,11 @@ export function WhatsAppPage() {
             <input className="input mt-2" type="password" value={config.apiKey} onChange={(e) => setConfig({ ...config, apiKey: e.target.value })} placeholder={status.apiKeyMasked ? `Atual: ${status.apiKeyMasked}` : "Cole a API key da Evolution"} />
             <span className="mt-1 block text-xs text-slate-500">Deixe em branco para manter a chave atual. O JARVIS nunca mostra a chave salva.</span>
           </label>
+          <label className="block text-sm font-semibold text-slate-300">
+            Remetentes autorizados (WhatsApp)
+            <input className="input mt-2" value={config.allowedSenders} onChange={(e) => setConfig({ ...config, allowedSenders: e.target.value })} placeholder="5511999999999, 5531999999999" />
+            <span className="mt-1 block text-xs text-slate-500">Informe os numeros com DDI, separados por virgula. Sem uma lista, o webhook nao processa mensagens.</span>
+          </label>
           <label className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3 text-sm text-slate-200">
             <span>Resposta automatica pelo WhatsApp</span>
             <input type="checkbox" checked={config.autoReply} onChange={(e) => setConfig({ ...config, autoReply: e.target.checked })} />
@@ -244,6 +255,8 @@ export function WhatsAppPage() {
             <span>Instancia: {status.instanceConfigured ? status.instance : "ausente"}</span>
             <span>API key: {status.apiKeyConfigured ? status.apiKeyMasked : "ausente"}</span>
             <span>Auto reply: {String(status.autoReply)}</span>
+            <span>Remetentes autorizados: {status.allowedSendersConfigured ? status.allowedSenders.length : "nenhum"}</span>
+            <span>Autenticacao do webhook: {status.webhookAuthenticationConfigured ? "preparada" : "pendente: configure o webhook"}</span>
           </div>
         </form>
 

@@ -8,6 +8,7 @@ import { env } from "./config/env.js";
 import { parseInterCsvStatement } from "./modules/finance/parsers/interCsvParser.js";
 import { parseOfxStatement } from "./modules/finance/parsers/ofxParser.js";
 import { normalizeConnectionState, normalizeQrResponse } from "./modules/whatsapp/evolutionManagerService.js";
+import { whatsappService } from "./services/whatsappService.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
 import { geminiService } from "./services/geminiService.js";
@@ -36,6 +37,8 @@ let userId = "";
 let financeAccountId = "";
 let financeCategoryId = "";
 let statementImportId = "";
+let webhookSecret = "";
+let webhookSequence = 0;
 const schedulerTaskIds: string[] = [];
 
 function generateInterCsv(rows = 2221) {
@@ -76,6 +79,30 @@ DATA:OFXSGML
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
 
+function webhookMessage(message: Record<string, unknown>, overrides: Record<string, unknown> = {}) {
+  webhookSequence += 1;
+  return {
+    event: "MESSAGES_UPSERT",
+    instance: "jarvis-test",
+    data: {
+      key: { id: `test-webhook-${webhookSequence}`, remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
+      message
+    },
+    ...overrides
+  };
+}
+
+async function configureWebhookTest() {
+  await whatsappService.saveConfig(userId, {
+    apiUrl: "https://evolution.test",
+    apiKey: "test-evolution-api-key-not-valid-outside-tests",
+    instance: "jarvis-test",
+    autoReply: true,
+    allowedSenders: ["555511888888888"]
+  });
+  webhookSecret = await whatsappService.ensureWebhookSecret(userId);
+}
+
 describe("JARVIS Home AI API", () => {
   beforeAll(async () => {
     const login = await request(app).post("/api/auth/login").send(credentials).expect(200);
@@ -110,6 +137,8 @@ describe("JARVIS Home AI API", () => {
     await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
     await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token", "n8n_webhook_url", "n8n_api_key", "openai_api_key", "openai_model", "gemini_api_key", "gemini_model", "ai_primary_provider", "ollama_base_url", "ollama_model"] } } });
+    await prisma.setting.deleteMany({ where: { userId, key: { in: ["whatsapp_evolution_api_url", "whatsapp_evolution_api_key", "whatsapp_evolution_instance", "whatsapp_auto_reply", "whatsapp_evolution_allowed_senders", "whatsapp_evolution_webhook_secret"] } } });
+    await prisma.whatsAppMessage.deleteMany({ where: { externalMessageId: { startsWith: "test-webhook-" } } });
     if (schedulerTaskIds.length > 0) {
       await prisma.task.deleteMany({ where: { id: { in: schedulerTaskIds } } });
     }
@@ -951,6 +980,7 @@ describe("JARVIS Home AI API", () => {
   });
 
   it("imports Banco Inter OFX metadata, creates PJ DO INTER when confirmed, and supports WhatsApp file import mock", async () => {
+    await configureWebhookTest();
     await prisma.financialTransaction.deleteMany({ where: { userId, transactionExternalId: { startsWith: "FIT-" } } });
     const ofx = generateInterOfx(4);
     const uploaded = await request(app)
@@ -977,52 +1007,115 @@ describe("JARVIS Home AI API", () => {
 
     const webhook = await request(app)
       .post("/api/whatsapp/webhook")
-      .send({
-        data: {
-          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
-          message: {
-            documentMessage: {
-              fileName: "Extrato-17-10-2024-a-16-05-2026-CSV.csv",
-              mimetype: "text/csv",
-              caption: "ei jarvis importar extrato",
-              base64: Buffer.from(generateInterCsv(3), "utf8").toString("base64")
-            }
-          }
+      .set("x-jarvis-webhook-secret", webhookSecret)
+      .send(webhookMessage({
+        documentMessage: {
+          fileName: "Extrato-17-10-2024-a-16-05-2026-CSV.csv",
+          mimetype: "text/csv",
+          caption: "ei jarvis importar extrato",
+          base64: Buffer.from(generateInterCsv(3), "utf8").toString("base64")
         }
-      })
+      }))
       .expect(200);
     expect(webhook.body.statementImportId).toEqual(expect.any(String));
     await prisma.statementImport.deleteMany({ where: { id: { in: [importId, webhook.body.statementImportId] } } });
   });
 
+  it("authenticates Evolution webhooks, validates sender and instance, and deduplicates replayed message IDs", async () => {
+    await configureWebhookTest();
+    const unauthorizedPayload = webhookMessage({ conversation: "ei jarvis status" });
+    await request(app).post("/api/whatsapp/webhook").send(unauthorizedPayload).expect(401);
+    await request(app)
+      .post("/api/whatsapp/webhook")
+      .set("x-jarvis-webhook-secret", "wrong-test-secret")
+      .send(unauthorizedPayload)
+      .expect(401);
+
+    await request(app)
+      .post("/api/whatsapp/webhook")
+      .set("x-jarvis-webhook-secret", webhookSecret)
+      .send({ event: "SEND_MESSAGE", instance: "jarvis-test", data: {} })
+      .expect(403);
+
+    const wrongInstancePayload = webhookMessage({ conversation: "ei jarvis status" }, { instance: "another-instance" });
+    await request(app).post("/api/whatsapp/webhook").set("x-jarvis-webhook-secret", webhookSecret).send(wrongInstancePayload).expect(403);
+
+    const senderPayload = webhookMessage({ conversation: "ei jarvis status" });
+    senderPayload.data.key.remoteJid = "5511888888888@s.whatsapp.net";
+    await request(app).post("/api/whatsapp/webhook").set("x-jarvis-webhook-secret", webhookSecret).send(senderPayload).expect(403);
+
+    const payload = webhookMessage({ conversation: "mensagem sem frase de ativacao" });
+    const first = await request(app).post("/api/whatsapp/webhook").set("x-jarvis-webhook-secret", webhookSecret).send(payload).expect(200);
+    expect(first.body.ignored).toBe("wake_phrase_required");
+    const replay = await request(app).post("/api/whatsapp/webhook").set("x-jarvis-webhook-secret", webhookSecret).send(payload).expect(200);
+    expect(replay.body.ignored).toBe("duplicate_event");
+    expect(await prisma.whatsAppMessage.count({ where: { externalMessageId: payload.data.key.id } })).toBe(1);
+  });
+
+  it("persists the webhook secret encrypted and isolates settings by user", async () => {
+    await configureWebhookTest();
+    const storedSecret = await prisma.setting.findUniqueOrThrow({
+      where: { userId_key: { userId, key: "whatsapp_evolution_webhook_secret" } }
+    });
+    expect(String(storedSecret.value)).toMatch(/^enc:v1:/);
+    expect(String(storedSecret.value)).not.toContain(webhookSecret);
+
+    const secondUser = await prisma.user.create({
+      data: {
+        name: "Webhook isolation test",
+        email: `webhook-isolation-${Date.now()}@example.test`,
+        passwordHash: "test-only-unused-password-hash",
+        role: "user"
+      }
+    });
+    try {
+      await whatsappService.saveConfig(secondUser.id, {
+        apiUrl: "https://isolated-evolution.test",
+        apiKey: "isolated-test-api-key",
+        instance: "isolated-test-instance",
+        autoReply: false,
+        allowedSenders: ["5511999999999"]
+      });
+      const secondSecret = await whatsappService.ensureWebhookSecret(secondUser.id);
+      const secondStoredSecret = await prisma.setting.findUniqueOrThrow({
+        where: { userId_key: { userId: secondUser.id, key: "whatsapp_evolution_webhook_secret" } }
+      });
+      const secondStoredApiKey = await prisma.setting.findUniqueOrThrow({
+        where: { userId_key: { userId: secondUser.id, key: "whatsapp_evolution_api_key" } }
+      });
+
+      expect(secondSecret).not.toBe(webhookSecret);
+      expect(String(secondStoredSecret.value)).toMatch(/^enc:v1:/);
+      expect(String(secondStoredApiKey.value)).toMatch(/^enc:v1:/);
+      expect(String(secondStoredApiKey.value)).not.toContain("isolated-test-api-key");
+      expect((await whatsappService.runtimeConfig(secondUser.id)).instance).toBe("isolated-test-instance");
+      expect((await whatsappService.runtimeConfig(userId)).instance).toBe("jarvis-test");
+    } finally {
+      await prisma.user.delete({ where: { id: secondUser.id } });
+    }
+  });
+
   it("ignores WhatsApp messages and files without the required wake phrase", async () => {
+    await configureWebhookTest();
     const text = await request(app)
       .post("/api/whatsapp/webhook")
-      .send({
-        data: {
-          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
-          message: { conversation: "entrada pix recebido R$ 120,00 cliente Joao" }
-        }
-      })
+      .set("x-jarvis-webhook-secret", webhookSecret)
+      .send(webhookMessage({ conversation: "entrada pix recebido R$ 120,00 cliente Joao" }))
       .expect(200);
     expect(text.body.ignored).toBe("wake_phrase_required");
     expect(text.body.processedText).toBe(false);
 
     const file = await request(app)
       .post("/api/whatsapp/webhook")
-      .send({
-        data: {
-          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
-          message: {
-            documentMessage: {
-              fileName: "extrato.csv",
-              mimetype: "text/csv",
-              caption: "importar extrato",
-              base64: Buffer.from(generateInterCsv(1), "utf8").toString("base64")
-            }
-          }
+      .set("x-jarvis-webhook-secret", webhookSecret)
+      .send(webhookMessage({
+        documentMessage: {
+          fileName: "extrato.csv",
+          mimetype: "text/csv",
+          caption: "importar extrato",
+          base64: Buffer.from(generateInterCsv(1), "utf8").toString("base64")
         }
-      })
+      }))
       .expect(200);
     expect(file.body.ignored).toBe("wake_phrase_required");
     expect(file.body.statementImportId).toBeUndefined();
@@ -1030,18 +1123,14 @@ describe("JARVIS Home AI API", () => {
     const transcribeSpy = vi.spyOn(openAiService, "transcribeAudio");
     const fileOnly = await request(app)
       .post("/api/whatsapp/webhook")
-      .send({
-        data: {
-          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
-          message: {
-            documentMessage: {
-              fileName: "Extrato-17-10-2024-a-16-05-2026-OFX.ofx",
-              mimetype: "application/octet-stream",
-              base64: Buffer.from(generateInterOfx(1), "utf8").toString("base64")
-            }
-          }
+      .set("x-jarvis-webhook-secret", webhookSecret)
+      .send(webhookMessage({
+        documentMessage: {
+          fileName: "Extrato-17-10-2024-a-16-05-2026-OFX.ofx",
+          mimetype: "application/octet-stream",
+          base64: Buffer.from(generateInterOfx(1), "utf8").toString("base64")
         }
-      })
+      }))
       .expect(200);
     expect(fileOnly.body.ignored).toBe("wake_phrase_required");
     expect(fileOnly.body.transcriptionStatus).toBeUndefined();
@@ -1117,6 +1206,7 @@ describe("JARVIS Home AI API", () => {
     const n8nSetupTest = await request(app).post("/api/integrations/setup/n8n/test").set(auth()).expect(200);
     expect(["not_configured", "success", "error"]).toContain(n8nSetupTest.body.status);
 
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 201, data: { ok: true } } as never);
     const evolutionWebhook = await request(app).post("/api/integrations/setup/evolution/configure-webhook").set(auth()).expect(200);
     expect(["not_configured", "manual_action_required", "success"]).toContain(evolutionWebhook.body.status);
     expect(JSON.stringify(evolutionWebhook.body)).not.toMatch(/super-secret|apikey/i);
@@ -1213,8 +1303,21 @@ describe("JARVIS Home AI API", () => {
     const importOne = await request(app).post("/api/n8n/workflows/import/jarvis-system-alert.json").set(auth()).expect(200);
     expect(["manual_action_required", "success"]).toContain(importOne.body.status);
 
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 201, data: { ok: true } } as never);
     const webhook = await request(app).post("/api/whatsapp/configure-webhook").set(auth()).expect(200);
     expect(["not_configured", "manual_action_required", "success"]).toContain(webhook.body.status);
     expect(JSON.stringify(webhook.body)).not.toContain("apikey");
+  });
+
+  it("rate limits webhook requests before processing them", async () => {
+    const responses = await Promise.all(Array.from({ length: 65 }, () =>
+      request(app)
+        .post("/api/whatsapp/webhook")
+        .set("x-forwarded-for", "198.51.100.77")
+        .send(webhookMessage({ conversation: "ei jarvis rate-limit-test" }))
+    ));
+
+    expect(responses.some((response) => response.status === 401)).toBe(true);
+    expect(responses.some((response) => response.status === 429)).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { createHash } from "node:crypto";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
@@ -13,8 +14,10 @@ import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { redactSensitive } from "../../utils/redact.js";
 import { evolutionManagerService } from "./evolutionManagerService.js";
+import { isValidWebhookSecret, validateEvolutionWebhook } from "./webhookSecurity.js";
 
 const router = Router();
+const webhookRateLimit = rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false });
 
 function requireAdmin(req: Parameters<typeof authMiddleware>[0], res: Parameters<typeof authMiddleware>[1]) {
   if (req.user?.role !== "admin") {
@@ -103,7 +106,8 @@ const configSchema = z.object({
   apiUrl: z.string().url("Informe a URL da Evolution API.").transform((value) => value.replace(/\/+$/, "")),
   apiKey: z.string().optional().refine((value) => !value || !/^https?:\/\//i.test(value), "API key nao pode ser uma URL. Cole a chave da Evolution API."),
   instance: z.string().min(1, "Informe a instancia."),
-  autoReply: z.boolean().default(false)
+  autoReply: z.boolean().default(false),
+  allowedSenders: z.array(z.string().regex(/^\d{10,15}$/, "Use apenas o numero com DDI e digitos.")).max(20).default([])
 });
 
 const instanceSchema = z.object({
@@ -182,9 +186,47 @@ router.post("/send", authMiddleware, validate(z.object({ phone: z.string().regex
   res.json(await whatsappService.send(req.body.phone, req.body.content, req.user!.id));
 }));
 
-router.post("/webhook", asyncHandler(async (req, res) => {
-  const inbound = whatsappService.extractInbound(req.body);
+router.post("/webhook", webhookRateLimit, asyncHandler(async (req, res) => {
   const admin = await prisma.user.findFirst({ where: { role: "admin" } });
+  if (!admin) return res.status(503).json({ message: "Webhook WhatsApp indisponivel." });
+  const config = await whatsappService.runtimeConfig(admin.id);
+  if (!isValidWebhookSecret(config.webhookSecret, req.get("x-jarvis-webhook-secret"))) {
+    return res.status(401).json({ message: "Webhook WhatsApp nao autenticado." });
+  }
+
+  const inbound = whatsappService.extractInbound(req.body);
+  const invalidReason = validateEvolutionWebhook({
+    event: inbound.event,
+    instance: inbound.instance,
+    expectedInstance: config.instance,
+    messageId: inbound.messageId,
+    phone: inbound.cleanPhone,
+    allowedSenders: config.allowedSenders,
+    fromMe: inbound.fromJarvis,
+    isGroup: inbound.isGroup
+  });
+  if (invalidReason) return res.status(403).json({ received: false, reason: invalidReason });
+
+  let messageRecord;
+  try {
+    messageRecord = await prisma.whatsAppMessage.create({
+      data: {
+        userId: admin.id,
+        externalMessageId: inbound.messageId,
+        phone: inbound.phone,
+        content: inbound.text,
+        direction: "inbound",
+        status: "processing",
+        rawPayload: redactSensitive(req.body) as never
+      }
+    });
+  } catch (error) {
+    if ((error as { code?: string })?.code === "P2002") {
+      return res.json({ received: true, ignored: "duplicate_event" });
+    }
+    throw error;
+  }
+
   let content = inbound.text;
   let transcriptionStatus = "";
   let statementImportId = "";
@@ -213,13 +255,11 @@ router.post("/webhook", asyncHandler(async (req, res) => {
     } as never
   });
 
-  await prisma.whatsAppMessage.create({
+  await prisma.whatsAppMessage.update({
+    where: { id: messageRecord.id },
     data: {
-      phone: inbound.phone,
       content: content || (inbound.hasAudio ? "[audio recebido sem transcricao]" : inbound.attachment.hasAttachment ? "[arquivo recebido sem wake phrase]" : ""),
-      direction: "inbound",
-      status: wakePhraseDetected ? "received" : "ignored_wake_phrase_required",
-      rawPayload: redactSensitive(req.body) as never
+      status: wakePhraseDetected ? "received" : "ignored_wake_phrase_required"
     }
   });
 
@@ -260,7 +300,7 @@ router.post("/webhook", asyncHandler(async (req, res) => {
   });
 
   if (admin && inbound.attachment.hasAttachment) {
-    const file = await whatsappService.downloadInboundAttachment(req.body, admin.id);
+    const file = await whatsappService.downloadInboundAttachment(req.body);
     if (file.status === "success") {
       const statement = await statementImportService.uploadFromWhatsApp(admin.id, {
         fileName: file.fileName,
