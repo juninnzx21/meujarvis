@@ -1,4 +1,15 @@
-﻿# SYSTEM_STATUS_REPORT
+# SYSTEM_STATUS_REPORT
+
+## Revisão de observabilidade e isolamento — 2026-10-18
+
+- Revisão do OBS-001 encontrou que `/api/health/full` permitia a qualquer usuário autenticado consultar falhas e contagens globais. A implementação local subsequente filtra logs e dados financeiros por usuário e limita o agregado global ao papel `admin`.
+- Request IDs do servidor, logs HTTP sem URL/query/corpo, erros sem stack/mensagem brutos e readiness do banco foram revisados. Integrações marcadas `not_checked` não são consideradas conectadas.
+- Métricas HTTP reiniciam com o processo e não são agregadas entre réplicas. Validação completa local com PostgreSQL descartável verificado: backend 158/158, frontend 49/49, Agent Sync 15/15, zero skips; typechecks/builds aprovados. Integração autenticada comprovou isolamento entre admin e usuário comum. A segunda revisão independente e smoke operacional continuam pendentes. Nenhum deploy ou acesso à VPS.
+- Após a revisão do payload restante, métricas globais ficam apenas para admin; provedores de IA são consultados por usuário e scheduler não expõe erros/horários agregados a usuários comuns. Nova validação final: backend 159/159, frontend 49/49, Agent Sync 15/15, sem skips; builds/typechecks aprovados.
+
+## Agent Sync local V1 — 2026-10-17
+
+Foi preparado `tools/agent-sync` para executar o planejador/revisor OpenAI com o Codex CLI local. O dry-run confirmou a branch isolada e a tarefa elegível MEM-001; quatro testes do módulo e o typecheck passaram. A suíte real GPT→Codex→GPT não foi executada: `OPENAI_API_KEY` não está configurada neste ambiente. Não houve chamadas de modelo, timer, push, merge, deploy ou alteração na VPS. O scheduler permanece desativado.
 
 ## Atualizacao 2026-05-18 - Reset seguro da Evolution
 
@@ -378,3 +389,165 @@ Status: **APROVADO COM RESSALVAS**.
 - Monitoramento: health endpoints e checklist externo preparados.
 - Backup offsite: plano criptografado preparado; destino externo pendente.
 - E2E: plano atualizado; Playwright completo ainda pendente.
+
+## Atualizacao 2026-10-15 - Protecao do health detalhado
+
+- `/api/health/full` exige JWT e reflete integrações persistidas para o usuário autenticado.
+- `/api/health/public` continua disponível com resposta resumida para monitoramento externo.
+- n8n, WhatsApp/Evolution e Home Assistant seguem realmente não configurados na conta de produção, conforme health atual; essa alteração corrige a leitura por usuário, não adiciona credenciais.
+
+## Deploy 2026-10-15 — health seguro
+
+Commit `d9487c4` implantado no backend da VPS após CI verde (validate, desktop e android). Health público HTTP 200; health detalhado retorna 401 anonimamente e 200 com sessão autenticada. Smoke autenticado confirmou que a tela agora lê as configurações persistidas do admin: n8n e WhatsApp/Evolution estão configurados; Home Assistant não está. Isso atesta apenas configuração no painel, não teste de conexão dos provedores. A resposta não retornou padrões de segredo. Só o container JARVIS backend foi recriado; os demais containers e banco continuaram ativos.
+
+- Teste real de conexão Evolution (somente GET, sem disparo de mensagem): sucesso, instância com sessão `open`.
+
+## Voz local do navegador — 2026-10-15
+
+A seleção do preset JARVIS passou a priorizar vozes masculinas pt-BR identificáveis e deixou de tratar “Brasil” no nome como indicador de gênero. A suíte frontend inclui teste de regressão para Google Português do Brasil e Microsoft Antonio. Naquela versão, não havia chaves/IDs de voz salvos para Fish Audio e ElevenLabs; suas cotas retornaram `not_configured`.
+
+## Publicacao da correcao de voz — 2026-10-15
+
+A release `91d297c` está publicada. A página e o bundle público retornaram 200 e o bundle contém o seletor corrigido. A VPS segue saudável (app, banco e scheduler `ok`) com todos os cinco containers JARVIS/n8n em execução. A seleção local agora procura primeiro nomes masculinos pt-BR; naquele momento, não havia chaves/IDs de Fish Audio ou ElevenLabs salvos. O usuário pode configurar credenciais novas em `/settings/integrations` e selecionar `auto`. A credencial Fish Audio compartilhada na conversa não deve ser reutilizada; gere uma nova antes de salvar.
+
+## Correções adicionais da Central de Voz — 2026-10-15
+
+Carregar vozes e testar a fala agora salvam antes os dados preenchidos na tela. A leitura da cota Fish Audio aceita contas com crédito gratuito sem campo `credit`. Testes unitários cobrem crédito gratuito, saldo positivo, cota esgotada e resposta sem saldo. A produção ainda depende de chaves e voice IDs válidos do usuário para validar síntese remota real.
+
+Release `1cd1170` publicada na VPS após CI verde. Frontend e backend foram recompilados sem cache e recriados sem dependências; PostgreSQL e n8n permaneceram em execução. Smoke tests: painel de integrações e health público HTTP 200. O status TTS autenticado segue em `browser`; as três chaves externas e os voice IDs estão ausentes, então a geração premium não pode ser testada ainda.
+
+O backend `116225f` também está publicado. A leitura de crédito agora envia `check_free_credit=true`, conforme o OpenAPI oficial da Fish Audio. Health público e página de integrações continuaram em HTTP 200 após recriar apenas o backend. Chaves e vozes remotas permanecem ausentes; ainda não é possível testar geração premium na conta.
+
+## Seleção automática por cota confirmada — publicada em 2026-10-15
+
+O modo automático só tenta provedores remotos quando a cota está confirmada como disponível e suficiente para o texto. Provedores com cota desconhecida ou insuficiente são pulados para evitar requisições sem confirmação de disponibilidade. A interface explica a regra.
+
+Commit `bb72343`; CI `38765847066` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-bb72343`, com build Docker sem cache e recriação apenas de backend/frontend; sem migrations. Testes: bundle público contém a mensagem nova; `/settings/integrations`, API pública e checks internos retornaram HTTP 200. Frontend, backend, PostgreSQL e n8n permanecem ativos. A síntese remota continuava sem validação por falta de chaves e voice IDs.
+
+## Validação da voz local — publicada em 2026-10-15
+
+Causa: uma voz Google pt-BR salva tinha prioridade; se nenhuma voz masculina fosse identificada, o seletor escolhia a primeira voz pt-BR genérica. Agora uma voz salva só é aceita se o nome identifica uma voz masculina; o seletor prioriza pt-BR e não reproduz fallback Google genérico. A página corrige preferência antiga, lista vozes masculinas identificáveis e o teste aguarda o fim da fala para exibir o resultado.
+
+Commit `73dec7f`; CI `38772235880` verde nos jobs validate, desktop e android. Release `/opt/jarvis-home-assistant/releases/jarvis-73dec7f` implantada na VPS, recriando somente frontend. Página e bundle públicos HTTP 200, bundle conferido com a proteção contra fallback e mensagem de teste; health público e backend interno HTTP 200. Frontend, backend, PostgreSQL e n8n seguem ativos. Os testes simulados de Web Speech passam. Não foi possível ouvir áudio nesta sessão, que está deslogada; provedores remotos seguem sem credenciais/voice IDs configurados.
+
+## Piper local — publicada em 2026-10-15
+
+Foi adicionada uma integração TTS Piper isolada e interna, com o modelo PT-BR pt_BR-cadu-medium (aprox. 63 MB), limite Docker de 1 CPU/512 MB, health check e síntese WAV autenticada pela API JARVIS. O modo automático prioriza Piper, Fish Audio pode ser usado com cota confirmada e ElevenLabs requer autorização explícita para fallback.
+
+A VPS tem 4 vCPUs, 7.8 GiB de RAM, nenhum GPU, 3.7 GiB disponíveis no diagnóstico e 2.1 GiB em swap usada. Kokoro e Chatterbox ainda não foram instalados ou testados; aguardam benchmark seguro devido ao uso de recursos dos outros serviços.
+
+Commit `c3899e0`; CI `38775757022` verde nos jobs validate, desktop e android. Release publicada em `/opt/jarvis-home-assistant/releases/jarvis-c3899e0`; somente Piper, backend e frontend foram criados/recriados, sem migrations nem reinício de PostgreSQL, n8n ou outros projetos. A síntese autenticada `/api/voice/speech` retornou HTTP 200, `audio/wav`, provedor `piper` e WAV válido. A geração respondeu em 2,19 s no teste inicial; o container ficou saudável e usou cerca de 260 MiB de 512 MiB, com 0,34% de CPU no instante medido. Página pública, frontend interno e API pública retornaram HTTP 200. A voz foi gerada e validada tecnicamente; reprodução audível no dispositivo do usuário ainda depende de teste na sessão logada.
+
+## Diagnóstico do teste de voz — 2026-10-15
+
+O botão **Testar voz** agora mostra a mensagem segura do backend quando a geração remota falha, incluindo status HTTP quando disponível. Se o servidor gerar o áudio mas o dispositivo não conseguir tocá-lo, a interface informa esse cenário separadamente. A seleção do navegador continua recusando fallback para a voz Google genérica.
+
+Deploy da tela de diagnóstico de voz — 2026-10-15
+
+A release `13cf8af` está publicada na VPS. CI `38783407549` passou em validate, desktop e android. Somente `jarvis-frontend` foi recriado; a imagem anterior está preservada com tag de rollback. Site/API retornaram 200, health da aplicação e banco está `ok`, e Piper continua saudável.
+# Atualização de voz — 15/10/2026
+
+O fluxo ElevenLabs agora aceita parâmetros ajustáveis de estabilidade, semelhança, expressividade e velocidade. O painel inicia com estabilidade 0,42, semelhança 0,82, estilo 0,18 e velocidade 0,94; as opções são armazenadas como configurações do usuário e aplicadas apenas pelo backend. A seleção de uma voz masculina pt-BR continua dependente das vozes liberadas na conta do provedor. Uma amostra audível e a confirmação da voz escolhida dependem de teste no navegador autenticado.
+
+## Diagnóstico de interações — 15/10/2026
+
+Health público consultado: app e banco retornaram `ok`; OpenAI e Gemini constam como configurados no servidor; n8n, WhatsApp e Home Assistant constam como não configurados no health público. Isso não substitui o status autenticado por usuário. Corrigido o encaminhamento do usuário autenticado para consultas do Brain ao Home Assistant/n8n/health. Chat e voz agora aguardam até 90 segundos; o chat apresenta erros em vez de ocultá-los e permite repetir a mensagem. A VPS não foi atualizada: acesso SSH por chave/senha não autenticou neste ambiente.
+
+## Central de downloads JARVIS 2.0.0 — 15/10/2026
+
+O APK TWA assinado foi compilado nesta revisão e validado pelo `apksigner`; o certificado coincide com o fingerprint configurado em `assetlinks.json`. A Central foi atualizada para apontar para os assets de uma release pública do GitHub. O workflow `release-downloads.yml` compila o EXE Windows, cria checksums e publica APK e EXE ao enviar a tag `v2.0.0`. O instalador Windows não tem assinatura Authenticode. O repositório não tem deploy automático do frontend e SSH recusou a autenticação; portanto, o site online ainda precisa receber o build do frontend para exibir os novos botões.
+
+# AUTH-001 — MFA administrativa (implementação parcial)
+
+Foi adicionado um serviço TOTP isolado compatível com RFC 6238 e testes determinísticos. O serviço gera segredos base32 aleatórios, códigos de seis dígitos e URIs de provisionamento para aplicativos autenticadores, e valida códigos com tolerância de um intervalo de 30 segundos. O login ainda não usa este serviço; não há enrollment, persistência cifrada, recuperação nem revogação de sessões nesta etapa.
+# Atualização 2026-10-17 — AUTH-001 MFA administrativo
+
+Implementação local na branch `codex/auth-001-admin-mfa-20261017`: enrollment com QR TOTP, desafio MFA no login administrativo, segredo cifrado, recovery codes de uso único, status e desativação protegida que revoga sessões antigas. Migration `20261017170000_admin_totp_mfa` e testes de integração com PostgreSQL descartável incluídos. Backend: 82/82 testes e build passaram. Frontend: 49/49 testes, typecheck e build passaram. Revisão independente, CI desta branch e deploy ainda pendentes. Nenhuma alteração foi feita na VPS ou produção.
+
+## AUTH-001 — revisão de segurança local — 2026-10-17
+
+- A API de autenticação passou a definir `Cache-Control: no-store` e `Pragma: no-cache` em todas as respostas para evitar cache de tokens de desafio, QR/segredo TOTP e códigos de recuperação.
+- Provisionamento, login MFA, TOTP/recovery de uso único, proteção de replay e revogação por `authVersion` foram revisados em código e na suíte integrada local.
+- Estado: branch local em revisão; não há CI GitHub desta branch nem validação em produção. `TOTP_ENCRYPTION_KEY` ainda não foi provisionada em produção. Não ativar MFA até provisionar uma chave exclusiva, aleatória e com recuperação protegida.
+
+## Agent Sync V1 — 2026-10-17 (local, sem ciclo externo)
+
+Executor local disponível em `tools/agent-sync`, com OpenAI como planejador/revisor e Codex SDK local como desenvolvedor. A V1 limita a 1 ciclo por padrão e 3 no máximo, seleciona tarefas permitidas pelo STATE, usa sandbox sem rede para o Codex, executa testes backend/frontend com ambiente sintético e banco PostgreSQL descartável obrigatório, registra aprovações como `IN_REVIEW` e atualiza o progresso. Dry-run e 7 testes unitários passaram. Ciclo real ainda não executado: faltam chave OpenAI API na sessão e PostgreSQL descartável local. Scheduler permanece pausado; sem alterações na VPS, produção ou GitHub remoto.
+
+## Agent Sync V1 — checkpoint do protocolo — 2026-10-17T22:02:40Z
+
+A configuração do SDK confirma que o processo Codex recebe um ambiente allowlist sem URLs do PostgreSQL e executa a thread com rede desativada. Assim, o agente não acessa diretamente o DB descartável; o coordenador executa as validações no host. Não foi sondada uma sessão real para evitar iniciar outro ciclo pago.
+
+Os estados agora diferenciam blocked, validation_failed, no_changes e review_rejected. Sem diff, o revisor não é chamado e a tarefa não avança para IN_REVIEW. MEM-001 ainda não foi implementada. Agent Sync passou TypeScript e 13/13 testes; nenhum ciclo GPT/Codex, push, merge, deploy ou acesso VPS ocorreu. Scheduler segue pausado.
+
+## MEM-001 — regressões de memória (2026-10-17)
+
+Adicionada suíte `backend/src/memoryIsolation.integration.test.ts` para isolamento por usuário, exclusão/cascata, concorrência e contexto compartilhado entre chat e WhatsApp com históricos separados. Nenhum comportamento de retenção, schema ou módulo de produção foi alterado. Execução PostgreSQL reservada ao coordenador por opt-in explícito; no sandbox os cinco casos são ignorados deliberadamente.
+
+Cobertura, limites dos dublês, resultados locais e procedimento de revisão: [MEM-001-VALIDATION](docs/jarvis/tasks/MEM-001-VALIDATION.md). Aceite PostgreSQL concluído no host pelo coordenador: 5/5 casos de MEM-001 aprovados (0 skips); backend validate aprovado com 87 testes (10/10 suítes); frontend validate aprovado com 49 testes (9/9 suítes); builds e git diff --check aprovados. Tarefa pronta para IN_REVIEW.
+
+## SEC-002 — hardening de cifras e rotação — 2026-10-18
+
+- `Setting` grava novas cifras `enc:v2:` com chave dedicada; `enc:v1:` permanece legível durante migração, enquanto cifra inválida/desconhecida aborta com falha fechada.
+- Serviço de rotação faz preflight completo, backup cifrado antes de escrita e atualizações serializáveis; dry-run é somente leitura. Restauração valida o backup e reverte integralmente se algum registro não corresponder.
+- Revisão técnica inicial encontrou que o backup validava só o prefixo dos ciphertexts. A correção local usa backup v2 com HMAC que vincula registros, ciphertexts e metadados; valores são autenticados/decifrados antes da restauração, e backups v1 sem autenticação são recusados.
+- Backend 106 testes/12 arquivos, frontend 49/9, Agent Sync 13/13 e builds passaram localmente com chaves sintéticas e PostgreSQL descartável loopback. Teste recuperou backup real gerado e comprovou rollback após erro parcial.
+- Pós-correção: PostgreSQL descartável confirmado em loopback, migrations atualizadas (6/6); SEC-002 focado 24/24 sem skips (9 integrações); backend validate 111/111 sem skips; frontend 49/49; Agent Sync 13/13. Segunda revisão independente e gate protocolar ainda pendem; status permanece `IN_PROGRESS`.
+- Sem migração ou rotação de segredos reais, sem acesso VPS/produção e sem push, merge ou deploy. Backups anteriores permanecem preservados e ignorados pelo Git.
+- SEC-002 permanece `IN_PROGRESS`: a correção da ressalva está pendente de validação; o gate `reviewed_continue` também não foi executado. Nenhum estado de produção foi inferido.
+
+## SEC-002 — isolamento do PostgreSQL e fixtures — 2026-10-18
+
+A revisão independente identificou o gate permissivo de banco de teste e a exclusão ampla de dados por prefixo na suíte API. O gate local agora exige o container Docker conhecido, imagem/saúde/bind loopback/tmpfs sem mounts e credenciais correspondentes, além de validar por SQL a identidade do servidor antes de mutações. A suíte API cria somente usuários sintéticos aleatórios, verifica que registros de outro usuário sobrevivem ao teardown e apaga apenas fixtures vinculadas aos próprios usuários. Agent Sync deixou de aplicar o seed global com dados de perfil/demo.
+
+Validação final pós-correção: PostgreSQL descartável confirmado por configuração Docker e SQL (database `jarvis_agent_sync_test`, PostgreSQL 16, tmpfs sem mounts, bind exclusivo `127.0.0.1:55433`); seis migrations presentes e nenhuma pendente, sem seed global. Foco SEC-002/MEM-001/API **57/57 sem skips**; backend `npm run validate` **116/116 em 14 arquivos**, Prisma generate/typecheck/typecheck:seed/build PASS; frontend **49/49**, typecheck/build PASS (aviso conhecido de bundle >500 kB); Agent Sync **14/14**, typecheck PASS. SEC-002 permanece `IN_PROGRESS` aguardando segunda revisão independente e gate formal `reviewed_continue`. Sem segredos reais, produção, VPS, push, merge ou deploy; Agent Sync/scheduler pausados.
+
+## SEC-002 — gate P1 da CLI de rotação corrigido — 2026-10-17 BRT / 2026-10-18 UTC
+
+Commits locais de implementação: `610cfdc` (`fix(security): require verified disposable DB for rotation`) e `2370f3f` (`fix(security): verify rotation target inside transaction`), sobre o HEAD inicial `ca206855c2594c2970fe50069e0b1ced6768b7c0`, branch `codex/agent-sync-v1-20261017`.
+
+O gate agora exige container Docker esperado e saudável, ID e digest de imagem fixados, credenciais conferidas sem log, bind somente loopback, tmpfs com opções exatas, nenhum volume/bind persistente, rede isolada sem pares extras e identidade SQL de database, role, IP interno e porta. O container é inspecionado novamente depois da consulta. O critério não usa hostname ou nome contendo `test`; a CLI rejeita `--confirm-non-test-database` e só aceita `--dry-run`. Rotação e restauração repetem a prova SQL pela mesma conexão transacional que altera os settings; a rotação a repete antes de criar o backup em disco. Criação de backup também valida antes do primeiro efeito colateral.
+
+Validação: PostgreSQL descartável confirmado; 6 migrations presentes e zero pendentes; backend 142/142 em 15 arquivos, frontend 49/49 e Agent Sync 14/14, todos sem skips; typechecks/builds passaram. CLI rejeitou a flag removida com exit 2; `--dry-run` concluiu e o inventário de backups não mudou. A suíte integrada verificou que alvos recusados não criam backup nem alteram registros, e que rotação/restauração legítimas funcionam no banco descartável. Bundle frontend ainda apresenta aviso conhecido acima de 500 kB.
+
+Somente dados e chaves sintéticos. Nenhuma migration foi aplicada nesta rodada, nenhum banco persistente foi rotacionado, e não houve acesso a VPS/produção, push, merge ou deploy. SEC-002 segue `IN_PROGRESS` até nova revisão independente e gate `reviewed_continue`; Agent Sync automático e scheduler permanecem pausados.
+
+## OBS-001 — diagnóstico e observabilidade HTTP — 2026-10-18 (em revisão local)
+
+A branch implementa IDs de correlação gerados pelo backend, logs HTTP sem URL/query/body, contadores 4xx/5xx em memória, alertas internos deduplicados de 5xx e health/readiness resiliente a falhas do banco. O status separa configuração de conectividade e usa “não verificado” quando não há probe.
+
+Validação local: PostgreSQL descartável verificado por Docker e SQL; backend `npm run validate` 153/153, zero skips, Prisma/typechecks/build aprovados; `app.integration.test.ts` 43/43 após conferir exposição CORS do `X-Request-Id`; frontend 49/49, typecheck/build aprovados. O bundle continua com aviso acima de 500 kB.
+
+Escopo não validado: VPS/produção, monitoramento externo, envio de WhatsApp/e-mail, recuperação operacional e retenção/rotação real de logs. Métricas HTTP reiniciam com o processo. OBS-001 permanece IN_REVIEW até revisão independente e smoke operacional autorizado; não houve deploy.
+
+## Checkpoint SEC-002 — formato estrito de ciphertext — 2026-10-18
+
+A revisão independente encontrou que os parsers de `enc:v1` e `enc:v2` ignoravam segmentos após os campos esperados. `decryptSecret` agora falha fechado e `needsReEncryption` marca o valor para rejeição/reprocessamento quando a estrutura não contém exatamente cinco segmentos. Regressões geram ciphertexts sintéticos válidos das duas versões e acrescentam sufixos inesperados.
+
+Validação local pós-fix: PostgreSQL descartável identificado por Docker+SQL; backend **172/172**, frontend **49/49**, Agent Sync **17/17** e integração SEC-002 **11/11**, zero skips; typechecks, builds, migrations, dry-run e `git diff --check` passaram. A revisão independente direcionada confirmou o fechamento do achado e não encontrou outros problemas de código no escopo. Commit de código: `76809d0371dadb58ca27b865f3933b2662e3ad99`. SEC-002 segue `IN_PROGRESS` até o gate formal `reviewed_continue`; OBS-001/OBS-002 continuam `IN_REVIEW` aguardando smoke operacional autorizado. Sem VPS, produção, segredo real, chamada paga, push, merge ou deploy.
+
+## Checkpoint AUTH-001 — hardening de armazenamento TOTP — 2026-10-18
+
+Revisão independente identificou aceitação de campos TOTP extras e a possibilidade de reutilizar `JWT_SECRET` como chave de cifra. O parser agora exige envelope `totp:v1` com exatamente três campos após o prefixo, base64url canônico, IV de 12 bytes, tag GCM de 16 bytes e ciphertext não vazio. `TOTP_ENCRYPTION_KEY` é rejeitada se igual a `JWT_SECRET`, tanto no schema de ambiente quanto no serviço. Regressões cobrem estrutura inválida, IV/tag curtos, alfabeto não canônico e reutilização da chave JWT. Re-revisão independente confirmou fechamento e compatibilidade com valores v1 válidos.
+
+`run-cycle.ps1 -ValidateOnly` após as mudanças: backend **175/175** em 22 arquivos, frontend **49/49** em 9 arquivos, Agent Sync **17/17**, zero skips; migrations, typechecks, builds, dry-run e `git diff --check` passaram. Integração SEC-002, PostgreSQL descartável verificado: **11/11**. AUTH-001 permanece `IN_REVIEW`: falta CI GitHub da branch e confirmação operacional não reveladora de `TOTP_ENCRYPTION_KEY` antes de qualquer ativação/deploy. Nenhum segredo real, VPS ou produção foi acessado.
+## NVIDIA NIM — implementação local (2026-10-18)
+
+- Configuração por usuário no painel para NVIDIA LLM; chave criptografada, catálogo curado de modelos, teste manual com confirmação, provedor principal e fallback ordenável. Chat usa endpoint NVIDIA OpenAI-compatible; streaming e tool calling não estão implementados.
+- STT: integração para NVIDIA Speech NIM auto-hospedado em endpoint privado HTTP; arquivos limitados a 20 MiB e fallback OpenAI explicitamente opt-in. O Whisper/Canary hospedado por NVIDIA em gRPC ainda não está conectado.
+- TTS: Magpie Multilingual para pt-BR (Diego/Louise/Isabela), usando API HTTP do catálogo e a chave salva na seção NVIDIA. Uso automático bloqueado até a quota ser verificável; teste real exige confirmação explícita.
+- Proteções atuais: timeout, 30 req/min por usuário/processo, circuit breaker após 3 falhas por 30 s, 1.024 tokens de saída, até 32 mensagens/24.000 caracteres e logs sem prompt/credenciais. Métricas incluem latência e tokens reportados, não custo monetário; o limite é local ao processo e não representa quota da conta.
+- Validação: testes com endpoints mockados e chave fictícia; nenhuma chamada, preço, quota ou disponibilidade real de conta NVIDIA verificada. Sem alteração ou deploy na VPS.
+
+## Checkpoint local — NVIDIA_ZERO_SPEND e gates — 2026-10-19
+
+A política NVIDIA de R$ 0,00 está aplicada aos caminhos de execução backend; as operações hospedadas e seus testes estão bloqueados sem evidência de quota, preço e entitlement sem custo. Validação local `LOCAL_VALIDATION_OK`: backend 177/177, frontend 49/49, Agent Sync 17/17, zero skips; builds, typechecks, dry-run e diff-check aprovados. O workflow de release foi endurecido para exigir CI bem-sucedido no SHA exato em main. CI remoto e configurações de proteção não confirmados. VPS: `[VPS_ENDPOINT_REDACTED]:22014` confirmado, sem conta não-root/fingerprint; não conectada. Nenhuma publicação/produção/chamada paga; scheduler pausado.
+
+
+## Continuidade master — 2026-10-19
+
+ValidateOnly passou após regressão que bloqueia fetch externo no teste NVIDIA: PostgreSQL descartável/migrations PASS; backend 177/177, frontend 49/49, Agent Sync 17/17, sem skips; typechecks, builds, dry-run e git diff --check PASS. NVIDIA continua CONFIGURED_BUT_BILLING_UNVERIFIED, LLM/STT/TTS bloqueados pelo orçamento de R$ 0.
+
+Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e não existe remotamente. Não houve push; revisar dados operacionais privados do histórico antes de publicação. VPS sem conexão: faltam usuário não-root e fingerprint confiável. Gates não foram promovidos e scheduler segue pausado.
+
+\n

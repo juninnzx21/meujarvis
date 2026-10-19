@@ -28,8 +28,30 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://jarvis:jarvis_password@postgres:5432/jarvis_db?schema=public
+      PIPER_TTS_URL: http://piper:5000
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-3001}:3001"
+    networks:
+      - default
+      - homeassistant_private
+
+  piper:
+    build: ./tts/piper
+    container_name: jarvis-piper-tts
+    restart: unless-stopped
+    environment:
+      PIPER_MODEL: pt_BR-cadu-medium
+      PIPER_MODEL_DIR: /models
+    volumes:
+      - jarvis_piper_models:/models
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 180s
 
   frontend:
     build:
@@ -92,3 +114,9 @@ volumes:
   jarvis_postgres_data:
   jarvis_n8n_postgres_data:
   jarvis_n8n_data:
+  jarvis_piper_models:
+
+networks:
+  homeassistant_private:
+    external: true
+    name: homeassistant_private

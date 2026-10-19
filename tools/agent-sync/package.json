@@ -1,0 +1,25 @@
+{
+  "name": "@juninnzxtec/jarvis-agent-sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dry-run": "tsx src/cli.ts dry-run",
+    "validate-local": "tsx src/cli.ts validate-local",
+    "cycle": "tsx src/cli.ts cycle",
+    "test": "tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@openai/codex-sdk": "0.163.0",
+    "openai": "^4.77.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.22.0",
+    "typescript": "^5.7.2"
+  }
+}

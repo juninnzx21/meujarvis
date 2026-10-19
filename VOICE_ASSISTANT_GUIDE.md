@@ -54,3 +54,13 @@ Rotas principais:
 O JARVIS agora possui um Brain interno em `/api/brain/*` e painel em `/brain`, com agentes especialistas, roteador de intencoes, ferramentas internas seguras, contexto por memorias/documentos/financeiro/status, feedback/aprendizado e verificador de resposta. O Brain nao treina modelo do zero; ele orquestra OpenAI/Gemini/fallback local com limites de seguranca.
 
 Rotas principais: `/brain`, `/brain/agents`, `/brain/tools`, `/brain/memory`, `/brain/feedback`. Chat e voz usam o Brain mantendo compatibilidade. WhatsApp continua exigindo `ei jarvis` e OFX/CSV continuam exigindo revisao.
+# Configurar voz local Piper, Fish Audio ou ElevenLabs
+
+Entre no JARVIS como administrador e abra **Configurações → Integrações** (`/settings/integrations`). Na seção **Voz do JARVIS**:
+
+1. Selecione **Piper local** para testar a voz pt-BR sem chave; o serviço interno é limitado a 1 CPU e 512 MB.
+2. Para Fish Audio ou ElevenLabs, informe credenciais e ID de voz; o backend criptografa as chaves e o painel mostra apenas uma versão mascarada.
+3. Pressione **Testar voz** para gerar e reproduzir o áudio.
+4. O modo automático tenta Piper primeiro. Provedores remotos só são chamados com configuração e cota confirmadas; autorize ElevenLabs explicitamente para permitir esse fallback.
+
+As respostas faladas usam o provedor ativo. Se nenhum motor masculino estiver disponível, o JARVIS informa a falha em vez de selecionar uma voz feminina genérica.

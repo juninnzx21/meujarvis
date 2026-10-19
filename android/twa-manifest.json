@@ -1,0 +1,72 @@
+{
+  "packageId": "br.com.juninnzxtec.jarvis.twa",
+  "host": "jarvis.juninnzxtec.com.br",
+  "name": "JARVIS 2.0",
+  "launcherName": "JARVIS",
+  "display": "standalone",
+  "themeColor": "#06B6D4",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#020617",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://jarvis.juninnzxtec.com.br/icons/icon-512.svg",
+  "maskableIconUrl": "https://jarvis.juninnzxtec.com.br/icons/maskable-icon.svg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "E:\\jarvis-home-assistant\\.private-release\\JARVIS-upload-key.jks",
+    "alias": "jarvisupload"
+  },
+  "appVersionName": "2.0.0",
+  "appVersionCode": 20000,
+  "shortcuts": [
+    {
+      "name": "Falar com JARVIS",
+      "shortName": "Voz",
+      "url": "https://jarvis.juninnzxtec.com.br/voice",
+      "chosenIconUrl": "https://jarvis.juninnzxtec.com.br/icons/icon-192.svg"
+    },
+    {
+      "name": "Abrir Chat",
+      "shortName": "Chat",
+      "url": "https://jarvis.juninnzxtec.com.br/chat",
+      "chosenIconUrl": "https://jarvis.juninnzxtec.com.br/icons/icon-192.svg"
+    },
+    {
+      "name": "Nova tarefa",
+      "shortName": "Tarefa",
+      "url": "https://jarvis.juninnzxtec.com.br/tasks",
+      "chosenIconUrl": "https://jarvis.juninnzxtec.com.br/icons/icon-192.svg"
+    },
+    {
+      "name": "Financeiro",
+      "shortName": "Financeiro",
+      "url": "https://jarvis.juninnzxtec.com.br/finance",
+      "chosenIconUrl": "https://jarvis.juninnzxtec.com.br/icons/icon-192.svg"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://jarvis.juninnzxtec.com.br/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://jarvis.juninnzxtec.com.br/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "2.0.0"
+}

@@ -15,10 +15,10 @@ const configSchema = z.object({
   enabled: z.boolean().optional()
 });
 
-router.get("/status", asyncHandler(async (req, res) => res.json(await n8nService.userStatus(req.user!.id))));
-router.get("/config", asyncHandler(async (req, res) => res.json(await n8nService.getConfig(req.user!.id))));
+router.get("/status", asyncHandler(async (req, res) => res.json(await n8nService.userStatus(req.user!.id, req.user!.role === "admin"))));
+router.get("/config", asyncHandler(async (req, res) => res.json(await n8nService.getConfig(req.user!.id, req.user!.role === "admin"))));
 router.put("/config", validate(configSchema), asyncHandler(async (req, res) => res.json(await n8nService.saveConfig(req.user!.id, req.body))));
-router.delete("/config", asyncHandler(async (req, res) => res.json(await n8nService.clearConfig(req.user!.id))));
+router.delete("/config", asyncHandler(async (req, res) => res.json(await n8nService.clearConfig(req.user!.id, req.user!.role === "admin"))));
 router.post("/trigger", asyncHandler(async (req, res) => res.json(await n8nService.trigger(req.body, req.user!.id))));
 router.post("/test", asyncHandler(async (req, res) => res.json(await n8nService.test(req.user!.id))));
 router.post("/templates/:template/test", asyncHandler(async (req, res) => res.json(await n8nService.testTemplate(String(req.params.template), req.user!.id))));

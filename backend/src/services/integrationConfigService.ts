@@ -4,15 +4,21 @@ import { join } from "node:path";
 import { env } from "../config/env.js";
 import { prisma } from "../prisma/client.js";
 import { decryptSettingValue, encryptSettingValue, maskSecret, publicSettingValue } from "./encryptionService.js";
+import { getAiPrimaryProvider, getAiProviderOrder, saveAiPrimaryProvider, saveAiProviderConfig, saveOllamaConfig } from "./aiProviderConfigService.js";
 import { financeIntegrationService } from "./financeIntegrationService.js";
 import { geminiService } from "./geminiService.js";
 import { homeAssistantService } from "./homeAssistantService.js";
 import { n8nService } from "./n8nService.js";
 import { openAiService } from "./openAiService.js";
+import { ollamaService } from "./ollamaService.js";
 import { writeSystemLog } from "./systemLogService.js";
 import { whatsappService } from "./whatsappService.js";
 import { redactSensitive } from "../utils/redact.js";
 import { emitJarvisEvent } from "./eventBusService.js";
+import { ttsService } from "./ttsService.js";
+import { sanitizeLogValue, sanitizeSystemLog } from "./systemLogService.js";
+import { nvidiaAiService } from "./nvidiaAiService.js";
+import { nvidiaSpeechService } from "./nvidiaSpeechService.js";
 
 export const publicIntegrationUrls = {
   frontendPublicUrl: "https://jarvis.juninnzxtec.com.br",
@@ -33,13 +39,18 @@ const globalKeys = {
 };
 
 export const integrationProviders = [
+  "ai_selection",
   "openai",
   "gemini",
+  "nvidia",
+  "ollama",
+  "nvidia_speech",
   "n8n",
   "whatsapp",
   "evolution",
   "home_assistant",
   "finance",
+  "tts",
   "monitoring",
   "backup",
   "api_public"
@@ -114,39 +125,89 @@ export async function listLocalN8nWorkflows() {
 }
 
 export const integrationConfigService = {
-  async status(userId: string) {
+  async status(userId: string, includeSystemWideDetails = false) {
     const urls = await globalUrls(userId);
-    const [n8n, whatsapp, finance, homeAssistant, pendingImports, pendingRows, lastBackup] = await Promise.all([
-      n8nService.userStatus(userId),
-      whatsappService.status(userId),
+    const visibleUrls = includeSystemWideDetails ? urls : {
+      frontendPublicUrl: "",
+      apiPublicUrl: "",
+      whatsappWebhookUrl: "",
+      n8nPublicUrl: "",
+      publicHealthUrl: "",
+      fullHealthUrl: ""
+    };
+    const [primaryProvider, fallbackOrder, openai, gemini, nvidia, nvidiaSpeech, ollama, n8n, whatsapp, finance, homeAssistant, tts, pendingImports, pendingRows, lastBackup] = await Promise.all([
+      getAiPrimaryProvider(userId),
+      getAiProviderOrder(userId),
+      openAiService.statusForUser(userId, includeSystemWideDetails),
+      geminiService.statusForUser(userId, includeSystemWideDetails),
+      nvidiaAiService.statusForUser(userId),
+      nvidiaSpeechService.status(userId),
+      ollamaService.statusForUser(userId),
+      n8nService.userStatus(userId, includeSystemWideDetails),
+      whatsappService.status(userId, includeSystemWideDetails),
       financeIntegrationService.status(userId),
-      homeAssistantService.status(userId),
+      homeAssistantService.status(userId, includeSystemWideDetails),
+      ttsService.status(userId),
       prisma.statementImport.count({ where: { userId, status: { in: ["uploaded", "parsed", "review_required"] } } }),
       prisma.statementImportRow.count({ where: { import: { userId }, status: "pending" } }),
       prisma.systemLog.findFirst({ where: { module: "backup" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
     ]);
     const data = {
-      urls,
+      urls: visibleUrls,
       providers: {
-        api_public: { status: "configured", configured: true, url: urls.apiPublicUrl, webhookUrl: urls.whatsappWebhookUrl },
-        openai: openAiService.status(),
-        gemini: geminiService.status(),
-        n8n: { ...n8n, publicUrl: urls.n8nPublicUrl },
-        whatsapp: { ...whatsapp, webhookUrl: urls.whatsappWebhookUrl, wakePhraseRequired: true, wakePhrase: "ei jarvis", ignoreGroups: true },
-        evolution: { ...whatsapp, webhookUrl: urls.whatsappWebhookUrl },
+        api_public: includeSystemWideDetails
+          ? { status: "configured", configured: true, url: urls.apiPublicUrl, webhookUrl: urls.whatsappWebhookUrl }
+          : { status: "configured", configured: true },
+        ai_selection: { primaryProvider, fallbackOrder },
+        openai,
+        gemini,
+        nvidia,
+        nvidia_speech: nvidiaSpeech,
+        ollama,
+        n8n: { ...n8n, ...(includeSystemWideDetails ? { publicUrl: urls.n8nPublicUrl } : {}) },
+        whatsapp: { ...whatsapp, ...(includeSystemWideDetails ? { webhookUrl: urls.whatsappWebhookUrl } : {}), wakePhraseRequired: true, wakePhrase: "ei jarvis", ignoreGroups: true },
+        evolution: { ...whatsapp, ...(includeSystemWideDetails ? { webhookUrl: urls.whatsappWebhookUrl } : {}) },
         home_assistant: homeAssistant,
+        tts,
         finance: { ...finance, pendingImports, pendingReviewRows: pendingRows, requireImportReview: true, externalAiCategorization: false },
-        monitoring: { configured: true, status: "configured", publicHealthUrl: urls.publicHealthUrl, fullHealthUrl: urls.fullHealthUrl, alertsConfigured: false },
+        monitoring: includeSystemWideDetails
+          ? { configured: true, status: "configured", publicHealthUrl: urls.publicHealthUrl, fullHealthUrl: urls.fullHealthUrl, alertsConfigured: false }
+          : { configured: true, status: "configured", alertsConfigured: false },
         backup: { configured: true, status: "configured", localConfigured: true, offsiteConfigured: false, lastBackupAt: lastBackup?.createdAt ?? null }
       }
     };
     return assertNoSecretInResponse(data);
   },
-  async config(userId: string) {
-    const status = await this.status(userId);
+  async config(userId: string, includeSystemWideDetails = false) {
+    const status = await this.status(userId, includeSystemWideDetails);
     return status;
   },
   async saveProvider(userId: string, provider: IntegrationProvider, input: Record<string, unknown>) {
+    if (provider === "ai_selection") {
+      const primaryProvider = await saveAiPrimaryProvider(userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: "ai_primary_provider_saved", message: "Provedor principal de IA atualizado.", metadata: { primaryProvider } });
+      return this.status(userId);
+    }
+    if (provider === "openai" || provider === "gemini") {
+      const saved = await saveAiProviderConfig(provider, userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: `${provider}_settings_saved`, message: `${provider === "openai" ? "OpenAI" : "Gemini"} configurado pelo painel.`, metadata: { keyConfigured: saved.configured, source: saved.source, model: saved.model } });
+      return this.status(userId);
+    }
+    if (provider === "nvidia") {
+      const saved = await saveAiProviderConfig("nvidia", userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: "nvidia_settings_saved", message: "NVIDIA NIM configurado pelo painel.", metadata: { keyConfigured: saved.configured, source: saved.source, model: saved.model } });
+      return this.status(userId);
+    }
+    if (provider === "nvidia_speech") {
+      const saved = await nvidiaSpeechService.save(userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: "nvidia_speech_settings_saved", message: "NVIDIA Speech NIM configurado pelo painel.", metadata: { configured: saved.configured, provider: saved.provider } });
+      return this.status(userId);
+    }
+    if (provider === "ollama") {
+      const saved = await saveOllamaConfig(userId, input);
+      await writeSystemLog({ userId, module: "integrations", action: "ollama_settings_saved", message: "Ollama configurado pelo painel.", metadata: { configured: saved.configured, model: saved.model } });
+      return this.status(userId);
+    }
     if (provider === "api_public") {
       const entries = [
         [globalKeys.frontendPublicUrl, validatePublicUrl(asString(input.frontendPublicUrl) || publicIntegrationUrls.frontendPublicUrl)],
@@ -192,6 +253,7 @@ export const integrationConfigService = {
         defaultAccountId: asString(input.defaultAccountId)
       });
     }
+    if (provider === "tts") return ttsService.save(userId, input);
     if (provider === "monitoring" || provider === "backup") {
       const key = provider === "monitoring" ? globalKeys.monitoringAlertsEnabled : globalKeys.backupOffsiteEnabled;
       await prisma.setting.upsert({
@@ -203,13 +265,23 @@ export const integrationConfigService = {
     }
     return { status: "manual_action_required", message: "Essa integracao usa variaveis de ambiente no backend. Configure pelo .env/secret manager e valide pelo health." };
   },
+  async listAiModels(userId: string, provider: "openai" | "gemini" | "nvidia" | "ollama") {
+    if (provider === "openai") return openAiService.listModelsForUser(userId);
+    if (provider === "gemini") return geminiService.listModelsForUser(userId);
+    if (provider === "nvidia") return nvidiaAiService.listModelsForUser(userId);
+    return ollamaService.listModels(userId);
+  },
   async testProvider(userId: string, provider: IntegrationProvider) {
-    if (provider === "openai") return openAiService.status();
-    if (provider === "gemini") return geminiService.status();
+    if (provider === "openai") return openAiService.testConnection(userId);
+    if (provider === "gemini") return geminiService.testConnection(userId);
+    if (provider === "nvidia") return nvidiaAiService.testConnection(userId);
+    if (provider === "nvidia_speech") return nvidiaSpeechService.testConnection(userId);
+    if (provider === "ollama") return ollamaService.testConnection(userId);
     if (provider === "n8n") return n8nService.test(userId);
     if (provider === "whatsapp" || provider === "evolution") return whatsappService.testConnection(userId);
     if (provider === "home_assistant") return homeAssistantService.testConnection(userId);
     if (provider === "finance") return financeIntegrationService.testConnection(userId);
+    if (provider === "tts") return ttsService.test(userId);
     if (provider === "api_public" || provider === "monitoring") {
       const urls = await globalUrls(userId);
       const response = await axios.get(`${urls.apiPublicUrl}/health`, { timeout: 15000 });
@@ -223,15 +295,15 @@ export const integrationConfigService = {
     if (provider === "whatsapp" || provider === "evolution") return whatsappService.configureWebhook(userId, publicIntegrationUrls.whatsappWebhookUrl);
     return { status: "manual_action_required", message: "Bootstrap automatico nao disponivel para este provider." };
   },
-  async logs(userId: string) {
+  async logs(userId: string, includeSystemWideData = false) {
     const modules = ["integrations", "n8n", "whatsapp", "finance", "home-assistant", "backup", "monitoring", "event-bus"];
     const logs = await prisma.systemLog.findMany({
-      where: { OR: [{ userId }, { userId: null }], module: { in: modules } },
+      where: { ...(includeSystemWideData ? { OR: [{ userId }, { userId: null }] } : { userId }), module: { in: modules } },
       orderBy: { createdAt: "desc" },
       take: 80,
       select: { id: true, level: true, module: true, action: true, message: true, metadata: true, createdAt: true }
     });
-    return { logs };
+    return { logs: logs.map(sanitizeSystemLog) };
   },
   async wizard(userId: string) {
     const status = await this.status(userId);
@@ -247,13 +319,19 @@ export const integrationConfigService = {
       status
     };
   },
-  async events(userId: string) {
+  async events(userId: string, includeSystemWideData = false) {
     const events = await prisma.integrationEvent.findMany({
-      where: { OR: [{ userId }, { userId: null }] },
+      where: includeSystemWideData ? { OR: [{ userId }, { userId: null }] } : { userId },
       orderBy: { createdAt: "desc" },
       take: 100
     });
-    return { events };
+    return {
+      events: events.map((event) => ({
+        ...event,
+        payloadRedacted: sanitizeSystemLog({ message: "", metadata: event.payloadRedacted }).metadata,
+        lastError: event.lastError ? String(sanitizeLogValue(event.lastError)) : null
+      }))
+    };
   },
   async retryEvent(userId: string, id: string) {
     const event = await prisma.integrationEvent.findFirstOrThrow({ where: { id, OR: [{ userId }, { userId: null }] } });

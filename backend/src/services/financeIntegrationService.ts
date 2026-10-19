@@ -158,14 +158,24 @@ export const financeIntegrationService = {
   },
   async authenticate(userId: string, input: { apiUrl: string; email: string; password: string; defaultAccountName?: string }) {
     const apiUrl = normalizeApiUrl(input.apiUrl);
-    const response = await axios.request({
-      method: "post",
-      url: `${apiUrl}/api/v1/auth/login`,
-      data: { email: input.email, password: input.password },
-      headers: { Accept: "application/json" },
-      timeout: 20000
-    });
+    let response;
+    try {
+      response = await axios.request({
+        method: "post",
+        url: `${apiUrl}/api/v1/auth/login`,
+        data: { email: input.email, password: input.password, device_name: "JARVIS VPS" },
+        headers: { Accept: "application/json" },
+        timeout: 20000
+      });
+    } catch (error) {
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      await writeSystemLog({ userId, level: "warning", module: "finance", action: "auth_failed", message: "Falha ao autenticar no Controle Financeiro", metadata: { statusCode } });
+      return { status: "error", message: statusCode === 422 || statusCode === 401 ? "Credenciais do Controle Financeiro recusadas. Confira o e-mail e a senha." : "Nao foi possivel conectar ao Controle Financeiro." };
+    }
     const data = response.data?.data ?? response.data;
+    if (data?.requires_2fa === true && typeof data?.challenge_token === "string") {
+      return { status: "requires_2fa", challengeToken: data.challenge_token, message: "Informe o codigo temporario do autenticador do Controle Financeiro." };
+    }
     const token = data?.token ?? data?.access_token;
     const email = data?.user?.email ?? input.email;
     if (!token) {
@@ -179,9 +189,53 @@ export const financeIntegrationService = {
       defaultAccountName: input.defaultAccountName || "PJ DO INTER",
       defaultAccountId: ""
     });
-    const accountId = await this.resolveDefaultAccountId(userId);
+    let accountId: string | undefined;
+    try {
+      accountId = await this.resolveDefaultAccountId(userId);
+    } catch {
+      await writeSystemLog({ userId, level: "warning", module: "finance", action: "account_list_unavailable", message: "Autenticacao concluida, mas nao foi possivel listar as contas financeiras" });
+    }
     await writeSystemLog({ userId, module: "finance", action: "auth_login", message: "Controle financeiro vinculado ao JARVIS", metadata: { email, defaultAccountApplied: Boolean(accountId) } });
     return { ...(await this.status(userId)), message: "Controle financeiro vinculado com sucesso." };
+  },
+  async completeAuthenticationChallenge(userId: string, input: { apiUrl: string; email: string; challengeToken: string; code: string; defaultAccountName?: string }) {
+    const apiUrl = normalizeApiUrl(input.apiUrl);
+    let response;
+    try {
+      response = await axios.request({
+        method: "post",
+        url: `${apiUrl}/api/v1/two-factor/challenge`,
+        data: { challenge_token: input.challengeToken, code: input.code },
+        headers: { Accept: "application/json" },
+        timeout: 20000
+      });
+    } catch (error) {
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      await writeSystemLog({ userId, level: "warning", module: "finance", action: "auth_2fa_failed", message: "Falha na confirmacao 2FA do Controle Financeiro", metadata: { statusCode } });
+      return { status: "error", message: statusCode === 422 || statusCode === 401 ? "Codigo 2FA invalido ou expirado. Inicie a vinculacao novamente." : "Nao foi possivel validar o codigo 2FA." };
+    }
+    const data = response.data?.data ?? response.data;
+    const token = data?.token ?? data?.access_token;
+    if (!token) {
+      await writeSystemLog({ userId, level: "warning", module: "finance", action: "auth_2fa_failed", message: "Controle Financeiro nao retornou token apos 2FA" });
+      return { status: "error", message: "O Controle Financeiro nao concluiu a autenticacao." };
+    }
+    const email = data?.user?.email ?? input.email;
+    await this.saveConfig(userId, {
+      apiUrl,
+      token: String(token),
+      userEmail: String(email),
+      defaultAccountName: input.defaultAccountName || "PJ DO INTER",
+      defaultAccountId: ""
+    });
+    let accountId: string | undefined;
+    try {
+      accountId = await this.resolveDefaultAccountId(userId);
+    } catch {
+      await writeSystemLog({ userId, level: "warning", module: "finance", action: "account_list_unavailable", message: "Autenticacao 2FA concluida, mas nao foi possivel listar as contas financeiras" });
+    }
+    await writeSystemLog({ userId, module: "finance", action: "auth_login", message: "Controle Financeiro vinculado ao JARVIS apos 2FA", metadata: { email, defaultAccountApplied: Boolean(accountId) } });
+    return { ...(await this.status(userId)), message: "Controle Financeiro vinculado com sucesso." };
   },
   async disconnect(userId: string) {
     await prisma.setting.deleteMany({ where: { userId, key: { in: [keys.token, keys.userEmail, keys.defaultAccountId] } } });

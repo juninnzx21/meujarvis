@@ -1,11 +1,11 @@
 import { prisma } from "../../prisma/client.js";
 import { getHealth } from "../../services/healthService.js";
-import { publicIntegrationUrls } from "../../services/integrationConfigService.js";
 import { n8nService } from "../../services/n8nService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { homeAssistantService } from "../../services/homeAssistantService.js";
 import { findRelevantMemories } from "../../services/memorySearchService.js";
 import { redactSensitive } from "../../utils/redact.js";
+import { sanitizeSystemLog } from "../../services/systemLogService.js";
 import type { BrainToolDefinition, BrainToolResult } from "./brain.types.js";
 
 export const brainTools: BrainToolDefinition[] = [
@@ -25,13 +25,13 @@ export const brainTools: BrainToolDefinition[] = [
   { name: "listPendingImports", description: "Lista importacoes pendentes de revisao.", safety: "safe", category: "Financeiro" },
   { name: "detectDuplicates", description: "Resume duplicatas de importacao.", safety: "safe", category: "Financeiro" },
   { name: "searchDocuments", description: "Busca documentos e trechos redigidos.", safety: "safe", category: "Documentos" },
+  { name: "searchInternet", description: "Pesquisa a web com fontes citadas para perguntas de conhecimento e informações atuais.", safety: "safe", category: "Internet" },
   { name: "listDocuments", description: "Lista documentos do usuario.", safety: "safe", category: "Documentos" },
   { name: "getN8nStatus", description: "Consulta status do n8n.", safety: "safe", category: "n8n" },
   { name: "listWorkflows", description: "Lista workflows locais conhecidos.", safety: "safe", category: "n8n" },
   { name: "triggerSafeWorkflow", description: "Prepara disparo seguro de workflow.", safety: "confirmation_required", category: "n8n" },
   { name: "getWhatsappStatus", description: "Consulta status WhatsApp/Evolution.", safety: "safe", category: "WhatsApp" },
   { name: "getEvolutionStatus", description: "Consulta status seguro Evolution.", safety: "safe", category: "WhatsApp" },
-  { name: "getWebhookUrl", description: "Retorna webhook oficial do WhatsApp.", safety: "safe", category: "WhatsApp" },
   { name: "getHomeStatus", description: "Consulta status Home Assistant.", safety: "safe", category: "Home Assistant" },
   { name: "listEntities", description: "Lista entidades se configurado.", safety: "safe", category: "Home Assistant" },
   { name: "prepareSafeAction", description: "Prepara acao de casa inteligente com confirmacao quando sensivel.", safety: "confirmation_required", category: "Home Assistant" }
@@ -48,12 +48,15 @@ export class ToolRegistryService {
 
   async run(userId: string, tool: string, input: { query?: string; message?: string } = {}): Promise<BrainToolResult> {
     try {
-      if (tool === "getSystemStatus") return ok(tool, await getHealth(false));
-      if (tool === "getHealthFull") return ok(tool, await getHealth(true));
-      if (tool === "getRecentLogs") return ok(tool, await prisma.systemLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 8, select: { level: true, module: true, action: true, message: true, createdAt: true } }));
+      if (tool === "getSystemStatus") return ok(tool, await getHealth(false, userId));
+      if (tool === "getHealthFull") return ok(tool, await getHealth(true, userId));
+      if (tool === "getRecentLogs") {
+        const logs = await prisma.systemLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 8, select: { level: true, module: true, action: true, message: true, createdAt: true } });
+        return ok(tool, logs.map(sanitizeSystemLog));
+      }
       if (tool === "getNotifications") return ok(tool, await prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 8 }));
       if (tool === "getIntegrationStatus") {
-        const health = await getHealth(true);
+        const health = await getHealth(true, userId);
         return ok(tool, "integrations" in health ? health.integrations : health);
       }
       if (tool === "searchMemories") return ok(tool, await findRelevantMemories(userId, input.query || input.message || "", 8));
@@ -77,13 +80,12 @@ export class ToolRegistryService {
       if (tool === "detectDuplicates") return ok(tool, await prisma.statementImportRow.count({ where: { import: { userId }, status: "duplicate" } }));
       if (tool === "searchDocuments") return ok(tool, await prisma.documentChunk.findMany({ where: { document: { userId }, contentRedacted: { contains: input.query || input.message || "", mode: "insensitive" } }, include: { document: true }, take: 8 }));
       if (tool === "listDocuments") return ok(tool, await prisma.document.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 12 }));
-      if (tool === "getN8nStatus") return ok(tool, n8nService.status());
+      if (tool === "getN8nStatus") return ok(tool, await n8nService.userStatus(userId));
       if (tool === "listWorkflows") return ok(tool, ["jarvis-system-alert", "jarvis-daily-summary", "jarvis-task-created", "jarvis-health-monitor", "jarvis-evolution-test"]);
       if (tool === "getWhatsappStatus") return ok(tool, await whatsappService.status(userId));
       if (tool === "getEvolutionStatus") return ok(tool, await whatsappService.status(userId));
-      if (tool === "getWebhookUrl") return ok(tool, { webhookUrl: publicIntegrationUrls.whatsappWebhookUrl });
-      if (tool === "getHomeStatus") return ok(tool, await homeAssistantService.status());
-      if (tool === "listEntities") return ok(tool, await homeAssistantService.entities());
+      if (tool === "getHomeStatus") return ok(tool, await homeAssistantService.status(userId));
+      if (tool === "listEntities") return ok(tool, await homeAssistantService.entities(userId));
       if (tool === "createMemory" || tool === "createTransactionDraft" || tool === "triggerSafeWorkflow" || tool === "prepareSafeAction") {
         return { tool, status: "confirmation_required", message: "Ferramenta preparada, mas exige confirmacao explicita antes de qualquer efeito real." };
       }

@@ -77,7 +77,7 @@ export const brainAgents: BrainAgentDefinition[] = [
     name: "WhatsAppAgent",
     description: "WhatsApp, Evolution API, QR, webhook, anexos, audio e comandos seguros.",
     domains: ["whatsapp", "evolution", "webhook", "qr"],
-    allowedTools: ["getWhatsappStatus", "getEvolutionStatus", "getWebhookUrl"],
+    allowedTools: ["getWhatsappStatus", "getEvolutionStatus"],
     safetyRules: ["WhatsApp so executa com ei jarvis.", "Envio real exige confirmacao."],
     systemPrompt: "Oriente conexao e diagnostico sem expor API key.",
     examples: ["configurar whatsapp", "gerar QR"]

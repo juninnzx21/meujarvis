@@ -3,9 +3,15 @@ import { describe, expect, it } from "vitest";
 import { StatusPill } from "./StatusPill";
 
 describe("StatusPill", () => {
-  it("renders operational state for configured services", () => {
+  it("labels configured integrations as configured, not operational", () => {
     render(<StatusPill status="configurado" />);
-    expect(screen.getByText("operacional")).toBeInTheDocument();
+    expect(screen.getByText("configurado")).toBeInTheDocument();
+    expect(screen.queryByText("operacional")).not.toBeInTheDocument();
+  });
+
+  it("shows a disconnected WhatsApp as disconnected instead of operational", () => {
+    render(<StatusPill status="disconnected" />);
+    expect(screen.getByText("desconectado")).toBeInTheDocument();
   });
 
   it("renders pending state for not configured services", () => {

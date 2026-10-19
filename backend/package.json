@@ -1,6 +1,6 @@
 {
   "name": "jarvis-home-ai-backend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
@@ -12,8 +12,10 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "seed:personal": "tsx prisma/seed-personal-profile.ts",
     "sync:settings": "tsx scripts/sync-user-settings.ts",
+    "settings:rotate": "tsx scripts/rotate-settings-encryption.ts",
     "create:admin": "tsx scripts/create-admin.ts",
     "test": "vitest run",
+    "test:sec002:integration": "tsx src/test-utils/verifyDisposablePostgres.ts && vitest run src/services/settingsRotation.integration.test.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:seed": "tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --esModuleInterop prisma/seed.ts prisma/seed-personal-profile.ts",
     "validate": "npm run prisma:generate && npm run typecheck && npm run typecheck:seed && npm run test && npm run build"

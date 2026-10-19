@@ -1,6 +1,8 @@
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
 import axios from "axios";
+import bcrypt from "bcrypt";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { app } from "./app.js";
@@ -10,10 +12,15 @@ import { parseOfxStatement } from "./modules/finance/parsers/ofxParser.js";
 import { normalizeConnectionState, normalizeQrResponse } from "./modules/whatsapp/evolutionManagerService.js";
 import { prisma } from "./prisma/client.js";
 import { homeAssistantService } from "./services/homeAssistantService.js";
+import { nvidiaSpeechService } from "./services/nvidiaSpeechService.js";
+import { nvidiaAiService } from "./services/nvidiaAiService.js";
+import { getAiProviderConfig, getAiProviderOrder } from "./services/aiProviderConfigService.js";
 import { geminiService } from "./services/geminiService.js";
 import { openAiService } from "./services/openAiService.js";
 import { schedulerService } from "./services/schedulerService.js";
 import { writeSystemLog } from "./services/systemLogService.js";
+import { createTotpCode } from "./services/totpService.js";
+import { assertDisposablePostgresConnection } from "./test-utils/disposablePostgres.js";
 
 vi.mock("axios", () => ({
   default: {
@@ -24,17 +31,23 @@ vi.mock("axios", () => ({
   }
 }));
 
-const credentials = { email: "admin@jarvis.local", password: "12345678" };
+vi.mocked(axios.post).mockResolvedValue({ status: 200, data: { ok: true } } as never);
+
+const testRunId = randomUUID();
+const credentials = { email: `sec002-api-${testRunId}@example.invalid`, password: "synthetic-sec002-api-password" };
+const demoCredentials = { email: "admin@jarvis.local", password: "synthetic-only-password" };
+const testTitlePrefix = `Teste automatizado ${testRunId}`;
+const testTitle = (label: string) => `${testTitlePrefix} ${label}`;
 let token = "";
-let automationId = "";
-let routineId = "";
-let scheduledRoutineId = "";
-let notificationId = "";
 let userId = "";
 let financeAccountId = "";
 let financeCategoryId = "";
-let statementImportId = "";
-const schedulerTaskIds: string[] = [];
+let adminTotpSecret = "";
+let adminRecoveryCodes: string[] = [];
+let testDatabaseVerified = false;
+let unrelatedFixtureUserId = "";
+let unrelatedFixtureMemoryId = "";
+let unrelatedFixtureTaskId = "";
 
 function generateInterCsv(rows = 2221) {
   const lines = [
@@ -65,7 +78,7 @@ function generateInterOfx(rows = 2221) {
     const amount = i % 2 === 0 ? "120.00" : "-49.90";
     const type = i % 2 === 0 ? "CREDIT" : "DEBIT";
     const memo = i % 2 === 0 ? `Pix recebido Cliente ${i}` : `FABWEB HOSPEDAGEM ${i}`;
-    return `<STMTTRN><TRNTYPE>${type}<DTPOSTED>${year}${month}${day}<TRNAMT>${amount}<FITID>FIT-${i}<MEMO>${memo}</STMTTRN>`;
+    return `<STMTTRN><TRNTYPE>${type}<DTPOSTED>${year}${month}${day}<TRNAMT>${amount}<FITID>FIT-${testRunId}-${i}<MEMO>${memo}</STMTTRN>`;
   }).join("\n");
   return `OFXHEADER:100
 DATA:OFXSGML
@@ -74,75 +87,273 @@ DATA:OFXSGML
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
 
-describe("JARVIS Home AI API", () => {
+describe.skipIf(process.env.JARVIS_AGENT_SYNC_TEST_DATABASE_CONFIGURED !== "true")("JARVIS Home AI API", () => {
   beforeAll(async () => {
-    const login = await request(app).post("/api/auth/login").send(credentials).expect(200);
-    token = login.body.token;
-    userId = login.body.user.id;
+    const databaseUrl = process.env.JARVIS_AGENT_SYNC_TEST_DATABASE_URL ?? "";
+    await assertDisposablePostgresConnection(databaseUrl, () => prisma.$queryRaw`
+      SELECT current_database() AS "database",
+        current_user AS "role",
+        inet_server_addr()::text AS "serverAddress",
+        inet_server_port() AS "serverPort"
+    `);
+    testDatabaseVerified = true;
+    const testUser = await prisma.user.create({
+      data: {
+        name: "SEC-002 Synthetic API Test User",
+        email: credentials.email,
+        passwordHash: await bcrypt.hash(credentials.password, 4),
+        role: "admin"
+      }
+    });
+    userId = testUser.id;
+    const unrelatedFixtureUser = await prisma.user.create({
+      data: {
+        name: "SEC-002 Synthetic Cleanup Control",
+        email: `sec002-cleanup-control-${testRunId}@example.invalid`,
+        passwordHash: await bcrypt.hash("synthetic-control-password", 4)
+      }
+    });
+    unrelatedFixtureUserId = unrelatedFixtureUser.id;
+    const unrelatedMemory = await prisma.memory.create({
+      data: { userId: unrelatedFixtureUserId, title: "Teste automatizado controle preservado", content: "Fixture alheio ao run", type: "note" }
+    });
+    unrelatedFixtureMemoryId = unrelatedMemory.id;
+    const unrelatedTask = await prisma.task.create({
+      data: { userId: unrelatedFixtureUserId, title: "Teste automatizado controle preservado", description: "Fixture alheio ao run" }
+    });
+    unrelatedFixtureTaskId = unrelatedTask.id;
+    env.TOTP_ENCRYPTION_KEY = "integration-test-totp-encryption-key-only";
+    const login = await request(app).post("/api/auth/login").send(credentials).expect(202).expect("Cache-Control", "no-store");
+    const enrollment = await request(app).post("/api/auth/mfa/enrollment/start").send({ setupToken: login.body.setupToken }).expect(200).expect("Cache-Control", "no-store");
+    adminTotpSecret = enrollment.body.secret;
+    expect(enrollment.body.qrDataUrl).toMatch(/^data:image\/png;base64,/);
+    const active = await request(app).post("/api/auth/mfa/enrollment/confirm").send({ setupToken: login.body.setupToken, code: createTotpCode(adminTotpSecret) }).expect(200).expect("Cache-Control", "no-store");
+    adminRecoveryCodes = active.body.recoveryCodes;
+    expect(adminRecoveryCodes).toHaveLength(10);
+    token = active.body.token;
+    userId = active.body.user.id;
+    const storedAdmin = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    expect(storedAdmin.totpSecretEncrypted).toMatch(/^totp:v1:/);
+    expect(storedAdmin.totpSecretEncrypted).not.toContain(adminTotpSecret);
+    expect(storedAdmin.totpRecoveryCodeHashes).not.toContain(adminRecoveryCodes[0]);
   });
 
   afterAll(async () => {
-    if (automationId) {
-      await prisma.automation.deleteMany({ where: { id: automationId } });
+    let unrelatedFixturesPreserved = true;
+    try {
+      if (testDatabaseVerified && unrelatedFixtureUserId) {
+        const preservedMemory = await prisma.memory.findUnique({ where: { id: unrelatedFixtureMemoryId } });
+        const preservedTask = await prisma.task.findUnique({ where: { id: unrelatedFixtureTaskId } });
+        unrelatedFixturesPreserved = Boolean(preservedMemory && preservedTask);
+        await prisma.user.deleteMany({ where: { id: unrelatedFixtureUserId, email: `sec002-cleanup-control-${testRunId}@example.invalid` } });
+      }
+      if (testDatabaseVerified && userId) {
+        await prisma.user.deleteMany({ where: { id: userId, email: credentials.email } });
+      }
+    } finally {
+      await prisma.$disconnect();
+      vi.restoreAllMocks();
     }
-    if (routineId) {
-      await prisma.routine.deleteMany({ where: { id: routineId } });
+    if (testDatabaseVerified && unrelatedFixtureUserId) {
+      expect(unrelatedFixturesPreserved).toBe(true);
     }
-    if (scheduledRoutineId) {
-      await prisma.routine.deleteMany({ where: { id: scheduledRoutineId } });
-    }
-    if (notificationId) {
-      await prisma.notification.deleteMany({ where: { id: notificationId } });
-    }
-    if (statementImportId) {
-      await prisma.statementImport.deleteMany({ where: { id: statementImportId } });
-    }
-    await prisma.financialTransaction.deleteMany({ where: { userId, description: { contains: "Teste automatizado financeiro nativo" } } });
-    if (financeAccountId) {
-      await prisma.bankAccount.deleteMany({ where: { id: financeAccountId } });
-    }
-    if (financeCategoryId) {
-      await prisma.financialCategory.deleteMany({ where: { id: financeCategoryId } });
-    }
-    await prisma.assistantDraftAction.deleteMany({ where: { userId } });
-    await prisma.memory.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
-    await prisma.task.deleteMany({ where: { title: { startsWith: "Teste automatizado" } } });
-    await prisma.setting.deleteMany({ where: { userId, key: { in: ["finance_api_url", "finance_api_token", "n8n_webhook_url", "n8n_api_key"] } } });
-    if (schedulerTaskIds.length > 0) {
-      await prisma.task.deleteMany({ where: { id: { in: schedulerTaskIds } } });
-    }
-    await prisma.$disconnect();
   });
 
-  it("authenticates the demo user without exposing password data", async () => {
-    const login = await request(app).post("/api/auth/login").send(credentials).expect(200);
+  it("authenticates the synthetic test user without exposing password data", async () => {
+    const stepOne = await request(app).post("/api/auth/login").send(credentials).expect(202).expect("Cache-Control", "no-store");
+    expect(stepOne.body.mfaRequired).toBe(true);
+    await request(app).get("/api/auth/me").set("Authorization", `Bearer ${stepOne.body.challengeToken}`).expect(401);
+    const freshCode = createTotpCode(adminTotpSecret, Date.now() + 30_000);
+    const login = await request(app).post("/api/auth/login/totp").send({ challengeToken: stepOne.body.challengeToken, code: freshCode }).expect(200).expect("Cache-Control", "no-store");
     expect(login.body.token).toEqual(expect.any(String));
     expect(JSON.stringify(login.body)).not.toMatch(/password|passwordHash/i);
 
+    await request(app).post("/api/auth/login/totp").send({ challengeToken: stepOne.body.challengeToken, code: freshCode }).expect(401);
+
     const me = await request(app).get("/api/auth/me").set(auth()).expect(200);
     expect(me.body.user.email).toBe(credentials.email);
+
+    const recoveryChallenge = await request(app).post("/api/auth/login").send(credentials).expect(202);
+    const recoveryLogin = await request(app).post("/api/auth/login/totp").send({ challengeToken: recoveryChallenge.body.challengeToken, code: adminRecoveryCodes[0] }).expect(200);
+    expect(recoveryLogin.body.token).toEqual(expect.any(String));
+    await request(app).get("/api/auth/me").set("Authorization", `Bearer ${login.body.token}`).expect(401);
+
+    const replayChallenge = await request(app).post("/api/auth/login").send(credentials).expect(202);
+    await request(app).post("/api/auth/login/totp").send({ challengeToken: replayChallenge.body.challengeToken, code: adminRecoveryCodes[0] }).expect(401);
+
+    const beforeDisable = recoveryLogin.body.token as string;
+    const disabled = await request(app).post("/api/auth/mfa/disable").set("Authorization", `Bearer ${beforeDisable}`).send({ password: credentials.password, code: adminRecoveryCodes[1] }).expect(200);
+    expect(disabled.body.enabled).toBe(false);
+    await request(app).get("/api/auth/me").set("Authorization", `Bearer ${beforeDisable}`).expect(401);
+    token = disabled.body.token;
+    await request(app).get("/api/auth/me").set(auth()).expect(200);
+    await request(app).get("/api/auth/mfa/status").set(auth()).expect(200).expect(({ body }) => {
+      expect(body).toEqual({ enabled: false, recoveryCodesRemaining: 0 });
+    });
+    const setupAgain = await request(app).post("/api/auth/login").send(credentials).expect(202);
+    expect(setupAgain.body.mfaSetupRequired).toBe(true);
   });
 
   it("can block demo login when production flag disables it", async () => {
     const previous = env.ALLOW_DEMO_LOGIN;
     env.ALLOW_DEMO_LOGIN = false;
-    await request(app).post("/api/auth/login").send(credentials).expect(403).expect((res) => {
+    await request(app).post("/api/auth/login").send(demoCredentials).expect(403).expect((res) => {
       expect(res.body.message).toContain("demo");
     });
     env.ALLOW_DEMO_LOGIN = previous;
   });
 
+  it("exposes the selected TTS provider header to the configured frontend", async () => {
+    const response = await request(app)
+      .options("/api/voice/speech")
+      .set("Origin", "http://localhost:5173")
+      .set("Access-Control-Request-Method", "POST")
+      .expect(204);
+    expect(response.headers["access-control-expose-headers"]).toContain("X-Jarvis-TTS-Provider");
+    expect(response.headers["access-control-expose-headers"]).toContain("X-Request-Id");
+  });
   it("reports health and safe integration fallback status", async () => {
     const health = await request(app).get("/api/health").expect(200);
     expect(health.body.app).toBe("ok");
     expect(health.body.database).toBe("ok");
+    expect(health.body.openaiConfigured).toBeUndefined();
+    expect(health.body.scheduler.lastError).toBeUndefined();
+    expect(health.body.scheduler.lastRunAt).toBeUndefined();
 
-    const full = await request(app).get("/api/health/full").expect(200);
+    await request(app).get("/api/health/full").expect(401);
+    const full = await request(app).get("/api/health/full").set(auth()).expect(200);
     expect(full.body.integrations.n8n.status).toMatch(/configured|not_configured/);
     expect(full.body.integrations.whatsapp.autoReply).toBe(false);
     expect(full.body.observability.uptimeSeconds).toEqual(expect.any(Number));
     expect(full.body.observability.logsCount).toEqual(expect.any(Number));
     expect(Array.isArray(full.body.observability.recentFailures)).toBe(true);
+  });
+
+  it("isolates detailed health logs and finance counts from other users", async () => {
+    const isolationId = randomUUID();
+    const userCredentials = { email: `health-scope-${isolationId}@example.invalid`, password: "synthetic-health-scope-password" };
+    const adminMarker = `health-scope-admin-${isolationId}`;
+    const userMarker = `health-scope-user-${isolationId}`;
+    const historicalUrlSecret = `legacy-hook-${isolationId}`;
+    const historicalWebhookUrl = `https://n8n.example.invalid/webhook/${historicalUrlSecret}?token=${historicalUrlSecret}`;
+    const historicalLogMessage = `Legacy callback failed at ${historicalWebhookUrl}`;
+    const globalEventMarker = `global-integration-event-${isolationId}`;
+    const eventPathSecret = `event-path-secret-${isolationId}`;
+    let scopedUserId = "";
+    const integrationEventIds: string[] = [];
+    const importIds: string[] = [];
+    try {
+      const scopedUser = await prisma.user.create({
+        data: {
+          name: "Health Scope Synthetic User",
+          email: userCredentials.email,
+          passwordHash: await bcrypt.hash(userCredentials.password, 4),
+          role: "user"
+        }
+      });
+      scopedUserId = scopedUser.id;
+      const scopedLogin = await request(app).post("/api/auth/login").send(userCredentials).expect(200);
+
+      await prisma.systemLog.createMany({
+        data: [
+          { userId, level: "error", module: "test", action: "health_scope", message: adminMarker },
+          { userId: scopedUserId, level: "error", module: "test", action: "health_scope", message: userMarker },
+          { userId: scopedUserId, level: "warning", module: "n8n", action: "historical_url", message: historicalLogMessage, metadata: { webhookUrl: historicalWebhookUrl } }
+        ]
+      });
+      const [globalEvent, scopedEvent] = await Promise.all([
+        prisma.integrationEvent.create({ data: { type: "system.alert", payloadRedacted: { marker: globalEventMarker }, lastError: `failed /webhook/${eventPathSecret}?key=private` } }),
+        prisma.integrationEvent.create({ data: { userId: scopedUserId, type: "system.alert", payloadRedacted: { callback: `https://n8n.example.invalid/webhook/${eventPathSecret}?key=private` }, lastError: `failed /webhook-test/${eventPathSecret}` } })
+      ]);
+      integrationEventIds.push(globalEvent.id, scopedEvent.id);
+      const adminImport = await prisma.statementImport.create({ data: { userId, fileName: `${isolationId}-admin.csv`, fileType: "csv", status: "uploaded" } });
+      const userImport = await prisma.statementImport.create({ data: { userId: scopedUserId, fileName: `${isolationId}-user.csv`, fileType: "csv", status: "uploaded" } });
+      importIds.push(adminImport.id, userImport.id);
+      await prisma.statementImportRow.createMany({
+        data: [
+          { importId: adminImport.id, description: "Synthetic admin row", raw: {} },
+          { importId: userImport.id, description: "Synthetic user row", raw: {} }
+        ]
+      });
+
+      const userHealth = await request(app).get("/api/health/full").set({ Authorization: `Bearer ${scopedLogin.body.token}` }).expect(200);
+      const userPayload = JSON.stringify(userHealth.body);
+      expect(userPayload).toContain(userMarker);
+      expect(userPayload).not.toContain(adminMarker);
+      expect(userPayload).not.toContain(historicalUrlSecret);
+      expect(userHealth.body.integrations.finance.pendingImports).toBe(1);
+      expect(userHealth.body.integrations.finance.pendingReviewRows).toBe(1);
+      expect(userHealth.body.observability.http).toBeNull();
+      expect(userHealth.body.scheduler.lastError).toBeNull();
+
+      const integrationStatus = await request(app).get("/api/integrations/status").set({ Authorization: `Bearer ${scopedLogin.body.token}` }).expect(200);
+      const integrationStatusText = JSON.stringify(integrationStatus.body);
+      expect(Object.values(integrationStatus.body.urls).every((value: unknown) => value === "")).toBe(true);
+      expect(integrationStatus.body.providers.api_public.url).toBeUndefined();
+      expect(integrationStatus.body.providers.whatsapp.webhookUrl).toBeUndefined();
+      expect(integrationStatus.body.providers.n8n.webhookUrl).toBe("");
+      expect(integrationStatus.body.providers.home_assistant.tokenMasked).toBe("");
+      expect(integrationStatusText).not.toContain("apijarvis.juninnzxtec.com.br");
+      expect(integrationStatusText).not.toContain("n8njarvis.juninnzxtec.com.br");
+      expect(integrationStatus.body.providers.n8n).toMatchObject({ configured: null, status: "unknown" });
+      expect(integrationStatus.body.providers.whatsapp).toMatchObject({ configured: null, status: "unknown", apiUrlConfigured: null, apiKeyConfigured: null });
+      expect(integrationStatus.body.providers.home_assistant).toMatchObject({ configured: null, status: "unknown", tokenConfigured: null });
+      expect(integrationStatusText).not.toContain('"source":"env"');
+
+      const [n8nStatus, whatsappStatus, homeAssistantStatus] = await Promise.all([
+        request(app).get("/api/n8n/status").set({ Authorization: `Bearer ${scopedLogin.body.token}` }),
+        request(app).get("/api/whatsapp/status").set({ Authorization: `Bearer ${scopedLogin.body.token}` }),
+        request(app).get("/api/home-assistant/status").set({ Authorization: `Bearer ${scopedLogin.body.token}` })
+      ]);
+      expect(n8nStatus.body).toMatchObject({ configured: null, status: "unknown", webhookConfigured: null, apiKeyConfigured: null });
+      expect(whatsappStatus.body).toMatchObject({ configured: null, status: "unknown", apiUrlConfigured: null, apiKeyConfigured: null, instanceConfigured: null });
+      expect(homeAssistantStatus.body).toMatchObject({ configured: null, status: "unknown", urlConfigured: null, tokenConfigured: null });
+
+      const userEvents = await request(app).get("/api/integrations/events").set({ Authorization: `Bearer ${scopedLogin.body.token}` }).expect(200);
+      expect(JSON.stringify(userEvents.body)).not.toContain(globalEventMarker);
+      expect(JSON.stringify(userEvents.body)).not.toContain(eventPathSecret);
+      expect(userEvents.body.events).toHaveLength(1);
+      const adminEvents = await request(app).get("/api/integrations/events").set(auth()).expect(200);
+      expect(JSON.stringify(adminEvents.body)).toContain(globalEventMarker);
+      expect(JSON.stringify(adminEvents.body)).not.toContain(eventPathSecret);
+
+      const commandHealth = await request(app).post("/api/commands/run")
+        .set({ Authorization: `Bearer ${scopedLogin.body.token}` })
+        .send({ phrase: "status do sistema" }).expect(200);
+      const commandHealthText = JSON.stringify(commandHealth.body);
+      expect(commandHealth.body.result.intent).toBe("health.check");
+      expect(commandHealthText).not.toContain("apijarvis.juninnzxtec.com.br");
+      expect(commandHealthText).not.toContain("n8njarvis.juninnzxtec.com.br");
+      expect(commandHealthText).not.toMatch(/apiKeyMasked|tokenMasked|webhookUrl|fullHealthUrl/);
+      expect(userHealth.body.scheduler.lastRunAt).toBeNull();
+      expect(JSON.stringify(userHealth.body.integrations)).not.toMatch(/webhookUrl|apiKeyMasked|apiUrl|instance|publicHealthUrl|fullHealthUrl/);
+
+      const userReport = await request(app).get("/api/reports/system").set({ Authorization: `Bearer ${scopedLogin.body.token}` }).expect(200);
+      const userReportPayload = JSON.stringify(userReport.body);
+      expect(userReportPayload).toContain(userMarker);
+      expect(userReportPayload).not.toContain(adminMarker);
+      expect(userReportPayload).not.toContain(historicalUrlSecret);
+      expect(JSON.stringify(userReport.body.health.integrations)).not.toMatch(/webhookUrl|apiKeyMasked|apiUrl|instance|publicHealthUrl|fullHealthUrl/);
+
+      const userLogs = await request(app).get("/api/logs?module=n8n").set({ Authorization: `Bearer ${scopedLogin.body.token}` }).expect(200);
+      expect(JSON.stringify(userLogs.body)).not.toContain(historicalUrlSecret);
+      expect(JSON.stringify(userLogs.body)).toContain("[REDACTED_URL]");
+      const integrationLogs = await request(app).get("/api/integrations/logs").set({ Authorization: `Bearer ${scopedLogin.body.token}` }).expect(200);
+      expect(JSON.stringify(integrationLogs.body)).not.toContain(historicalUrlSecret);
+
+      const adminHealth = await request(app).get("/api/health/full").set(auth()).expect(200);
+      const adminPayload = JSON.stringify(adminHealth.body);
+      expect(adminPayload).toContain(adminMarker);
+      expect(adminPayload).toContain(userMarker);
+      expect(adminHealth.body.integrations.finance.pendingImports).toBeGreaterThanOrEqual(2);
+      expect(adminHealth.body.integrations.finance.pendingReviewRows).toBeGreaterThanOrEqual(2);
+    } finally {
+      await prisma.statementImportRow.deleteMany({ where: { importId: { in: importIds } } });
+      await prisma.statementImport.deleteMany({ where: { id: { in: importIds } } });
+      await prisma.integrationEvent.deleteMany({ where: { id: { in: integrationEventIds } } });
+      await prisma.systemLog.deleteMany({ where: { message: { in: [adminMarker, userMarker, historicalLogMessage] } } });
+      if (scopedUserId) await prisma.user.deleteMany({ where: { id: scopedUserId, email: userCredentials.email } });
+    }
   });
 
   it("persists chat conversations and messages", async () => {
@@ -161,7 +372,7 @@ describe("JARVIS Home AI API", () => {
 
   it("processes voice commands with the original JARVIS BR Premium persona", async () => {
     const empty = await request(app).post("/api/voice/process").set(auth()).send({ text: "   " }).expect(400);
-    expect(empty.body.message).toContain("Informe uma fala");
+    expect(empty.body.message).toBe("Dados invalidos");
 
     const voice = await request(app).post("/api/voice/process").set(auth()).send({ text: "status do sistema" }).expect(200);
     expect(voice.body.voicePersona).toBe("JARVIS BR Premium");
@@ -180,12 +391,28 @@ describe("JARVIS Home AI API", () => {
 
     const tools = await request(app).get("/api/brain/tools").set(auth()).expect(200);
     expect(tools.body.tools.some((tool: { name: string }) => tool.name === "summarizeFinance")).toBe(true);
+    expect(tools.body.tools.some((tool: { name: string }) => tool.name === "getWebhookUrl")).toBe(false);
+
+    const whatsappPlan = await request(app)
+      .post("/api/brain/plan")
+      .set(auth())
+      .send({ message: "configurar webhook do WhatsApp", allowExternalAI: false, allowTools: true })
+      .expect(200);
+    expect(whatsappPlan.body.plannedTools).not.toContain("getWebhookUrl");
+    expect(JSON.stringify(whatsappPlan.body)).not.toContain("apijarvis.juninnzxtec.com.br/api/whatsapp/webhook");
+
+    const whatsappGuidance = await request(app)
+      .post("/api/brain/ask")
+      .set(auth())
+      .send({ message: "configurar webhook do WhatsApp", allowExternalAI: false, allowTools: true })
+      .expect(200);
+    expect(JSON.stringify(whatsappGuidance.body)).not.toContain("apijarvis.juninnzxtec.com.br/api/whatsapp/webhook");
 
     const memory = await prisma.memory.create({
       data: {
         userId,
         type: "fact",
-        title: "Teste automatizado Brain memoria",
+        title: testTitle("Brain memoria"),
         content: "Junior trabalha no JARVIS Home AI e gosta de respostas objetivas.",
         tags: ["brain", "jarvis"],
         importance: 5
@@ -199,7 +426,7 @@ describe("JARVIS Home AI API", () => {
       .expect(200);
     expect(ask.body.agent).toBe("PersonalMemoryAgent");
     expect(ask.body.intent).toBe("memory.query");
-    expect(ask.body.answer).toContain("Teste automatizado Brain memoria");
+    expect(ask.body.answer).toContain(testTitle("Brain memoria"));
     expect(JSON.stringify(ask.body)).not.toMatch(/sk-|AIza|Bearer\s+|password/i);
 
     const plan = await request(app)
@@ -213,6 +440,31 @@ describe("JARVIS Home AI API", () => {
     const draft = await request(app).post("/api/brain/execute-draft").set(auth()).send({ draftAction: { type: "home.action", entity: "lock.front_door" } }).expect(200);
     expect(draft.body.status).toBe("confirmation_required");
 
+    const memoryTitle = "memória de regressão não persistida";
+    const memoryBefore = await prisma.memory.count({ where: { userId, title: memoryTitle } });
+    const memoryDraft = await request(app)
+      .post("/api/brain/ask")
+      .set(auth())
+      .send({ message: `lembre que ${memoryTitle}`, allowExternalAI: false, allowTools: false })
+      .expect(200);
+    expect(memoryDraft.body.needsConfirmation).toBe(true);
+    expect(memoryDraft.body.usedTools).toContainEqual(expect.objectContaining({ tool: "createMemory", status: "confirmation_required" }));
+    expect(await prisma.memory.count({ where: { userId, title: memoryTitle } })).toBe(memoryBefore);
+
+    const taskTitle = "tarefa de regressão não persistida";
+    const taskBefore = await prisma.task.count({ where: { userId, title: taskTitle } });
+    const taskDraft = await request(app)
+      .post("/api/brain/ask")
+      .set(auth())
+      .send({ message: `crie uma tarefa ${taskTitle}`, allowExternalAI: false, allowTools: false })
+      .expect(200);
+    expect(taskDraft.body.needsConfirmation).toBe(true);
+    expect(taskDraft.body.usedTools).toContainEqual(expect.objectContaining({ tool: "createTask", status: "confirmation_required" }));
+    expect(await prisma.task.count({ where: { userId, title: taskTitle } })).toBe(taskBefore);
+
+    await request(app).post("/api/brain/execute-draft").set(auth()).send({ unexpected: true }).expect(400);
+    await request(app).post("/api/brain/execute-draft").set(auth()).send({ draftAction: {} }).expect(400);
+
     const feedback = await request(app).post("/api/brain/feedback").set(auth()).send({ message: "prefiro respostas curtas e praticas", savePreference: true }).expect(201);
     expect(feedback.body.status).toBe("success");
 
@@ -224,13 +476,13 @@ describe("JARVIS Home AI API", () => {
     const created = await request(app)
       .post("/api/memories")
       .set(auth())
-      .send({ title: "Teste automatizado memória", content: "Conteúdo de teste", type: "note", tags: ["test"], importance: 3 })
+      .send({ title: testTitle("memória"), content: "Conteúdo de teste", type: "note", tags: ["test"], importance: 3 })
       .expect(201);
 
     await request(app)
       .put(`/api/memories/${created.body.memory.id}`)
       .set(auth())
-      .send({ title: "Teste automatizado memória editada", content: "Editado", type: "note", tags: ["test"], importance: 4 })
+      .send({ title: testTitle("memória editada"), content: "Editado", type: "note", tags: ["test"], importance: 4 })
       .expect(200);
 
     const chat = await request(app)
@@ -241,7 +493,11 @@ describe("JARVIS Home AI API", () => {
     expect(chat.body.intent).toBe("memory.create");
 
     const list = await request(app).get("/api/memories?q=n8n").set(auth()).expect(200);
-    expect(list.body.memories.length).toBeGreaterThan(0);
+    expect(chat.body.needsConfirmation).toBe(true);
+    expect(chat.body.usedTools).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tool: "createMemory", status: "confirmation_required" })
+    ]));
+    expect(list.body.memories).toHaveLength(0);
 
     await request(app).delete(`/api/memories/${created.body.memory.id}`).set(auth()).expect(204);
   });
@@ -250,13 +506,13 @@ describe("JARVIS Home AI API", () => {
     const created = await request(app)
       .post("/api/tasks")
       .set(auth())
-      .send({ title: "Teste automatizado tarefa", description: "Teste", priority: "high", status: "pending" })
+      .send({ title: testTitle("tarefa"), description: "Teste", priority: "high", status: "pending" })
       .expect(201);
 
     await request(app)
       .put(`/api/tasks/${created.body.task.id}`)
       .set(auth())
-      .send({ title: "Teste automatizado tarefa editada", description: "Editado", priority: "urgent", status: "in_progress" })
+      .send({ title: testTitle("tarefa editada"), description: "Editado", priority: "urgent", status: "in_progress" })
       .expect(200);
 
     const done = await request(app).patch(`/api/tasks/${created.body.task.id}/status`).set(auth()).send({ status: "done" }).expect(200);
@@ -276,9 +532,9 @@ describe("JARVIS Home AI API", () => {
     const created = await request(app)
       .post("/api/automations")
       .set(auth())
-      .send({ name: "Teste automatizado automação", triggerType: "manual", actionType: "internal", enabled: true, config: { action: "test" } })
+      .send({ name: testTitle("automação"), triggerType: "manual", actionType: "internal", enabled: true, config: { action: "test" } })
       .expect(201);
-    automationId = created.body.automation.id;
+    const automationId = created.body.automation.id;
 
     const run = await request(app).post(`/api/automations/${automationId}/run`).set(auth()).send({ input: "test" }).expect(200);
     expect(run.body.log.status).toBe("success");
@@ -289,7 +545,7 @@ describe("JARVIS Home AI API", () => {
     await request(app)
       .post("/api/automations")
       .set(auth())
-      .send({ name: "Teste automatizado perigoso", triggerType: "manual", actionType: "internal", enabled: true, config: { cmd: "rm -rf /" } })
+      .send({ name: testTitle("perigoso"), triggerType: "manual", actionType: "internal", enabled: true, config: { cmd: "rm -rf /" } })
       .expect(400);
   });
 
@@ -344,12 +600,38 @@ describe("JARVIS Home AI API", () => {
     const created = await request(app)
       .post("/api/finance/transactions")
       .set(auth())
-      .send({ type: "income", status: "received", description: "Teste automatizado financeiro", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" })
+      .send({ type: "income", status: "received", description: testTitle("financeiro"), amount: 120, transaction_date: "2026-05-14", payment_method: "pix" })
       .expect(200);
     expect(created.body.status).toBe("success");
 
     const cleared = await request(app).delete("/api/finance/config").set(auth()).expect(200);
     expect(cleared.body.status).toBe("not_configured");
+
+    vi.mocked(axios.request)
+      .mockResolvedValueOnce({ status: 200, data: { data: { requires_2fa: true, challenge_token: "temporary-finance-challenge-token" } } })
+      .mockResolvedValueOnce({ status: 200, data: { data: { token: "fake-finance-token-after-2fa", user: { email: "finance@example.com" } } } })
+      .mockResolvedValueOnce({ status: 200, data: { data: [{ id: "acc-primary", name: "PJ DO INTER" }] } });
+    const login = await request(app)
+      .post("/api/finance/auth/login")
+      .set(auth())
+      .send({ apiUrl: "https://controlefinanceiro.test", email: "finance@example.com", password: "fake-password" })
+      .expect(200);
+    expect(login.body.status).toBe("requires_2fa");
+    expect(login.body.challengeToken).toBe("temporary-finance-challenge-token");
+
+    const linked = await request(app)
+      .post("/api/finance/auth/challenge")
+      .set(auth())
+      .send({ apiUrl: "https://controlefinanceiro.test", email: "finance@example.com", challengeToken: login.body.challengeToken, code: "123456" })
+      .expect(200);
+    expect(linked.body.status).toBe("configured");
+    expect(JSON.stringify(linked.body)).not.toContain("fake-finance-token-after-2fa");
+
+    vi.mocked(axios.request).mockResolvedValueOnce({ status: 200, data: { data: { id: "finance-user", email: "finance@example.com" } } });
+    const connected = await request(app).post("/api/finance/test-connection").set(auth()).expect(200);
+    expect(connected.body.status).toBe("success");
+
+    await request(app).delete("/api/finance/auth").set(auth()).expect(200);
   });
 
   it("uses OpenAI fallback safely when the provider returns quota errors", async () => {
@@ -441,7 +723,7 @@ describe("JARVIS Home AI API", () => {
     expect(saved.body.status).toBe("configured");
     expect(JSON.stringify(saved.body)).not.toContain("secret-n8n-token");
     const stored = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "n8n_api_key" } } });
-    expect(String(stored.value)).toMatch(/^enc:v1:/);
+    expect(String(stored.value)).toMatch(/^enc:v[12]:/);
     expect(String(stored.value)).not.toContain("secret-n8n-token");
 
     vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, token: "secret-token" } });
@@ -469,11 +751,17 @@ describe("JARVIS Home AI API", () => {
     expect(saved.body.status).toBe("configured");
     expect(JSON.stringify(saved.body)).not.toContain("secret-key");
 
-    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { instance: "open" } });
+    vi.mocked(axios.get)
+      .mockResolvedValueOnce({ status: 200, data: { instance: { state: "open" } } })
+      .mockResolvedValueOnce({ status: 200, data: { instance: { state: "close" } } });
     vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { ok: true, apikey: "secret-key" } });
 
     const test = await request(app).post("/api/whatsapp/test-connection").set(auth()).expect(200);
-    expect(test.body.status).toBe("success");
+    expect(test.body).toMatchObject({ status: "connected", connectionState: "connected", reachable: true });
+
+    const disconnected = await request(app).post("/api/whatsapp/test-connection").set(auth()).expect(200);
+    expect(disconnected.body).toMatchObject({ status: "disconnected", connectionState: "disconnected", reachable: true });
+    expect(disconnected.body.message).toMatch(/sessão.*desconectada/i);
 
     const send = await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "5511999999999", content: "teste", confirmed: true }).expect(200);
     expect(send.body.status).toBe("success");
@@ -598,15 +886,25 @@ describe("JARVIS Home AI API", () => {
     expect(run.body.intent).toBe("report.tasks");
   });
 
-  it("supports routines CRUD, run history, and seed routines", async () => {
+  it("supports routines CRUD and run history for an isolated user", async () => {
+    await prisma.routine.createMany({
+      data: Array.from({ length: 4 }, (_, index) => ({
+        userId,
+        name: `SEC002 routine fixture ${testRunId} ${index}`,
+        description: "Synthetic API integration fixture",
+        triggerType: "manual" as const,
+        enabled: false,
+        config: { report: "tasks" }
+      }))
+    });
     const seed = await request(app).get("/api/routines").set(auth()).expect(200);
     expect(seed.body.routines.length).toBeGreaterThanOrEqual(4);
     const created = await request(app)
       .post("/api/routines")
       .set(auth())
-      .send({ name: "Teste automatizado rotina", description: "Rotina de teste", triggerType: "manual", enabled: true, config: { report: "tasks" } })
+      .send({ name: testTitle("rotina"), description: "Rotina de teste", triggerType: "manual", enabled: true, config: { report: "tasks" } })
       .expect(201);
-    routineId = created.body.routine.id;
+    const routineId = created.body.routine.id;
     const run = await request(app).post(`/api/routines/${routineId}/run`).set(auth()).send({ source: "test" }).expect(200);
     expect(run.body.run.status).toBe("success");
     const runs = await request(app).get(`/api/routines/${routineId}/runs`).set(auth()).expect(200);
@@ -629,8 +927,8 @@ describe("JARVIS Home AI API", () => {
   });
 
   it("supports notifications and read state", async () => {
-    const notification = await prisma.notification.create({ data: { userId, title: "Teste automatizado notificacao", message: "Aviso seguro", type: "info" } });
-    notificationId = notification.id;
+    const notification = await prisma.notification.create({ data: { userId, title: testTitle("notificacao"), message: "Aviso seguro", type: "info" } });
+    const notificationId = notification.id;
     const list = await request(app).get("/api/notifications").set(auth()).expect(200);
     expect(list.body.notifications.some((item: { id: string }) => item.id === notificationId)).toBe(true);
     const read = await request(app).patch(`/api/notifications/${notificationId}/read`).set(auth()).expect(200);
@@ -644,7 +942,7 @@ describe("JARVIS Home AI API", () => {
     const created = await request(app)
       .post("/api/tasks")
       .set(auth())
-      .send({ title: "Teste automatizado lembrete", dueDate: yesterday, reminderAt: today, priority: "high" })
+      .send({ title: testTitle("lembrete"), dueDate: yesterday, reminderAt: today, priority: "high" })
       .expect(201);
     expect(created.body.task.reminderAt).toEqual(expect.any(String));
     const overdue = await request(app).get("/api/tasks?overdue=true").set(auth()).expect(200);
@@ -667,14 +965,13 @@ describe("JARVIS Home AI API", () => {
     const routine = await prisma.routine.create({
       data: {
         userId,
-        name: "Teste automatizado rotina scheduler",
+        name: testTitle("rotina scheduler"),
         description: "Scheduler seguro",
         triggerType: "schedule",
         enabled: true,
         config: { report: "tasks", schedule: { type: "interval_minutes", minutes: 1 } }
       }
     });
-    scheduledRoutineId = routine.id;
 
     const result = await schedulerService.runOnce(new Date());
     expect(result).toMatchObject({ skipped: false });
@@ -695,7 +992,7 @@ describe("JARVIS Home AI API", () => {
   it("creates task reminder notifications without duplicating them", async () => {
     const previous = env.SCHEDULER_ENABLED;
     env.SCHEDULER_ENABLED = true;
-    const title = `Teste automatizado reminder scheduler ${Date.now()}`;
+    const title = testTitle(`reminder scheduler ${Date.now()}`);
     const task = await prisma.task.create({
       data: {
         userId,
@@ -704,7 +1001,6 @@ describe("JARVIS Home AI API", () => {
         reminderAt: new Date(Date.now() - 60_000)
       }
     });
-    schedulerTaskIds.push(task.id);
 
     await schedulerService.runOnce(new Date());
     await schedulerService.runOnce(new Date(Date.now() + 60_000));
@@ -719,7 +1015,7 @@ describe("JARVIS Home AI API", () => {
   it("creates overdue task summary without duplicating alerts", async () => {
     const previous = env.SCHEDULER_ENABLED;
     env.SCHEDULER_ENABLED = true;
-    const title = `Teste automatizado overdue scheduler ${Date.now()}`;
+    const title = testTitle(`overdue scheduler ${Date.now()}`);
     const task = await prisma.task.create({
       data: {
         userId,
@@ -728,7 +1024,6 @@ describe("JARVIS Home AI API", () => {
         dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
       }
     });
-    schedulerTaskIds.push(task.id);
 
     await schedulerService.runOnce(new Date());
     await schedulerService.runOnce(new Date(Date.now() + 60_000));
@@ -746,7 +1041,7 @@ describe("JARVIS Home AI API", () => {
     const routine = await prisma.routine.create({
       data: {
         userId,
-        name: "Teste automatizado rotina sensivel scheduler",
+        name: testTitle("rotina sensivel scheduler"),
         triggerType: "schedule",
         enabled: true,
         config: { action: "whatsapp.send", token: "secret-token", schedule: { type: "interval_minutes", minutes: 1 } }
@@ -777,28 +1072,28 @@ describe("JARVIS Home AI API", () => {
     const account = await request(app)
       .post("/api/finance/bank-accounts")
       .set(auth())
-      .send({ bankName: "Banco Inter", accountName: `Teste automatizado financeiro nativo ${Date.now()}`, accountType: "business", currentBalance: 100 })
+      .send({ bankName: "Banco Inter", accountName: testTitle(`financeiro nativo ${Date.now()}`), accountType: "business", currentBalance: 100 })
       .expect(201);
     financeAccountId = account.body.account.id;
 
     const category = await request(app)
       .post("/api/finance/categories")
       .set(auth())
-      .send({ name: `Teste automatizado financeiro nativo categoria ${Date.now()}`, type: "income", keywords: ["cliente teste nativo"] })
+      .send({ name: testTitle(`financeiro nativo categoria ${Date.now()}`), type: "income", keywords: ["cliente teste nativo"] })
       .expect(201);
     financeCategoryId = category.body.category.id;
 
     const income = await request(app)
       .post("/api/finance/transactions")
       .set(auth())
-      .send({ bankAccountId: financeAccountId, categoryId: financeCategoryId, type: "income", direction: "in", amount: 120, description: "Teste automatizado financeiro nativo entrada cliente teste nativo", date: new Date().toISOString() })
+      .send({ bankAccountId: financeAccountId, categoryId: financeCategoryId, type: "income", direction: "in", amount: 120, description: testTitle("financeiro nativo entrada cliente teste nativo"), date: new Date().toISOString() })
       .expect(201);
     expect(income.body.transaction.status).toBe("confirmed");
 
     await request(app)
       .post("/api/finance/transactions")
       .set(auth())
-      .send({ bankAccountId: financeAccountId, type: "expense", direction: "out", amount: 20, description: "Teste automatizado financeiro nativo saida servidor", date: new Date().toISOString() })
+      .send({ bankAccountId: financeAccountId, type: "expense", direction: "out", amount: 20, description: testTitle("financeiro nativo saida servidor"), date: new Date().toISOString() })
       .expect(201);
 
     const updated = await prisma.bankAccount.findUniqueOrThrow({ where: { id: financeAccountId } });
@@ -818,7 +1113,7 @@ describe("JARVIS Home AI API", () => {
     expect(ofx.periodEnd?.toISOString().slice(0, 10)).toBe("2026-05-16");
     expect(ofx.finalBalance).toBe(326.05);
     expect(ofx.transactions).toHaveLength(2221);
-    expect(ofx.transactions[0].externalId).toBe("FIT-0");
+    expect(ofx.transactions[0].externalId).toBe(`FIT-${testRunId}-0`);
 
     const csv = parseInterCsvStatement(generateInterCsv());
     expect(csv.bankName).toBe("Banco Inter");
@@ -838,7 +1133,7 @@ describe("JARVIS Home AI API", () => {
     expect(account.body.intent).toMatch(/finance.collect_description|finance.create_account_confirmation/);
 
     const description = account.body.intent === "finance.create_account_confirmation"
-      ? await request(app).post("/api/finance/assistant").set(auth()).send({ content: "sim" }).expect(200).then(() => request(app).post("/api/finance/assistant").set(auth()).send({ content: "0" }).expect(200)).then(() => request(app).post("/api/finance/assistant").set(auth()).send({ content: "cliente site teste" }).expect(200))
+      ? await request(app).post("/api/finance/assistant").set(auth()).send({ content: "sim" }).expect(200).then(() => request(app).post("/api/finance/assistant").set(auth()).send({ content: "saldo 0" }).expect(200)).then(() => request(app).post("/api/finance/assistant").set(auth()).send({ content: "cliente site teste" }).expect(200))
       : await request(app).post("/api/finance/assistant").set(auth()).send({ content: "cliente site teste" }).expect(200);
     expect(description.body.intent).toBe("finance.awaiting_confirmation");
 
@@ -849,8 +1144,8 @@ describe("JARVIS Home AI API", () => {
   it("imports Inter CSV only after review and detects duplicates", async () => {
     const csv = [
       "Data;Descricao;Valor;Saldo",
-      `${new Date().toLocaleDateString("pt-BR")};PIX recebido Teste automatizado financeiro nativo cliente;120,00;120,00`,
-      `${new Date().toLocaleDateString("pt-BR")};Pagamento servidor Teste automatizado financeiro nativo;-30,00;90,00`
+      `${new Date().toLocaleDateString("pt-BR")};PIX recebido ${testTitle("financeiro nativo cliente")};120,00;120,00`,
+      `${new Date().toLocaleDateString("pt-BR")};Pagamento servidor ${testTitle("financeiro nativo saida")};-30,00;90,00`
     ].join("\n");
 
     const uploaded = await request(app)
@@ -858,7 +1153,7 @@ describe("JARVIS Home AI API", () => {
       .set(auth())
       .send({ fileName: "extrato-inter-pj.csv", content: csv, bankAccountId: financeAccountId })
       .expect(201);
-    statementImportId = uploaded.body.import.id;
+    const statementImportId = uploaded.body.import.id;
     expect(uploaded.body.import.status).toBe("review_required");
     expect(uploaded.body.import.totalRows).toBe(2);
 
@@ -879,7 +1174,6 @@ describe("JARVIS Home AI API", () => {
   });
 
   it("imports Banco Inter OFX metadata, creates PJ DO INTER when confirmed, and supports WhatsApp file import mock", async () => {
-    await prisma.financialTransaction.deleteMany({ where: { userId, transactionExternalId: { startsWith: "FIT-" } } });
     const ofx = generateInterOfx(4);
     const uploaded = await request(app)
       .post("/api/finance/import/upload")
@@ -907,7 +1201,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: {
             documentMessage: {
               fileName: "Extrato-17-10-2024-a-16-05-2026-CSV.csv",
@@ -928,7 +1222,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: { conversation: "entrada pix recebido R$ 120,00 cliente Joao" }
         }
       })
@@ -940,7 +1234,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: {
             documentMessage: {
               fileName: "extrato.csv",
@@ -960,7 +1254,7 @@ describe("JARVIS Home AI API", () => {
       .post("/api/whatsapp/webhook")
       .send({
         data: {
-          key: { remoteJid: "5531993239198@s.whatsapp.net", fromMe: false },
+          key: { remoteJid: "555511888888888@s.whatsapp.net", fromMe: false },
           message: {
             documentMessage: {
               fileName: "Extrato-17-10-2024-a-16-05-2026-OFX.ofx",
@@ -1053,6 +1347,133 @@ describe("JARVIS Home AI API", () => {
     expect(safeReset.body.status).toBe("confirmation_required");
 
     await prisma.setting.deleteMany({ where: { userId, key: { startsWith: "home_assistant" } } });
+  });
+
+  it("stores AI provider keys encrypted and routes user chat through the selected model", async () => {
+    const openAiKey = `sk-proj-test-${"a".repeat(36)}`;
+    const geminiKey = `AIza${"b".repeat(36)}`;
+    await request(app).put("/api/integrations/config/openai").set(auth()).send({ apiKey: openAiKey, model: "gpt-4o-mini" }).expect(200)
+      .expect((res) => {
+        expect(res.body.providers.openai).toMatchObject({ configured: true, keyConfigured: true, source: "painel", model: "gpt-4o-mini" });
+        expect(JSON.stringify(res.body)).not.toContain(openAiKey);
+      });
+    await request(app).put("/api/integrations/config/gemini").set(auth()).send({ apiKey: geminiKey, model: "gemini-2.5-flash" }).expect(200)
+      .expect((res) => {
+        expect(res.body.providers.gemini).toMatchObject({ configured: true, keyConfigured: true, source: "painel", model: "gemini-2.5-flash" });
+        expect(JSON.stringify(res.body)).not.toContain(geminiKey);
+      });
+
+    const storedOpenAi = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "openai_api_key" } } });
+    const storedGemini = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "gemini_api_key" } } });
+    expect(String(storedOpenAi.value)).toMatch(/^enc:v[12]:/);
+    expect(String(storedGemini.value)).toMatch(/^enc:v[12]:/);
+    const nvidiaKey = `nvapi-${"c".repeat(36)}`;
+    const savedNvidia = await request(app).put("/api/integrations/config/nvidia").set(auth()).send({ apiKey: nvidiaKey, model: "qwen/qwen3-next-80b-a3b-instruct" }).expect(200);
+    expect(savedNvidia.body.providers.nvidia).toMatchObject({ configured: true, model: "qwen/qwen3-next-80b-a3b-instruct" });
+    expect(JSON.stringify(savedNvidia.body)).not.toContain(nvidiaKey);
+    const storedNvidiaKey = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "nvidia_api_key" } } });
+    expect(String(storedNvidiaKey.value)).toMatch(/^enc:v[12]:/);
+    expect(String(storedNvidiaKey.value)).not.toContain(nvidiaKey);
+    const spendPolicy = await prisma.setting.findUniqueOrThrow({ where: { userId_key: { userId, key: "nvidia_zero_spend_policy_v1" } } });
+    expect(spendPolicy.value).toMatchObject({ name: "NVIDIA_ZERO_SPEND", budgetMonthlyBrl: 0, billingPeriod: "calendar_month", timezone: "America/Sao_Paulo", paidRequestsAllowed: false, unknownQuotaBehavior: "BLOCK", unknownPricingBehavior: "BLOCK", unknownEntitlementBehavior: "BLOCK", autoFallbackToPaidProvider: false, automaticPaidTopup: false });
+    expect(savedNvidia.body.providers.nvidia).toMatchObject({ status: "CONFIGURED_BUT_BILLING_UNVERIFIED", inferenceEnabled: false, billing: { blocked: true, budgetMonthlyBrl: 0, policyPersisted: true } });
+    const nvidiaModels = await request(app).get("/api/integrations/models/nvidia").set(auth()).expect(200);
+    expect(nvidiaModels.body.models).toContain("qwen/qwen3-next-80b-a3b-instruct");
+    const nvidiaFetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network blocked in NVIDIA zero-spend integration test"));
+    const nvidiaPostCount = () => vi.mocked(axios.post).mock.calls.filter(([url]) => String(url).includes("integrate.api.nvidia.com") || String(url).includes("invocation.api.nvcf.nvidia.com") || String(url).includes("10.0.0.25:9000")).length;
+    const nvidiaCallsBefore = nvidiaPostCount();
+    const nvidiaConnectionTest = await request(app).post("/api/integrations/test/nvidia").set(auth()).expect(200);
+    expect(nvidiaConnectionTest.body.status).toBe("billing_unverified_blocked");
+    expect(nvidiaPostCount()).toBe(nvidiaCallsBefore);
+    const blockEvent = await prisma.systemLog.findFirst({ where: { userId, action: "nvidia_zero_spend_blocked" }, orderBy: { createdAt: "desc" } });
+    expect(blockEvent?.metadata).toMatchObject({ policy: "NVIDIA_ZERO_SPEND", operation: "llm", model: "qwen/qwen3-next-80b-a3b-instruct", billingPeriod: "calendar_month", billingPeriodKey: expect.stringMatching(/^\d{4}-\d{2}$/), timezone: "America/Sao_Paulo", budgetMonthlyBrl: 0, decision: "BLOCK" });
+    await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "nvidia", fallbackProviders: ["ollama", "gemini"] }).expect(200);
+    const nvidiaReply = await openAiService.complete([{ role: "user", content: "responda com teste" }], userId);
+    expect(nvidiaReply).not.toBe("Resposta NVIDIA sintética.");
+    expect(nvidiaPostCount()).toBe(nvidiaCallsBefore);
+    expect(await nvidiaAiService.complete([{ role: "user", content: "x".repeat(24_001) }], userId)).toBeNull();
+    expect(nvidiaPostCount()).toBe(nvidiaCallsBefore);
+    await request(app).put("/api/integrations/config/nvidia_speech").set(auth()).send({ baseUrl: "https://example.com", provider: "nvidia" }).expect(400);
+    const nvidiaSpeechConfig = await request(app).put("/api/integrations/config/nvidia_speech").set(auth()).send({ baseUrl: "http://10.0.0.25:9000", provider: "nvidia", fallbackToOpenAi: true }).expect(200);
+    expect(nvidiaSpeechConfig.body.providers.nvidia_speech).toMatchObject({ provider: "nvidia", configured: true, language: "pt-BR", fallbackToOpenAi: false, inferenceEnabled: false, billing: { blocked: true, policyPersisted: true } });
+    const nvidiaTranscription = await nvidiaSpeechService.transcribeAudio({ buffer: Buffer.alloc(1024), filename: "voice.opus", mimeType: "audio/opus" }, userId);
+    expect(nvidiaTranscription).toMatchObject({ status: "billing_unverified_blocked", text: "", fallbackToOpenAi: false });
+    const nvidiaSpeechTest = await request(app).post("/api/integrations/test/nvidia_speech").set(auth()).expect(200);
+    expect(nvidiaSpeechTest.body.status).toBe("billing_unverified_blocked");
+    expect(nvidiaPostCount()).toBe(nvidiaCallsBefore);
+    expect(vi.mocked(axios.get).mock.calls.some(([url]) => String(url).includes("10.0.0.25:9000"))).toBe(false);
+    const nvidiaTestTts = await request(app).put("/api/integrations/config/tts").set(auth()).send({ provider: "nvidia", nvidiaVoiceId: "Magpie-Multilingual.PT-BR.Diego" }).expect(200);
+    expect(nvidiaTestTts.body).toMatchObject({ provider: "nvidia", nvidia: { configured: true, blocked: true, billing: { blocked: true, policyPersisted: true } } });
+    await request(app).post("/api/voice/speech").set(auth()).send({ text: "Olá, teste NVIDIA." }).expect(502);
+    expect(nvidiaPostCount()).toBe(nvidiaCallsBefore);
+    expect(nvidiaFetchSpy).not.toHaveBeenCalled();
+    nvidiaFetchSpy.mockRestore();
+    await request(app).put("/api/integrations/config/tts").set(auth()).send({ provider: "auto", nvidiaVoiceId: "Magpie-Multilingual.PT-BR.Diego" }).expect(200);
+    await request(app).put("/api/integrations/config/nvidia_speech").set(auth()).send({ baseUrl: "", provider: "openai" }).expect(200);
+    await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "auto", fallbackProviders: ["ollama", "openai", "gemini", "nvidia"] }).expect(200);
+
+    expect(String(storedOpenAi.value)).not.toContain(openAiKey);
+    expect(String(storedGemini.value)).not.toContain(geminiKey);
+
+    const completion = vi.fn().mockResolvedValue({ choices: [{ message: { content: "Resposta via modelo da conta." } }] });
+    const openAiModelsList = vi.fn().mockResolvedValue({ data: [{ id: "gpt-4o-mini" }, { id: "text-embedding-3-small" }] });
+    openAiService.setClientForTests({ chat: { completions: { create: completion } }, models: { list: openAiModelsList } } as never);
+    expect(await getAiProviderOrder(userId)).toEqual(["ollama", "openai", "gemini", "nvidia"]);
+    expect((await getAiProviderConfig("openai", userId)).configured).toBe(true);
+    const reply = await openAiService.complete([{ role: "user", content: "teste seguro" }], userId);
+    expect(completion).toHaveBeenCalledOnce();
+    expect(reply).toContain("modelo da conta");
+    expect(completion).toHaveBeenCalledWith(expect.objectContaining({ model: "gpt-4o-mini" }));
+    const openAiTest = await request(app).post("/api/integrations/test/openai").set(auth()).expect(200);
+    expect(openAiTest.body.status).toBe("success");
+    expect(openAiModelsList).toHaveBeenCalledOnce();
+    const openAiModels = await request(app).get("/api/integrations/models/openai").set(auth()).expect(200);
+    expect(openAiModels.body).toMatchObject({ status: "success", models: ["gpt-4o-mini"] });
+    expect(openAiModelsList).toHaveBeenCalledTimes(2);
+    openAiService.setClientForTests(null);
+
+    vi.mocked(axios.get)
+      .mockResolvedValueOnce({ status: 200, data: { name: "models/gemini-2.5-flash" } } as never)
+      .mockResolvedValueOnce({ status: 200, data: { models: [
+        { name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] },
+        { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }
+      ] } } as never);
+    const geminiTest = await request(app).post("/api/integrations/test/gemini").set(auth()).expect(200);
+    expect(geminiTest.body.status).toBe("success");
+    const geminiModels = await request(app).get("/api/integrations/models/gemini").set(auth()).expect(200);
+    expect(geminiModels.body).toMatchObject({ status: "success", models: ["gemini-2.5-flash"] });
+
+    const selection = await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "gemini" }).expect(200);
+    expect(selection.body.providers.ai_selection.primaryProvider).toBe("gemini");
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { candidates: [{ content: { parts: [{ text: "Resposta via Gemini selecionado." }] } }] } } as never);
+    const selectedReply = await openAiService.complete([{ role: "user", content: "teste provedor escolhido" }], userId);
+    expect(selectedReply).toContain("Gemini selecionado");
+    const restoredSelection = await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "auto" }).expect(200);
+    expect(restoredSelection.body.providers.ai_selection.primaryProvider).toBe("auto");
+
+    await request(app).put("/api/integrations/config/ollama").set(auth()).send({ baseUrl: "https://example.com", model: "llama3.2:3b" }).expect(400);
+    const localOllama = await request(app).put("/api/integrations/config/ollama").set(auth()).send({ baseUrl: "http://100.96.1.2:11434", model: "llama3.2:3b" }).expect(200);
+    expect(localOllama.body.providers.ollama).toMatchObject({ configured: true, model: "llama3.2:3b", baseUrl: "http://100.96.1.2:11434" });
+    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { models: [{ name: "llama3.2:3b" }, { name: "qwen3:4b" }] } } as never);
+    const localModels = await request(app).get("/api/integrations/models/ollama").set(auth()).expect(200);
+    expect(localModels.body).toMatchObject({ status: "success", models: ["llama3.2:3b", "qwen3:4b"] });
+    vi.mocked(axios.get).mockResolvedValueOnce({ status: 200, data: { models: [{ name: "llama3.2:3b" }] } } as never);
+    const localTest = await request(app).post("/api/integrations/test/ollama").set(auth()).expect(200);
+    expect(localTest.body).toMatchObject({ status: "success", model: "llama3.2:3b" });
+    const selectedLocal = await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "ollama" }).expect(200);
+    expect(selectedLocal.body.providers.ai_selection.primaryProvider).toBe("ollama");
+    vi.mocked(axios.post).mockResolvedValueOnce({ status: 200, data: { message: { content: "Resposta local do Ollama." } } } as never);
+    const localReply = await openAiService.complete([{ role: "user", content: "responda em português" }], userId);
+    expect(localReply).toBe("Resposta local do Ollama.");
+    expect(vi.mocked(axios.post).mock.calls.at(-1)?.[0]).toBe("http://100.96.1.2:11434/api/chat");
+    await request(app).put("/api/integrations/config/ollama").set(auth()).send({ baseUrl: "", model: "llama3.2:3b" }).expect(200);
+    await request(app).put("/api/integrations/config/ai_selection").set(auth()).send({ primaryProvider: "auto" }).expect(200);
+
+    const status = await request(app).get("/api/integrations/status").set(auth()).expect(200);
+    expect(status.body.providers.openai.source).toBe("painel");
+    expect(status.body.providers.gemini.source).toBe("painel");
+    expect(JSON.stringify(status.body)).not.toContain(openAiKey);
+    expect(JSON.stringify(status.body)).not.toContain(geminiKey);
   });
 
   it("lists local n8n workflows and returns manual webhook guidance safely", async () => {

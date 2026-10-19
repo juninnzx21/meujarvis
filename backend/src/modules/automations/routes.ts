@@ -7,6 +7,7 @@ import { prisma } from "../../prisma/client.js";
 import { homeAssistantService } from "../../services/homeAssistantService.js";
 import { n8nService } from "../../services/n8nService.js";
 import { writeSystemLog } from "../../services/systemLogService.js";
+import { sanitizeAutomationLog, sanitizeLogValue } from "../../services/systemLogService.js";
 import { whatsappService } from "../../services/whatsappService.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -51,18 +52,21 @@ router.post("/:id/run", asyncHandler(async (req, res) => {
   if (!automation) return res.status(404).json({ message: "Automacao nao encontrada" });
   if (!automation.enabled) return res.status(400).json({ message: "Automacao desativada" });
   if (isForbiddenAction(automation.config)) return res.status(400).json({ message: "Automacao bloqueada por seguranca" });
-  const log = await prisma.automationLog.create({ data: { automationId: automation.id, status: "pending", input: req.body ?? {} } });
+  const safeInput = sanitizeLogValue(req.body ?? {});
+  const log = await prisma.automationLog.create({ data: { automationId: automation.id, status: "pending", input: safeInput as never } });
   try {
     let output: unknown = { status: "success", message: "Acao interna registrada." };
     const config = automation.config as Record<string, unknown>;
     if (automation.actionType === "n8n") output = await n8nService.trigger({ automationId: automation.id, config }, req.user!.id);
     if (automation.actionType === "whatsapp") output = await whatsappService.send(String(config.phone ?? ""), String(config.message ?? "Teste JARVIS"), req.user!.id);
     if (automation.actionType === "home_assistant") output = await homeAssistantService.callService(String(config.domain), String(config.service), config, req.user!.id, Boolean(req.body?.confirmed));
-    const updated = await prisma.automationLog.update({ where: { id: log.id }, data: { status: "success", output: output as never } });
+    const safeOutput = sanitizeLogValue(output);
+    const updated = await prisma.automationLog.update({ where: { id: log.id }, data: { status: "success", output: safeOutput as never } });
     await writeSystemLog({ userId: req.user!.id, module: "automations", action: "run", message: "Automacao executada", metadata: { automationId: automation.id, logId: updated.id } });
-    return res.json({ log: updated, output });
+    return res.json({ log: sanitizeAutomationLog(updated), output: safeOutput });
   } catch (error) {
-    const updated = await prisma.automationLog.update({ where: { id: log.id }, data: { status: "error", error: error instanceof Error ? error.message : "Erro desconhecido" } });
+    const safeError = sanitizeLogValue(error instanceof Error ? error.message : "Erro desconhecido");
+    const updated = await prisma.automationLog.update({ where: { id: log.id }, data: { status: "error", error: String(safeError) } });
     await writeSystemLog({ userId: req.user!.id, level: "error", module: "automations", action: "run_error", message: "Erro ao executar automacao", metadata: { automationId: automation.id, logId: updated.id } });
     return res.status(500).json({ log: updated, message: "Erro ao executar automacao" });
   }
@@ -70,7 +74,7 @@ router.post("/:id/run", asyncHandler(async (req, res) => {
 
 router.get("/:id/logs", asyncHandler(async (req, res) => {
   const logs = await prisma.automationLog.findMany({ where: { automationId: String(req.params.id), automation: { userId: req.user!.id } }, orderBy: { createdAt: "desc" } });
-  res.json({ logs });
+  res.json({ logs: logs.map(sanitizeAutomationLog) });
 }));
 
 export default router;

@@ -25,7 +25,7 @@ export const setupProviders = [
 
 export type SetupProvider = typeof setupProviders[number];
 
-type SetupStatus = "configured" | "not_configured" | "degraded" | "error" | "manual_action_required";
+type SetupStatus = "configured" | "not_configured" | "degraded" | "error" | "manual_action_required" | "unknown";
 
 type SetupProviderState = {
   provider: SetupProvider;
@@ -54,6 +54,7 @@ function safeError(error: unknown) {
 
 function statusFrom(value: unknown): SetupStatus {
   const status = typeof value === "object" && value ? String((value as { status?: unknown }).status || "") : String(value || "");
+  if (status === "unknown") return "unknown";
   if (["configured", "success", "ok"].includes(status)) return "configured";
   if (["degraded", "partial"].includes(status)) return "degraded";
   if (["manual_action_required", "manual_import_required"].includes(status)) return "manual_action_required";
@@ -124,7 +125,7 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
       configured: Boolean(data.configured),
       maskedFields: { model: data.model || "", keyConfigured: Boolean(data.configured) },
       actions: ["test"],
-      manualSteps: ["Chaves de IA devem ficar em .env/secret manager da VPS; o painel mostra somente status e diagnostico."],
+      manualSteps: ["Cadastre ou troque a chave e o modelo em Configuracoes > Integracoes; a chave fica criptografada no backend e nao e devolvida ao navegador."],
       lastError: data.lastError || null,
       docsPath: "INTEGRATIONS_SETUP.md"
     };
@@ -156,11 +157,18 @@ async function buildProvider(userId: string, provider: SetupProvider, statusData
   }
   if (provider === "whatsapp" || provider === "evolution") {
     const data = providers.whatsapp || {};
-    const evolutionState = provider === "evolution" ? await evolutionManagerService.getSafeStatus(userId) : null;
-    const state = evolutionState?.connectionState || data.connectionState || "unknown";
+    const evolutionState = await evolutionManagerService.getSafeStatus(userId);
+    const state = evolutionState.connectionState || data.connectionState || "unknown";
+    const status: SetupStatus = !data.configured
+      ? "not_configured"
+      : state === "connected"
+        ? "configured"
+        : state === "unknown" && evolutionState.status === "error"
+          ? "error"
+          : "degraded";
     return {
       ...providerBase(provider, provider === "whatsapp" ? "WhatsApp" : "Evolution API", "Conexao WhatsApp por QR, webhook e comandos seguros com wake phrase."),
-      status: statusFrom(evolutionState?.status || data),
+      status,
       configured: Boolean(data.configured),
       maskedFields: {
         apiUrlConfigured: Boolean(data.apiUrlConfigured),

@@ -190,30 +190,36 @@ enum DocumentStatus {
 }
 
 model User {
-  id                    String                 @id @default(cuid())
-  name                  String
-  email                 String                 @unique
-  passwordHash          String
-  role                  UserRole               @default(user)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  conversations         Conversation[]
-  memories              Memory[]
-  tasks                 Task[]
-  automations           Automation[]
-  routines              Routine[]
-  notifications         Notification[]
-  bankAccounts          BankAccount[]
-  financialCategories   FinancialCategory[]
-  financialTransactions FinancialTransaction[]
-  statementImports      StatementImport[]
-  financialRules        FinancialRule[]
-  assistantDraftActions AssistantDraftAction[]
-  integrationEvents     IntegrationEvent[]
-  documents             Document[]
-  systemLogs            SystemLog[]
-  settings              Setting[]
-  whatsappMessages      WhatsAppMessage[]
+  id                         String                 @id @default(cuid())
+  name                       String
+  email                      String                 @unique
+  passwordHash               String
+  role                       UserRole               @default(user)
+  totpEnabled                Boolean                @default(false)
+  totpSecretEncrypted        String?
+  totpPendingSecretEncrypted String?
+  totpRecoveryCodeHashes     Json?
+  totpLastCounter            BigInt?
+  authVersion                Int                    @default(0)
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+  conversations              Conversation[]
+  memories                   Memory[]
+  tasks                      Task[]
+  automations                Automation[]
+  routines                   Routine[]
+  notifications              Notification[]
+  bankAccounts               BankAccount[]
+  financialCategories        FinancialCategory[]
+  financialTransactions      FinancialTransaction[]
+  statementImports           StatementImport[]
+  financialRules             FinancialRule[]
+  assistantDraftActions      AssistantDraftAction[]
+  integrationEvents          IntegrationEvent[]
+  documents                  Document[]
+  systemLogs                 SystemLog[]
+  settings                   Setting[]
+  whatsappMessages           WhatsAppMessage[]
 }
 
 model Conversation {

@@ -4,6 +4,8 @@ export function redactSensitive(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "string") {
     return value
+      .replace(/([?&](?:access[_-]?token|token|api[_-]?key|secret|password|code|auth|signature)=)[^&#\s]*/gi, "$1[REDACTED]")
+      .replace(/(["']?(?:authorization|access[_-]?token|refresh[_-]?token|token|api[-_]?key|secret|password|code|auth|signature)["']?\s*[:=]\s*["']?)[^"'&,;\s}]+/gi, "$1[REDACTED]")
       .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [REDACTED]")
       .replace(/sk-[A-Za-z0-9_-]+/g, "[REDACTED_API_KEY]")
       .replace(/AIza[A-Za-z0-9_-]+/g, "[REDACTED_API_KEY]")

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppLayout } from "../layouts/AppLayout";
 import { BrainAgentsPage, BrainFeedbackPage, BrainPage, BrainToolsPage } from "./Brain/BrainPages";
 import { CommandsPage } from "./Commands/CommandsPage";
+import { ChatPage } from "./Chat/ChatPage";
 import { FinancePage } from "./Finance/FinancePage";
 import { DocumentsPage } from "./Documents/DocumentsPage";
 import { NotificationsPage } from "./Notifications/NotificationsPage";
@@ -25,6 +26,7 @@ import { WhatsAppPage } from "./WhatsApp/WhatsAppPage";
 import { VoicePage } from "./Voice/VoicePage";
 import { VoiceSettingsPage } from "./Settings/VoiceSettingsPage";
 import { stopSpeaking, testVoice } from "../services/textToSpeechService";
+import { api } from "../services/api";
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { name: "Junior Rodrigues" }, logout: vi.fn() })
@@ -32,13 +34,14 @@ vi.mock("../contexts/AuthContext", () => ({
 
 vi.mock("../services/textToSpeechService", () => ({
   jarvisVoicePreset: { preset: "jarvis-br-premium", voiceURI: "", lang: "pt-BR", rate: 0.92, pitch: 0.82, volume: 1, spokenRepliesEnabled: true },
-  getAvailableVoices: vi.fn(() => [{ voiceURI: "voice-1", name: "Brasil Neutral", lang: "pt-BR" }]),
-  selectBestJarvisVoice: vi.fn(() => ({ voiceURI: "voice-1", name: "Brasil Neutral", lang: "pt-BR" })),
+  getAvailableVoices: vi.fn(() => [{ voiceURI: "voice-1", name: "Microsoft Antonio Online (Natural)", lang: "pt-BR" }]),
+  isMasculineJarvisVoice: vi.fn(() => true),
+  selectBestJarvisVoice: vi.fn(() => ({ voiceURI: "voice-1", name: "Microsoft Antonio Online (Natural)", lang: "pt-BR" })),
   loadVoiceSettings: vi.fn(() => ({ preset: "jarvis-br-premium", voiceURI: "voice-1", lang: "pt-BR", rate: 0.92, pitch: 0.82, volume: 1, spokenRepliesEnabled: true })),
   saveVoiceSettings: vi.fn((settings) => settings),
   speakJarvis: vi.fn(() => true),
   stopSpeaking: vi.fn(),
-  testVoice: vi.fn(() => true)
+  testVoice: vi.fn(async () => ({ status: "completed" as const }))
 }));
 
 vi.mock("../services/speechRecognitionService", () => ({
@@ -52,6 +55,8 @@ vi.mock("../services/speechRecognitionService", () => ({
 vi.mock("../services/api", () => ({
   api: {
     get: vi.fn((url: string) => {
+      if (url === "/integrations/models/openai") return Promise.resolve({ data: { status: "success", models: ["gpt-4.1-mini"] } });
+      if (url === "/integrations/models/gemini") return Promise.resolve({ data: { status: "success", models: ["gemini-2.5-flash"] } });
       if (url === "/commands") return Promise.resolve({ data: { commands: [{ id: "system.status", title: "status do sistema", example: "status do sistema", safety: "safe" }] } });
       if (url === "/routines") return Promise.resolve({ data: { routines: [{ id: "r1", name: "Resumo diario", description: "Resumo", enabled: true, triggerType: "schedule", config: { schedule: { type: "daily" } } }] } });
       if (url === "/finance/reports/summary") return Promise.resolve({ data: { totalBalance: "1000", monthIncome: "500", monthExpenses: "120", estimatedProfit: "380", pendingReview: 1, duplicates: 0, accounts: [{ id: "a1", bankName: "Banco Inter", accountName: "PJ DO INTER", currentBalance: "1000" }], recent: [{ id: "t1", description: "Cliente teste", amount: "120", direction: "in", bankAccount: { accountName: "PJ DO INTER" } }] } });
@@ -75,10 +80,11 @@ vi.mock("../services/api", () => ({
       if (url.startsWith("/whatsapp/evolution/connection-state")) return Promise.resolve({ data: { status: "success", instance: "jarvis", connectionState: "connected", message: "WhatsApp conectado." } });
       if (url === "/integrations/setup" || url.startsWith("/integrations/setup-wizard")) return Promise.resolve({ data: { steps: [{ provider: "api_public", title: "API publica", description: "URLs oficiais", status: "configured", configured: true, publicUrls: { api: "https://apijarvis.juninnzxtec.com.br/api" }, manualSteps: [] }, { provider: "n8n", title: "n8n", description: "Workflows", status: "manual_action_required", configured: false, publicUrls: { n8n: "https://n8njarvis.juninnzxtec.com.br" }, manualSteps: ["Importar workflows manualmente."] }] } });
       if (url === "/integrations/setup/summary") return Promise.resolve({ data: { status: "degraded", providers: [{ provider: "api_public", title: "API publica", status: "configured", configured: true, manualSteps: [] }, { provider: "n8n", title: "n8n", status: "manual_action_required", configured: false, manualSteps: ["Importar workflows manualmente."] }] } });
-      if (url.startsWith("/integrations")) return Promise.resolve({ data: { urls: { frontendPublicUrl: "https://jarvis.juninnzxtec.com.br", apiPublicUrl: "https://apijarvis.juninnzxtec.com.br/api", whatsappWebhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", n8nPublicUrl: "https://n8njarvis.juninnzxtec.com.br" }, providers: { api_public: { configured: true, status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, openai: { configured: true, status: "configured" }, gemini: { configured: true, status: "configured" }, n8n: { configured: false, status: "not_configured", apiKeyConfigured: false, webhookSecretConfigured: false }, whatsapp: { configured: false, status: "not_configured", webhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", apiKeyConfigured: false, autoReply: false }, evolution: { configured: false, status: "not_configured" }, home_assistant: { configured: false, status: "not_configured", tokenConfigured: false }, finance: { configured: false, status: "not_configured", tokenConfigured: false, defaultAccountName: "PJ DO INTER" }, monitoring: { configured: true, status: "configured" }, backup: { configured: true, status: "configured" } } } });
+      if (url.startsWith("/integrations")) return Promise.resolve({ data: { urls: { frontendPublicUrl: "https://jarvis.juninnzxtec.com.br", apiPublicUrl: "https://apijarvis.juninnzxtec.com.br/api", whatsappWebhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", n8nPublicUrl: "https://n8njarvis.juninnzxtec.com.br" }, providers: { api_public: { configured: true, status: "configured", url: "https://apijarvis.juninnzxtec.com.br/api" }, ai_selection: { primaryProvider: "auto" }, openai: { configured: true, status: "configured" }, gemini: { configured: true, status: "configured" }, n8n: { configured: false, status: "not_configured", apiKeyConfigured: false, webhookSecretConfigured: false }, whatsapp: { configured: false, status: "not_configured", webhookUrl: "https://apijarvis.juninnzxtec.com.br/api/whatsapp/webhook", apiKeyConfigured: false, autoReply: false }, evolution: { configured: false, status: "not_configured" }, home_assistant: { configured: false, status: "not_configured", tokenConfigured: false }, finance: { configured: false, status: "not_configured", tokenConfigured: false, defaultAccountName: "PJ DO INTER" }, monitoring: { configured: true, status: "configured" }, backup: { configured: true, status: "configured" } } } });
       return Promise.resolve({ data: { recommendations: ["ok"], open: [], overdue: [], logs: [] } });
     }),
     post: vi.fn((url: string) => {
+      if (url === "/finance/auth/login") return Promise.resolve({ data: { status: "configured", message: "Controle Financeiro conectado com sucesso." } });
       if (url === "/finance/parse") return Promise.resolve({ data: { parsed: { type: "income", status: "received", description: "cliente teste", amount: 120, transaction_date: "2026-05-14", payment_method: "pix" } } });
       if (url === "/chat/send") return Promise.resolve({ data: { assistantMessage: { id: "m2", role: "assistant", content: "Status operacional.", createdAt: new Date().toISOString() } } });
       if (url === "/brain/ask") return Promise.resolve({ data: { answer: "Com base nas memorias, Junior trabalha com JARVIS.", agent: "PersonalMemoryAgent", intent: "memory.query", confidence: 0.9, usedSources: [{ type: "memory", title: "Projeto JARVIS", excerpt: "JARVIS Home AI" }], usedTools: [{ tool: "searchMemories", status: "success" }], needsConfirmation: false, suggestedNextActions: ["Continuar"] } });
@@ -104,6 +110,16 @@ describe("Phase 5 and 6 pages", () => {
     render(<CommandsPage />);
     expect(await screen.findByText("Comandos")).toBeInTheDocument();
     expect((await screen.findAllByText("status do sistema")).length).toBeGreaterThan(0);
+  });
+
+  it("shows chat request failures and restores the unsent prompt for retry", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("network unavailable"));
+    render(<ChatPage />);
+    const input = await screen.findByPlaceholderText("Digite um comando ou mensagem...");
+    fireEvent.change(input, { target: { value: "status do sistema" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("erro");
+    expect(input).toHaveValue("status do sistema");
   });
 
   it("renders scheduled routines", async () => {
@@ -134,6 +150,18 @@ describe("Phase 5 and 6 pages", () => {
     render(<MemoryRouter><IntegrationSettingsPage /></MemoryRouter>);
     expect(await screen.findByText("Configuracoes de Integracoes")).toBeInTheDocument();
     expect(await screen.findByText("Evolution API / WhatsApp")).toBeInTheDocument();
+    expect(await screen.findByText("NVIDIA NIM · Conversa")).toBeInTheDocument();
+    expect(await screen.findByText("NVIDIA Speech NIM · Reconhecimento de voz (STT)")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("E-mail usado para entrar no Controle Financeiro"), { target: { value: "admin@financeiro.test" } });
+    fireEvent.change(screen.getByPlaceholderText("Senha do Controle Financeiro"), { target: { value: "fake-password" } });
+    fireEvent.click(screen.getByText("Conectar Controle Financeiro"));
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith("/finance/auth/login", expect.objectContaining({ apiUrl: "https://controlefinanceiro.juninnzxtec.com.br", email: "admin@financeiro.test", password: "fake-password" })));
+    expect(await screen.findByText("Controle Financeiro conectado com sucesso.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("IA principal das conversas"), { target: { value: "gemini" } });
+    fireEvent.click(screen.getByText("Salvar preferência"));
+    await waitFor(() => expect(api.put).toHaveBeenCalledWith("/integrations/config/ai_selection", { primaryProvider: "gemini", fallbackProviders: ["ollama", "openai", "nvidia"] }));
+    fireEvent.click(screen.getAllByText("Carregar modelos")[0]);
+    expect(await screen.findByRole("option", { name: "gpt-4.1-mini" })).toBeInTheDocument();
     cleanup();
 
     render(<MemoryRouter><IntegrationWizardPage /></MemoryRouter>);

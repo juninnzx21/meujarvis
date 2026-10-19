@@ -1,0 +1,530 @@
+{
+  "schemaVersion": 1,
+  "runId": "6b2d39d2-4dcb-4243-9c90-6e032daa7f0b",
+  "lastRunUtc": "2026-10-19T04:40:27Z",
+  "activeTaskId": null,
+  "tasks": [
+    {
+      "id": "BASE-000",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "BASE-001",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "BASE-002",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "TEST-001",
+      "status": "DONE_VERIFIED"
+    },
+    {
+      "id": "SEC-001",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "SEC-004",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "SEC-002",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "SEC-003",
+      "status": "BLOCKED"
+    },
+    {
+      "id": "AUTH-001",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "OBS-001",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "AI-001",
+      "status": "TODO"
+    },
+    {
+      "id": "NVIDIA-001",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "AI-002",
+      "status": "TODO"
+    },
+    {
+      "id": "WEB-001",
+      "status": "TODO"
+    },
+    {
+      "id": "MEM-001",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "MEM-002",
+      "status": "TODO"
+    },
+    {
+      "id": "VOICE-001",
+      "status": "TODO"
+    },
+    {
+      "id": "VOICE-002",
+      "status": "TODO"
+    },
+    {
+      "id": "AGENT-001",
+      "status": "TODO"
+    },
+    {
+      "id": "VPS-001",
+      "status": "TODO"
+    },
+    {
+      "id": "VPS-ACCESS-001",
+      "status": "BLOCKED"
+    },
+    {
+      "id": "INT-001",
+      "status": "TODO"
+    },
+    {
+      "id": "INT-002",
+      "status": "TODO"
+    },
+    {
+      "id": "INT-003",
+      "status": "TODO"
+    },
+    {
+      "id": "INT-004",
+      "status": "TODO"
+    },
+    {
+      "id": "DEV-001",
+      "status": "TODO"
+    },
+    {
+      "id": "DEV-002",
+      "status": "TODO"
+    },
+    {
+      "id": "DEV-003",
+      "status": "TODO"
+    },
+    {
+      "id": "PERF-001",
+      "status": "BLOCKED"
+    },
+    {
+      "id": "PERF-002",
+      "status": "TODO"
+    },
+    {
+      "id": "AUTO-001",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "SYNC-001",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "QA-001",
+      "status": "TODO"
+    },
+    {
+      "id": "REL-001",
+      "status": "TODO"
+    },
+    {
+      "id": "CONSOL-001",
+      "status": "IN_REVIEW"
+    },
+    {
+      "id": "OBS-002",
+      "status": "IN_REVIEW"
+    }
+  ],
+  "blockers": [
+    "SEC-002: implementação e re-revisão independente direcionada concluídas; falta o gate formal reviewed_continue pelo protocolo. Nenhum ciclo pago foi iniciado.",
+    "OBS-001/OBS-002: revisão independente do código sem achado P2 aberto conhecido; falta smoke operacional somente leitura no ambiente ativo.",
+    "AUTH-001: hardening local passou em testes e re-revisão direcionada; CI remoto da branch e verificação protegida da chave TOTP no runtime ainda pendentes.",
+    "AI-001: inelegível até OBS-001 atingir DONE_VERIFIED; provedores reais/custo não testados.",
+    "VPS-ACCESS-001: endpoint [VPS_ENDPOINT_REDACTED]:22014 confirmado pelo usuário; faltam conta SSH não-root e fingerprint SHA256 da host key por canal confiável. Nenhuma conexão feita.",
+    "CI/CD: branch codex/agent-sync-v1-20261017 não encontrada no GitHub; commit atual não tem CI remoto e não foi publicado. PR #1 aponta para outro branch/head.",
+    "Produção: não há workflow de deploy; regras de branch/environment GitHub, VPS/Compose/healthcheck e restore/rollback em staging não foram verificados.",
+    "Agent Sync/scheduler permanecem pausados; OPENAI_API_KEY ausente; nenhuma chamada paga, push, merge, deploy ou mudança VPS."
+  ],
+  "lastCommit": "dd27c5770354c893e379040ccaf0e9f545f84084",
+  "nextTaskId": null,
+  "checkpoint": {
+    "branch": "codex/agent-sync-v1-20261017",
+    "initialSha": "e98b6770e01b4f71c6acb18f70bd8881cbf7fff0",
+    "finalSha": "dd27c5770354c893e379040ccaf0e9f545f84084",
+    "workingTreeChanges": "NVIDIA_ZERO_SPEND backend block and tests, release exact-SHA CI success gate, docs/state/VPS endpoint checkpoint committed locally; no push.",
+    "status": "LOCAL_VALIDATION_PASSED_AWAITING_INDEPENDENT_REVIEW_AND_EXTERNAL_GATES",
+    "task": "NVIDIA-001",
+    "worktree": "E:\\jarvis-home-assistant\\.codex-worktrees\\jarvis-auth-001-20261017"
+  },
+  "vpsAccess": {
+    "status": "BLOCKED_PENDING_NON_ROOT_ACCOUNT_AND_TRUSTED_HOST_FINGERPRINT",
+    "proposal": "docs/jarvis/VPS_ACCESS.md",
+    "dedicatedKeyDetected": true,
+    "privateKeyContentRead": false,
+    "sshConfigExists": false,
+    "sshConnectionAttempted": false,
+    "vpsModified": false,
+    "agentSyncPaused": true,
+    "requiredBeforeConnection": [
+      "Informar conta não-root existente; criação exige autorização separada",
+      "Fornecer fingerprint SHA256 da host key obtido por canal confiável"
+    ],
+    "readOnlyConnectionAuthorized": true,
+    "endpoint": "[VPS_ENDPOINT_REDACTED]:22014",
+    "endpointConfirmedByUser": true
+  },
+  "lastRunnerCheck": {
+    "dryRun": "DRY_RUN_OK; Codex authenticated; OPENAI_API_KEY absent; eligibleTaskIds empty; scheduler/production disabled; no cycle.",
+    "activeLock": "No Agent Sync cycle active; stale prior lock was removed after confirming owner PID was absent. ValidateOnly and focused integration have completed.",
+    "executeGate": "BLOCKED; no task eligible while SEC-002 formal gate and OBS operational smoke are pending; AI-001 dependency unmet.",
+    "runId": "7045a5b9-59fc-4e2b-baf8-b34632451089",
+    "productionTouched": false
+  },
+  "scheduler": {
+    "requestedCadence": "hourly",
+    "status": "PREPARED_DISABLED",
+    "enabled": false,
+    "executionEnabled": false,
+    "executor": "Codex CLI via local Windows Task Scheduler template",
+    "codexCli": "0.163.0-alpha.10.2",
+    "codexAppCron": "PAUSED",
+    "gate": "Do not unpause until JARVIS is safely associated with the right project, dry-run and supervised cycle are reviewed, source divergence is reconciled, and activation is approved; never deploy automatically."
+  },
+  "agentSync": {
+    "status": "READY_WAITING_FOR_SECURE_INPUT",
+    "component": "tools/agent-sync",
+    "architecture": "Local OpenAI API planner/reviewer + local Codex SDK/CLI developer",
+    "maxCyclesPerRun": 3,
+    "defaultCyclesPerRun": 1,
+    "realCycleExecuted": true,
+    "openAiApiKeyConfigured": false,
+    "testPostgres": "postgres:16-alpine healthy, loopback 127.0.0.1:55433, container jarvis-agent-sync-postgres-test, tmpfs, 1 CPU/1 GiB",
+    "codexCliAuthenticated": true,
+    "schedulerEnabled": false,
+    "productionAccess": false,
+    "evidence": "ValidateOnly 2026-10-18 after SEC-002 parser fix: Docker+SQL identity and migrations PASS; backend 172/172, frontend 49/49, Agent Sync 17/17, zero skips; typechecks/builds/diff-check and dry-run PASS. Dedicated SEC-002 integration verified PostgreSQL identity and passed 11/11. No OpenAI call, no eligible task, scheduler/production disabled.",
+    "protocolOutcomes": [
+      "blocked",
+      "validation_failed",
+      "no_changes",
+      "approval_required",
+      "review_rejected",
+      "reviewed_continue"
+    ],
+    "blocker": "No task eligible: SEC-002 targeted independent code review passed but formal reviewed_continue gate remains pending; OBS-001/OBS-002 await authorized operational smoke; AI-001 depends on OBS-001 DONE_VERIFIED; VPS-ACCESS-001 awaits endpoint, port, non-root user and trusted host fingerprint."
+  },
+  "githubCi": {
+    "run": 56,
+    "runId": "39018772909",
+    "head": "57b8e4061cd41820153d03960db6cf1fd4194b1e",
+    "status": "SUCCESS",
+    "checks": "3/3",
+    "pullRequest": "NOT_CREATED_PERMISSION_403",
+    "pullRequestCompareUrl": "https://github.com/juninnzx21/meujarvis/compare/codex/jarvis-2.0-platform-20261015...codex/sec-001-004-review-20261017?expand=1",
+    "protectionRules": "NOT_VERIFIED",
+    "currentCommitStatus": "NO_REMOTE_STATUS_NOT_PUBLISHED",
+    "deployWorkflow": "ABSENT",
+    "pullRequest1Head": "eec24a6f01cd2b60da358a198da3ba32641afe1e",
+    "currentWorkingHead": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
+    "currentBranchFoundOnGitHub": false,
+    "currentWorkingBranch": "codex/agent-sync-v1-20261017",
+    "releaseWorkflowGate": "LOCAL: release tag must be reachable from main and same SHA must have successful JARVIS CI push run on main",
+    "remoteValidation": "PENDING; branch not pushed"
+  },
+  "sourceOfTruth": {
+    "repository": "https://github.com/juninnzx21/meujarvis",
+    "repositoryOfficial": true,
+    "canonicalBranch": "PROPOSED codex/jarvis-2.0-platform-20261015; PENDING_PR_REVIEW",
+    "workingBranch": "codex/agent-sync-v1-20261017",
+    "workingSha": "dd27c5770354c893e379040ccaf0e9f545f84084",
+    "reason": "O repositório GitHub é fonte oficial do código versionado. A branch de plataforma é candidata; PR, validação SEC e reconciliação de cópias permanecem pendentes."
+  },
+  "consolidation": {
+    "status": "IN_REVIEW",
+    "map": "docs/jarvis/CONSOLIDATION_MAP.md",
+    "storageAudit": "docs/jarvis/VPS_STORAGE_AUDIT.md",
+    "cleanupReport": "docs/jarvis/CLEANUP_REPORT.md",
+    "detailedInventory": "LOCAL_PRIVATE_ONLY",
+    "dockerCleanupPerformed": false,
+    "spaceFreedGiB": 0,
+    "cleanupSafeGiB": 0,
+    "hourlyAutomation": "PAUSED_DISABLED"
+  },
+  "storageAudit": {
+    "measuredGiB": 2.938,
+    "files": 42165,
+    "externalProcessDependency": false,
+    "listener55432": false,
+    "scheduledTaskReference": false,
+    "deletedGiB": 0,
+    "cleanup": "PENDING_APPROVAL_AND_ENVIRONMENT_GATE",
+    "details": "LOCAL_PRIVATE_ONLY; PostgreSQL binaries, installers, restore artifacts. E drive currently has about 198 GiB free; no cleanup was performed."
+  },
+  "evolutionStaging": {
+    "status": "AUTHORIZED_WAITING_FOR_SSH_AND_PREFLIGHT",
+    "resourcesCreated": false,
+    "productionWhatsAppUsed": false,
+    "plan": "Compose isolated, internal Docker network, no published ports, disposable backend/database, pinned images, test-only credentials, bounded resources after host check"
+  },
+  "lastLocalValidation": {
+    "timestampUtc": "2026-10-19T04:40:27Z",
+    "status": "LOCAL_VALIDATION_OK",
+    "runner": "tools/agent-sync/run-cycle.ps1 -ValidateOnly",
+    "disposablePostgresDockerSqlIdentity": "PASS",
+    "migrations": "PASS",
+    "backendTests": "177/177; 23 files; zero skips",
+    "backendTypecheck": "PASS",
+    "backendBuild": "PASS",
+    "frontendTests": "49/49; 9 files; zero skips",
+    "frontendTypecheck": "PASS",
+    "frontendBuild": "PASS",
+    "agentSyncTests": "17/17; zero skips",
+    "agentSyncTypecheck": "PASS",
+    "gitDiffCheck": "PASS",
+    "dryRun": "DRY_RUN_OK; eligibleTaskIds empty; scheduler/production disabled",
+    "openAiConfigured": false,
+    "codexAuthenticated": true,
+    "schedulerEnabled": false,
+    "productionTouched": false,
+    "paidModelCycleStarted": false,
+    "commit": "f4d04e0e67c568a9b34b82a93a67739deb1b8030 (HEAD during validation; regression test unstaged)",
+    "workingTreeAtRun": "NVIDIA fetch regression test modified; documentation checkpoint appended after validation."
+  },
+  "auth001Review": {
+    "timestampUtc": "2026-10-18T18:45:53Z",
+    "status": "LOCAL_FIX_VALIDATED_AND_TARGETED_INDEPENDENT_REVIEW_PASSED; FORMAL_GATE_PENDING",
+    "findings": "TOTP parser accepted extra fields, permissive base64url and invalid decoded lengths; TOTP encryption key was not required to differ from JWT secret",
+    "fix": "Exactly three fields after totp:v1 prefix; canonical base64url round-trip; IV 12 bytes, GCM tag 16 bytes, non-empty ciphertext; env schema and service reject TOTP_ENCRYPTION_KEY equal to JWT_SECRET",
+    "compatibility": "Valid existing canonical totp:v1 ciphertext envelope is unchanged",
+    "backendTests": "175/175 across 22 files; zero skips",
+    "frontendTests": "49/49 across 9 files; zero skips",
+    "agentSyncTests": "17/17; zero skips",
+    "sec002Integration": "11/11; zero skips; disposable Docker+SQL identity verified",
+    "independentReview": "Targeted static re-review confirmed fixes and v1 compatibility; no remaining finding in the reviewed diff; reviewer did not run tests",
+    "commit": "ad00d347a6cff75e209161568242944c63dabace; local only, no push",
+    "taskStatus": "IN_REVIEW",
+    "blockers": "Current local branch is not published, so no GitHub Actions run exists for this commit; before production also confirm TOTP_ENCRYPTION_KEY is present, >=32 chars and distinct from JWT_SECRET without revealing either value.",
+    "schedulerEnabled": false,
+    "productionTouched": false,
+    "paidModelCycleStarted": false
+  },
+  "sec002Validation": {
+    "timestampUtc": "2026-10-18T18:35:12Z",
+    "status": "LOCAL_REMEDIATION_VALIDATED; TARGETED_INDEPENDENT_REVIEW_PASSED; FORMAL_GATE_PENDING",
+    "database": "jarvis_agent_sync_test; PostgreSQL 16; verified by Docker+SQL; loopback 127.0.0.1:55433; tmpfs; no persistent mounts; one-member dedicated bridge",
+    "syntheticDataAndKeysOnly": true,
+    "backendTests": "172/172 across 22 files; zero skips",
+    "backendBuild": "PASS",
+    "frontendTests": "49/49 across 9 files; zero skips",
+    "frontendBuild": "PASS",
+    "agentSyncTests": "17/17; zero skips",
+    "encryptionUnitTests": "12/12",
+    "rotationIntegrationTests": "11/11; zero skips via mandatory test:sec002:integration after Docker+SQL identity verification",
+    "dryRun": "PASS; no backup inventory change",
+    "backupRestore": "PASS; authenticated backup restores with only explicitly configured previous settings key; ciphertext and identity validation remain required",
+    "partialFailureRollback": "PASS in disposable database",
+    "nonTestDatabaseGuard": "PASS; exact Docker+SQL identity required; removed bypass flag rejected with exit 2 before service execution",
+    "productionTouched": false,
+    "realSecretsRotated": false,
+    "agentSyncReviewGate": "NOT_RUN; no paid cycle or reviewer call authorized",
+    "independentReview": "Targeted independent re-review confirmed P2 closed and no other code findings in scope; tests not rerun by reviewer; formal reviewed_continue gate remains pending",
+    "gitDiffCheck": "PASS; local commit dcd6e4e7a3803eb205999f1f8125edf565de2327; no push",
+    "commit": "dcd6e4e7a3803eb205999f1f8125edf565de2327; prior CLI gate commits 610cfdc and 2370f3f",
+    "reviewFinding": "Unsigned backup prefix validation allowed ciphertext and record identity tampering",
+    "backupFormat": "v2 HMAC with dedicated-key domain separation; unsigned v1 backups rejected",
+    "postFixFocusedTests": "SEC-002 integration 11/11; full backend 168/168; frontend 49/49; Agent Sync 15/15; zero skips",
+    "postFixBackendValidation": "PASS; 168/168 tests across 22 files, zero skips; Prisma generate, typechecks and build passed",
+    "postFixFrontendValidation": "PASS; 49/49 tests and build",
+    "postFixDatabaseIntegration": "PASS; Docker+SQL identity and migrations; dedicated SEC-002 integration 11/11",
+    "postFixAgentSync": "PASS; typecheck and 15/15 tests, zero skips; scheduler remained paused",
+    "postFixSeed": "General seed intentionally not run because it contains non-synthetic demo/profile data; integration tests used synthetic disposable fixtures",
+    "legacyBackupRecovery": "Documented: preserve unsigned v1, no direct restore; require trusted preexisting provenance, AEAD validation, independent record identity verification and reviewed offline conversion, else recover from authoritative sources",
+    "postFixCommit": "dcd6e4e7a3803eb205999f1f8125edf565de2327; earlier backup-integrity remediation, local only",
+    "postFixIndependentReview": "Targeted re-review of the parser fix passed with no open code finding; formal reviewed_continue gate remains pending",
+    "taskStatus": "IN_PROGRESS",
+    "rotationGate": "Pinned disposable Docker container/image digest, loopback-only bind, exact tmpfs, no persistent mounts, one-member dedicated user bridge, matching credentials, SQL identity and post-query container reinspection. Bridge permits egress; documented limitation. Rotation/restore use the same transaction connection before mutation.",
+    "legacyBypassFlag": "REJECTED; --confirm-non-test-database removed; --dry-run is the only flag; normal execution still gated to the positively identified disposable database.",
+    "sideEffectGuards": "Rejected targets created no backup and changed no DB rows; backup/rotation/restore operations gate before side effects.",
+    "keySeparation": "PASS; environment and service reject current or old settings key equal to JWT_SECRET.",
+    "backupRecovery": "PASS; HMAC verification works with the configured previous key alone; all ciphertexts are validated before restoration.",
+    "dedicatedIntegrationCommand": "PASS; test:sec002:integration verifies Docker+SQL identity and fails closed rather than skipping.",
+    "ciphertextFormat": "PASS; enc:v1 and enc:v2 require exactly five colon-delimited components; valid ciphertext plus extra suffix fails closed",
+    "parserFixCommit": "76809d0371dadb58ca27b865f3933b2662e3ad99; local only, no push"
+  },
+  "obs001Validation": {
+    "timestampUtc": "2026-10-18T18:27:03Z",
+    "status": "LOCAL_REMEDIATION_VALIDATED; FINAL_INDEPENDENT_CODE_REVIEW_PASSED; AWAITING_OPERATIONAL_SMOKE",
+    "database": "jarvis_agent_sync_test; PostgreSQL 16; Docker+SQL verified; loopback 127.0.0.1:55433; no persistent mounts",
+    "backendValidate": "171/171 tests; 22 files; zero skips; Docker+SQL identity, Prisma, typecheck and build passed",
+    "appIntegrationAfterCorsAssertion": "Health/system report integration with synthetic admin/user validates owner isolation; public /api/health omits provider flags and scheduler details; suite included in backend 159/159",
+    "frontendValidate": "49/49; typecheck and build passed",
+    "httpCorrelationAndRedaction": "PASS; server-generated X-Request-Id; route templates only; no query/body in HTTP logs",
+    "healthFailureResilience": "PASS; database failure returns degraded readiness and does not issue dependent queries",
+    "integrationConnectivityClaims": "PASS; owner-scoped status, global ENV details only for admin; configured is not reported as connected",
+    "failureMetricsAndAlerts": "PASS in local tests; process-local counters, generic internal 5xx log with route/status dedupe",
+    "externalNotificationsOrProduction": "NOT_TESTED; no WhatsApp/email delivery, VPS, production, push, merge or deploy",
+    "scheduler": "PAUSED_DISABLED",
+    "agentSyncValidate": "17/17 tests; zero skips; typecheck passed",
+    "brainWebhookExposure": "PASS; getWebhookUrl removed from Brain registry, WhatsAppAgent allowlist, planner and executor; authenticated regressions cover tool list, plan and response",
+    "smoke": "PENDING_AUTHORIZED_OPERATIONAL_VALIDATION",
+    "independentReview": "PASS for current code diff; previous P2 closed; no remaining finding identified; production smoke not validated"
+  },
+  "lastCycle": {
+    "runId": "3a2d0831-27d0-4dc3-8eac-8734463001cc",
+    "taskId": "MEM-001",
+    "outcome": "review_rejected",
+    "failure": "Sem diff; sandbox Codex sem acesso a URL/rede do PostgreSQL host; sem TTL definido",
+    "lockReleased": true,
+    "partialChangesPresent": false
+  },
+  "recentAgentSyncRuns": [
+    {
+      "runId": "41178b4b-841a-40bb-b759-fcd20146fdd1",
+      "taskId": "MEM-001",
+      "outcome": "review_rejected",
+      "reason": "Sem diff; alegação de DB indisponível no sandbox apesar de preflight host",
+      "completedAt": "2026-10-17T21:09:13.313Z"
+    },
+    {
+      "runId": "3a2d0831-27d0-4dc3-8eac-8734463001cc",
+      "taskId": "MEM-001",
+      "outcome": "review_rejected",
+      "reason": "Sem diff; repetida alegação de DB indisponível; ausência de política TTL",
+      "completedAt": "2026-10-17T21:13:23.506Z"
+    }
+  ],
+  "lastAgentSyncProtocolValidation": {
+    "timestampUtc": "2026-10-17T22:08:30Z",
+    "command": "run-cycle.ps1 -ValidateOnly",
+    "status": "PASS",
+    "typecheck": "PASS",
+    "tests": "13/13",
+    "fullRunnerRepeated": true,
+    "paidCycleStarted": false,
+    "codexSandboxConnectionProbed": false,
+    "reason": "Preflight completo passou; espera commit local limpo e chave nova no prompt SecureString para executar somente um ciclo."
+  },
+  "obs002Validation": {
+    "timestampUtc": "2026-10-18T18:27:03Z",
+    "status": "LOCAL_VALIDATION_PASSED; FINAL_INDEPENDENT_CODE_REVIEW_PASSED; AWAITING_OPERATIONAL_SMOKE",
+    "finding": "Cross-user health/log/finance disclosure plus global provider URLs/config via command, integrations status/config and historical automation logs.",
+    "remediation": "Health commands and integration views are scoped to authenticated user; global ENV details/URLs require admin role; system and automation log output is redacted at read boundary including credentials, URLs, multi-segment and webhook-test paths.",
+    "evidence": "ValidateOnly 2026-10-18: backend 171/171 (22 files), frontend 49/49, Agent Sync 17/17; zero skips; Docker+SQL identity, migrations, typechecks/builds and dry-run pass.",
+    "integrationRegression": "Synthetic common user cannot see global integration URLs/config via detailed health, /api/integrations/status or /api/commands/run; historical system/automation logs redact secrets and webhook paths.",
+    "productionTouched": false,
+    "pushMergeDeploy": false,
+    "independentReview": "PASS for current code diff; getWebhookUrl P2 closed; no remaining finding identified; production smoke not validated",
+    "smoke": "PENDING_AUTHORIZED_OPERATIONAL_VALIDATION"
+  },
+  "ciCdPreparation": {
+    "timestampUtc": "2026-10-18T20:00:00Z",
+    "status": "RELEASE_VERSIONING_FIXED_DEPLOY_PLAN_ONLY_REMOTE_CI_PENDING",
+    "branch": "codex/agent-sync-v1-20261017",
+    "baseHead": "1acd0f7e8f47b4ae709b941c971a6cc03219099",
+    "checkpointCommit": "2467af929936e5ad69131706feaf2b0b1bbf9c9a",
+    "workflowsChanged": [
+      ".github/workflows/release-downloads.yml",
+      ".github/workflows/deploy-plan.yml"
+    ],
+    "changes": "Release names/title/checksums derived from validated SemVer tag; same-version Android APK required. Added manual main-only plan workflow with no secrets or remote effects; real deployment input fails closed.",
+    "localValidation": "run-cycle.ps1 -ValidateOnly PASS: PostgreSQL identity+migrations, backend 175/175, frontend 49/49, Agent Sync 17/17, zero skips, dry-run, builds, typechecks and git diff --check. A direct backend npm validate without the disposable test environment had 115 passed/60 skipped; the full runner supplied the required isolated database and reran all 175 without skips.",
+    "yamlValidation": "Static review; actionlint/YAML parser unavailable; GitHub Actions not run",
+    "releaseWorkflow": "Dynamic SemVer-derived names; requires tagged commit in main history and same-version APK file. APK internal version/certificate still require review.",
+    "productionDeployWorkflow": "Real deployment absent; deploy-plan.yml supports manual plan-only for staging/production, main-only, no secrets/SSH/migrations, fails closed if real deploy requested",
+    "artifactIntegrity": "CI artifacts are named by full commit SHA; image publication by immutable digest is not implemented",
+    "rollback": "Documented requirement only; application rollback and database rollback not operationally tested",
+    "vpsAccess": "Read-only authorized; current IP/port, non-root account and trusted host fingerprint remain unconfirmed; no connection attempted",
+    "branchProtection": "NOT_VERIFIED",
+    "schedulerEnabled": false,
+    "pushMergeDeploy": false
+  },
+  "nvidiaIntegration": {
+    "timestampUtc": "2026-10-18T22:26:00Z",
+    "status": "LOCAL_IMPLEMENTATION_VALIDATED_IN_PROGRESS",
+    "branch": "codex/agent-sync-v1-20261017",
+    "baseHead": "4f461f01caf46637cab55b2338e226b9adac3e42",
+    "implementationCommit": "721e34c991be9b2e323a53deea4603f2060086ef",
+    "providers": {
+      "llm": "NVIDIA NIM OpenAI-compatible chat completions; no streaming or tool calling; 1024 output token, 24000 character, 32 message and 30 requests per minute per process limits; 3-failure 30-second circuit breaker",
+      "stt": "Self-hosted private NVIDIA Speech NIM HTTP multipart transcription; 20 MiB maximum; OpenAI fallback opt-in; hosted NVIDIA Whisper/Canary gRPC not implemented",
+      "tts": "Hosted Magpie Multilingual HTTP synthesis for pt-BR voices Diego, Louise, Isabela; automatic mode blocks unknown quota"
+    },
+    "localValidation": "run-cycle.ps1 -ValidateOnly PASS; disposable PostgreSQL identity/migrations PASS; backend 175/175, frontend 49/49, Agent Sync 17/17, zero skips; builds/typechecks/dry-run/diff-check PASS. NVIDIA routes tested with mocks and synthetic encrypted key only.",
+    "externalProviderCalled": false,
+    "accountEntitlementQuotaAndCostValidated": false,
+    "monetaryCostEstimate": "Unavailable from the adapter; usage tokens logged when provider returns them.",
+    "openGaps": [
+      "No persistent per-account quota or monetary spending ceiling; current request/token bounds are per request/process only.",
+      "Model catalog is curated from official docs; account-level model entitlement is not queried.",
+      "No real NVIDIA test authorized or executed; hosted STT gRPC adapter is not implemented."
+    ],
+    "schedulerEnabled": false,
+    "pushMergeDeploy": false,
+    "vpsTouched": false
+  },
+  "nvidiaZeroSpend": {
+    "timestampUtc": "2026-10-19T04:40:27Z",
+    "status": "CONFIGURED_BUT_BILLING_UNVERIFIED",
+    "monthlyBudgetBrl": 0,
+    "billingPeriod": "calendar_month",
+    "timezone": "America/Sao_Paulo",
+    "llm": "BLOCKED",
+    "stt": "BLOCKED",
+    "tts": "BLOCKED",
+    "remoteTests": "BLOCKED_NO_REQUESTS",
+    "unknownQuotaPricingEntitlement": "BLOCK",
+    "paidFallback": false,
+    "persistentPerUserPolicy": "nvidia_zero_spend_policy_v1",
+    "evidence": "Backend integration and policy tests pass; no NVIDIA request/key/paid call. Official docs reviewed do not prove account-level free entitlement or hard spend cap.",
+    "taskStatus": "IN_PROGRESS"
+  },
+  "ciCdLocalReview": {
+    "timestampUtc": "2026-10-19T04:40:27Z",
+    "releaseWorkflowGate": "Requires successful JARVIS CI push run on main for exact release SHA plus ancestry in main",
+    "remoteActionsValidation": "PENDING",
+    "branchProtectionAndTagRules": "NOT_VERIFIED",
+    "deployWorkflow": "PLAN_ONLY_NO_PRODUCTION_DEPLOY",
+    "productionReady": false
+  },
+  "nextLocalCheckpoint": {
+    "task": "NVIDIA-001",
+    "status": "LOCAL_IMPLEMENTATION_COMMITTED_AWAITING_INDEPENDENT_REVIEW",
+    "nextTaskId": null,
+    "reason": "No other local task eligible in dry-run; OBS smoke needs authorized remote access, SEC-002 formal review gate pending, AUTH-001 remote CI and protected key check pending, AI-001 depends on OBS-001."
+  },
+  "docsCheckpointCommit": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
+  "masterContinuity": {
+    "timestampUtc": "2026-10-19T04:40:27Z",
+    "currentBranch": "codex/agent-sync-v1-20261017",
+    "headDuringValidation": "f4d04e0e67c568a9b34b82a93a67739deb1b8030",
+    "aheadOfOriginMain": 93,
+    "branchExistsOnRemote": false,
+    "otherWorktreesInventoried": 4,
+    "dirtyOtherWorktreesPreserved": true,
+    "independentNvidiaReview": "PASS_STATIC",
+    "fetchTransportTest": "MOCK_REJECTS_BEFORE_NETWORK",
+    "eligibleLocalTasks": [],
+    "vpsConnection": "NOT_ATTEMPTED",
+    "vpsBlockers": [
+      "non-root account",
+      "trusted SHA256 host-key fingerprint"
+    ],
+    "push": "NOT_PERFORMED_HISTORY_PRIVACY_REVIEW_REQUIRED",
+    "schedulerEnabled": false,
+    "paidCycleStarted": false
+  }
+}

@@ -57,7 +57,7 @@ async function listLocalWorkflowFiles() {
 
 export const n8nService = {
   configured: Boolean(env.N8N_WEBHOOK_URL),
-  async runtimeConfig(userId?: string): Promise<N8nRuntimeConfig> {
+  async runtimeConfig(userId?: string, allowEnvironmentFallback = true): Promise<N8nRuntimeConfig> {
     if (userId) {
       const rows = await prisma.setting.findMany({
         where: { userId, key: { in: Object.values(keys) } }
@@ -69,6 +69,7 @@ export const n8nService = {
       const enabled = settings[keys.enabled] === undefined ? true : Boolean(settings[keys.enabled]);
       if (webhookUrl || apiKey || webhookSecret) return { webhookUrl, apiKey, webhookSecret, enabled, source: "settings" };
     }
+    if (!allowEnvironmentFallback) return { webhookUrl: "", apiKey: "", webhookSecret: "", enabled: true, source: "settings" };
     return { webhookUrl: env.N8N_WEBHOOK_URL, apiKey: env.N8N_API_KEY, webhookSecret: "", enabled: true, source: "env" };
   },
   isConfigured(config: N8nRuntimeConfig) {
@@ -77,24 +78,43 @@ export const n8nService = {
   status() {
     return { configured: this.configured, status: this.configured ? "configured" : "not_configured", webhookConfigured: Boolean(env.N8N_WEBHOOK_URL) };
   },
-  async userStatus(userId: string) {
+  async userStatus(userId: string, includeEnvironmentDetails = false) {
     const config = await this.runtimeConfig(userId);
     const configured = this.isConfigured(config);
+    const exposeDetails = config.source !== "env" || includeEnvironmentDetails;
+    if (!exposeDetails) {
+      return {
+        configured: null,
+        status: "unknown",
+        enabled: null,
+        webhookConfigured: null,
+        webhookUrl: "",
+        apiKeyConfigured: null,
+        apiKeyMasked: "",
+        webhookSecretConfigured: null,
+        templates: n8nTemplates
+      };
+    }
     return {
       configured,
       status: configured ? "configured" : "not_configured",
       source: config.source,
       enabled: config.enabled,
       webhookConfigured: Boolean(config.webhookUrl),
-      webhookUrl: config.webhookUrl || "",
+      webhookUrl: exposeDetails ? config.webhookUrl || "" : "",
       apiKeyConfigured: Boolean(config.apiKey),
-      apiKeyMasked: maskSecret(config.apiKey),
+      apiKeyMasked: exposeDetails ? maskSecret(config.apiKey) : "",
       webhookSecretConfigured: Boolean(config.webhookSecret),
       templates: n8nTemplates
     };
   },
-  async getConfig(userId: string) {
-    return this.userStatus(userId);
+  async healthStatusForUser(userId: string) {
+    const config = await this.runtimeConfig(userId, false);
+    const configured = this.isConfigured(config);
+    return { configured, status: configured ? "configured" : "not_configured" };
+  },
+  async getConfig(userId: string, includeEnvironmentDetails = false) {
+    return this.userStatus(userId, includeEnvironmentDetails);
   },
   async saveConfig(userId: string, input: { webhookUrl: string; apiKey?: string; webhookSecret?: string; enabled?: boolean }) {
     const current = await this.runtimeConfig(userId);
@@ -120,10 +140,10 @@ export const n8nService = {
     });
     return this.userStatus(userId);
   },
-  async clearConfig(userId: string) {
+  async clearConfig(userId: string, includeEnvironmentDetails = false) {
     await prisma.setting.deleteMany({ where: { userId, key: { in: Object.values(keys) } } });
     await writeSystemLog({ userId, module: "n8n", action: "config_clear", message: "Configuracao n8n removida" });
-    return this.userStatus(userId);
+    return this.userStatus(userId, includeEnvironmentDetails);
   },
   async trigger(payload: unknown, userId?: string) {
     const config = await this.runtimeConfig(userId);
