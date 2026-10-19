@@ -31,7 +31,7 @@ jobs:
       JWT_SECRET: ci_only_change_me_not_for_production_123
       GEMINI_API_KEY: ci_test_gemini_key_for_mocked_transport_only
       CORS_ORIGIN: http://localhost:5173
-      SETTINGS_ENCRYPTION_KEY: ci_only_32_chars_minimum_value
+      SETTINGS_ENCRYPTION_KEY: ci_settings_encryption_key_for_isolated_tests_2026
       TOTP_ENCRYPTION_KEY: ci_only_totp_key_not_for_production_123456
       ALLOW_DEMO_LOGIN: "true"
     steps:

@@ -497,3 +497,9 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Próxima tarefa elegível: nenhuma implementação local independente pelo dry-run. Próximo avanço depende da revisão privada do histórico antes de publicação e de dados SSH confiáveis para smoke remoto.
 
 \n
+
+## Correção do primeiro CI remoto do snapshot — 2026-10-19
+
+- O push do snapshot sanitizado iniciou JARVIS CI run 57. A validação local passou, mas o seed do job validate falhou antes das suítes porque SETTINGS_ENCRYPTION_KEY sintética tinha menos de 32 caracteres.
+- A chave de fixture do workflow foi alongada para satisfazer o schema e continua diferente de TOTP_ENCRYPTION_KEY. Nenhum segredo real foi adicionado.
+- Desktop e Android estavam em execução no momento da leitura; aguardando conclusão CI do novo SHA após este commit. Nenhum deploy foi tentado.
