@@ -17,6 +17,8 @@ export function DashboardPage() {
   const [dayNotifications, setDayNotifications] = useState<DayNotification[] | null>(null);
   const [error, setError] = useState("");
   const [notificationError, setNotificationError] = useState(false);
+  const [taskActionBusy, setTaskActionBusy] = useState<string | null>(null);
+  const [taskActionError, setTaskActionError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -45,6 +47,23 @@ export function DashboardPage() {
 
   const today = calendarDay(new Date());
   const { due: relevantTasks, overdueCount } = summarizeDayTasks(dayTasks ?? [], new Date());
+
+  async function completeDayTask(taskId: string) {
+    if (taskActionBusy) return;
+    setTaskActionBusy(taskId);
+    setTaskActionError("");
+    try {
+      const response = await api.patch(`/tasks/${encodeURIComponent(taskId)}/status`, { status: "done" });
+      if (!response.data?.task || response.data.task.id !== taskId || response.data.task.status !== "done") {
+        throw new Error("A API nao confirmou a conclusao da tarefa.");
+      }
+      setDayTasks((previous) => previous?.map((task) => task.id === taskId ? { ...task, status: "done" } : task) ?? null);
+    } catch {
+      setTaskActionError("Nao foi possivel concluir a tarefa. Tente novamente.");
+    } finally {
+      setTaskActionBusy(null);
+    }
+  }
 
   const openAiStatus = health.integrations?.openai?.status ?? (health.openaiConfigured === true ? "configured" : "not_checked");
   const statuses = [
@@ -87,14 +106,20 @@ export function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl bg-white/5 p-4">
             <h4 className="mb-3 flex items-center gap-2 font-bold text-white"><ListTodo size={18} /> Tarefas com prazo ate hoje</h4>
+            {taskActionError && <p role="alert" className="mb-2 text-sm text-rose-200">{taskActionError}</p>}
             {dayTasks === null ? <p className="text-sm text-amber-200">{loading ? "Carregando tarefas..." : "Nao foi possivel consultar tarefas."}</p> :
               relevantTasks.length === 0 ? <p className="text-sm text-slate-400">Nenhuma tarefa pendente com prazo ate hoje.</p> :
               <ul className="space-y-2">{relevantTasks.slice(0, 5).map((task) => (
                 <li key={task.id} className="flex items-start justify-between gap-2 rounded-lg bg-white/5 p-2 text-sm text-slate-200">
-                  <span>{task.title}</span>
+                  <span className="min-w-0 flex-1">{task.title}</span>
                   <span className={(calendarDay(task.dueDate!) || today) < today ? "shrink-0 text-rose-200" : "shrink-0 text-cyan-100"}>
                     {(calendarDay(task.dueDate!) || today) < today ? "Atrasada" : "Hoje"}
                   </span>
+                  <button type="button" disabled={taskActionBusy !== null} onClick={() => void completeDayTask(task.id)}
+                    aria-label={`Concluir tarefa: ${task.title}`}
+                    className="shrink-0 rounded-lg border border-cyan-300/30 px-2 py-1 text-xs text-cyan-100 hover:bg-cyan-300/10 disabled:cursor-wait disabled:opacity-50">
+                    {taskActionBusy === task.id ? "Salvando..." : "Concluir"}
+                  </button>
                 </li>
               ))}</ul>}
             {dayTasks !== null && overdueCount > 0 && <p className="mt-3 text-sm text-rose-200">{overdueCount} tarefa(s) atrasada(s).</p>}
