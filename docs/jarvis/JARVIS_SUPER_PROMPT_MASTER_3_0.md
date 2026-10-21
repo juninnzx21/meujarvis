@@ -15,6 +15,9 @@ Transformar gradualmente o JARVIS existente em um superassistente pessoal **orig
 - Nunca presumir que assinatura ChatGPT, Gemini ou Claude financia API. Manter `NVIDIA_ZERO_SPEND`: **R$ 0**, bloquear inferência/STT/TTS remoto e fallback pago enquanto custo/cota/entitlement não forem comprovados/autorizados.
 - Microfone/wake-word e dados de saúde exigem consentimento explícito. Nada de escuta oculta. Ações administrativas, pagamentos, envio a terceiros e mudanças de produção exigem gates próprios.
 
+## 2.1. Regra obrigatória de reaproveitamento — NÃO RECOMEÇAR DO ZERO
+Antes de implementar qualquer módulo LIFE, Hermes/Honcho ou integração: (1) buscar modelos Prisma, migrations, services, hooks, componentes, rotas e testes equivalentes; (2) documentar o inventário e a decisão REUTILIZAR / ESTENDER / ADAPTAR / CRIAR APENAS SE AUSENTE; (3) preferir estender o módulo existente com migração compatível e preservar dados históricos; (4) proibir sistemas paralelos duplicados, segunda autenticação, segunda tabela de usuário, cópia de finanças/tarefas, segundo scheduler ou segundo motor agente sem justificativa arquitetural e testes; (5) preservar URLs, contratos da API e UI existentes ou usar mudança compatível versionada; (6) comparar antes/depois com testes de regressão; (7) distinguir integração comprovada de interface demonstrativa. **A primeira entrega LIFE-001 deve ampliar DashboardPage e reaproveitar /tasks e /notifications; não criar outro aplicativo.**
+
 ## 3. Arquitetura
 Preservar React/Vite/TypeScript, Node/Express/TypeScript, Prisma/PostgreSQL, Docker e aplicativos atuais. Cadeia: canais → autenticação/RBAC → contexto/memória → roteador de modelos → planejamento/agentes → catálogo de skills/MCP → executor de ferramentas com confirmação/rollback → eventos/notificações → auditoria/observabilidade. Definir contratos tipados, schemas Zod, versões, timeouts, erros e teste de isolamento.
 
