@@ -1,11 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../services/api";
 import { DashboardPage } from "./DashboardPage";
 
 vi.mock("../../services/api", () => ({
-  api: { get: vi.fn() }
+  api: { get: vi.fn(), patch: vi.fn() }
 }));
 
 const responses: Record<string, unknown> = {
@@ -26,6 +26,7 @@ function renderDashboard() {
 describe("Dashboard Meu Dia com APIs existentes", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(api.patch).mockResolvedValue({ data: { task: { id: "task-old", status: "done" } } });
     vi.mocked(api.get).mockImplementation((url) =>
       Promise.resolve({ data: responses[url] }) as ReturnType<typeof api.get>
     );
@@ -62,4 +63,22 @@ describe("Dashboard Meu Dia com APIs existentes", () => {
     expect(screen.getByText("nao verificado")).toBeInTheDocument();
     expect(screen.queryByText("online")).not.toBeInTheDocument();
   });
+  it("conclui pelo endpoint existente somente quando a API confirma", async () => {
+    renderDashboard();
+    const button = await screen.findByRole("button", { name: "Concluir tarefa: Pagar boleto pendente" });
+    fireEvent.click(button);
+    expect(vi.mocked(api.patch)).toHaveBeenCalledWith("/tasks/task-old/status", { status: "done" });
+    expect(await screen.findByText("Nenhuma tarefa pendente com prazo ate hoje.")).toBeInTheDocument();
+    expect(screen.queryByText("Pagar boleto pendente")).not.toBeInTheDocument();
+  });
+
+  it("mostra erro e conserva a tarefa quando a atualizacao falha", async () => {
+    vi.mocked(api.patch).mockRejectedValue(new Error("offline"));
+    renderDashboard();
+    const button = await screen.findByRole("button", { name: "Concluir tarefa: Pagar boleto pendente" });
+    fireEvent.click(button);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nao foi possivel concluir a tarefa.");
+    expect(screen.getByText("Pagar boleto pendente")).toBeInTheDocument();
+  });
+
 });
