@@ -22,12 +22,14 @@ export function DashboardPage() {
     let active = true;
     const endpoints = ["/health/full", "/chat/conversations", "/tasks", "/memories", "/logs", "/notifications"] as const;
     setLoading(true);
+    setError("");
+    setNotificationError(false);
     Promise.allSettled(endpoints.map((endpoint) =>
       endpoint === "/notifications" ? api.get(endpoint, { params: { unread: true } }) : api.get(endpoint)
     )).then(([h, c, t, m, l, n]) => {
       if (!active) return;
       if (h.status === "fulfilled") setHealth(h.value.data);
-      else setError("Nao foi possivel verificar a API agora.");
+      else { setHealth({}); setError("Nao foi possivel verificar a API agora."); }
       setCounts({
         conversations: c.status === "fulfilled" && Array.isArray(c.value.data.conversations) ? c.value.data.conversations.length : null,
         tasks: t.status === "fulfilled" && Array.isArray(t.value.data.tasks) ? t.value.data.tasks.length : null,
@@ -44,7 +46,7 @@ export function DashboardPage() {
   const today = calendarDay(new Date());
   const { due: relevantTasks, overdueCount } = summarizeDayTasks(dayTasks ?? [], new Date());
 
-  const openAiStatus = health.integrations?.openai?.status || (health.openaiConfigured ? "configured" : "missing_key");
+  const openAiStatus = health.integrations?.openai?.status ?? (health.openaiConfigured === true ? "configured" : "not_checked");
   const statuses = [
     ["IA", openAiStatus, Bot],
     ["Banco", health.database, Database],
@@ -113,7 +115,7 @@ export function DashboardPage() {
           <div key={label} className="glass rounded-2xl p-5">
             <Icon className="mb-4 text-cyanx" />
             <p className="mb-3 font-bold text-white">{label}</p>
-            <StatusPill status={status === true ? "configured" : status === "ok" ? "ok" : String(status)} />
+            <StatusPill status={status === true ? "configured" : status === false ? "not_configured" : status === "ok" ? "ok" : status == null ? "not_checked" : String(status)} />
           </div>
         ))}
       </div>
@@ -128,7 +130,8 @@ export function DashboardPage() {
         </div>
         <div className="glass rounded-2xl p-5">
           <h3 className="mb-4 font-bold text-white">Alertas do sistema</h3>
-          <p className="text-slate-300">IA usa OpenAI primeiro, Gemini como fallback e modo local seguro se provedores externos falharem.</p>
+          <p className="text-slate-300">A disponibilidade dos provedores de IA depende das configuracoes da sua conta. Confira o estado real em Integracoes.</p>
+          <Link className="mt-3 inline-block text-sm text-cyan-100 underline" to="/integrations">Consultar integracoes</Link>
         </div>
       </div>
     </section>
