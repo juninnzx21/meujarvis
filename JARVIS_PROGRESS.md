@@ -530,3 +530,13 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Botão por tarefa com desabilitação durante operação, retorno da API verificado por `id` e `status=done`, alteração do estado visual somente **após confirmação real**, e mensagem de erro sem eliminar a tarefa quando a API falha. Commit `960be5e05566b8a9f701196fab114823249d40ff`.
 - Adicionados dois cenários de teste à `DashboardPage.test.tsx` (conclusão confirmada e falha preservando estado), com ajuste de tipagem do mock Axios. Commits `824ba24373cb76c6bb96a92d225060e29ec862c0` e `048c9dc07129033b1d671a46541f788266714881`.
 - **Validação pendente:** os testes foram escritos, mas não executados em ambiente com dependências; consultas ao status e às execuções de PR por SHA não retornaram checks. Não marcar como DONE_VERIFIED nem fazer merge/deploy sem CI + revisão. Conservar PR #2 draft.
+
+
+## 2026-10-21 — Staging VPS isolado (PREPARADO, NÃO IMPLANTADO)
+
+- User confirmou VPS Ubuntu com Docker e sistemas em funcionamento; não alterou topologia. Nenhuma conexão à VPS foi realizada.
+- `docker-compose.staging.yml`: projeto `jarvis3staging`, rede/volume separados, gateway local-only `127.0.0.1:18080`, sem nomes de containers globais, automações/WhatsApp/IA externa desativadas e segredos independentes obrigatórios.
+- `deploy/staging/nginx.conf`: proxy para web e rotas `/api/` existentes; `backend/.dockerignore` e `frontend/.dockerignore` retiram `.env`, chaves, build e node_modules do contexto.
+- `.github/workflows/staging-preflight.yml`: preflight apenas de sintaxe/configuração e regras de isolamento, com placeholders de CI; sem SSH, migrações ou deploy.
+- `docs/jarvis/STAGING_VPS_RUNBOOK.md`: check de recursos, exigência de conta SSH não-root e host key verificada, Environment staging, banco isolado, migração segura, smoke E2E e rollback.
+- **Não executado nesta sessão**: docker compose config na VPS, GitHub Actions, build/run/health real, snapshot, migração, DNS ou publicação. Nenhum gate existente promovido.
