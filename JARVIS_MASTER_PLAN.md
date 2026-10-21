@@ -152,3 +152,9 @@ Validação nesta rodada: Agent Sync 13/13, migrations e seed PASS, backend 82/8
 ValidateOnly passou com PostgreSQL descartável identificado, migrations, backend 177/177, frontend 49/49 e Agent Sync 17/17 sem skips. NVIDIA permanece bloqueada sob orçamento de R$ 0; SEC-002/OBS/AUTH não foram promovidos. A branch de desenvolvimento está 93 commits à frente de origin/main, não existe no remoto, e há outras worktrees com alterações que foram preservadas. Revisar o histórico por dados operacionais privados antes de publicar. VPS sem conexão até confirmar conta não-root e fingerprint confiável. Dry-run sem tarefa local elegível; scheduler pausado.
 
 \n
+
+## JARVIS 3.0 — plano de expansão publicado em 2026-10-21
+
+O documento de execução consolidado desta evolução está em [docs/jarvis/JARVIS_SUPER_PROMPT_MASTER_3_0.md](docs/jarvis/JARVIS_SUPER_PROMPT_MASTER_3_0.md). **É especificação, não evidência de implementação/CI/deploy.** Abrange a experiência funcional pública do Néctar (LIFE-001 a LIFE-015), PoCs opcionais Hermes/Honcho, multi-IA com orçamento zero, skills/MCP, memória, voz, multicanal, agentes, multiusuário, segurança e CI/CD.
+
+**Não sobrescrever tarefas legadas nem promover gates existentes.** LIFE-001 pode começar como MVP de leitura com dados das rotas autenticadas atuais `/tasks`, `/notifications` e `/finance`, sem novos provedores nem acesso administrativo. Diferenciar dados ausentes de valores zero, verificar timezone e autorização, usar carregamento/falhas por módulo e adicionar testes antes do PR. LIFE-002 a LIFE-015 e as PoCs aguardam inventário/dependências no backlog vinculado. A branch `chatgpt/jarvis-3-master-20261021` é **apenas desenvolvimento**, criada a partir de `codex/publish-reviewed-20261019`; nenhum merge ou deploy autorizado por esta anotação.
