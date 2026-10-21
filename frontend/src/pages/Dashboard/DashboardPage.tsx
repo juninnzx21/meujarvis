@@ -5,46 +5,44 @@ import { MetricCard } from "../../components/MetricCard";
 import { StatusPill } from "../../components/StatusPill";
 import { api } from "../../services/api";
 import type { Task } from "../../types";
+import { calendarDay, summarizeDayTasks } from "./daySummary";
 
 type DayNotification = { id: string; message: string; createdAt: string; readAt?: string | null };
 
-function localDay(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
 export function DashboardPage() {
   const [health, setHealth] = useState<Record<string, any>>({});
-  const [counts, setCounts] = useState({ conversations: 0, tasks: 0, memories: 0, logs: [] as any[] });
+  const [counts, setCounts] = useState({ conversations: null as number | null, tasks: null as number | null, memories: null as number | null, logs: null as any[] | null });
   const [loading, setLoading] = useState(true);
   const [dayTasks, setDayTasks] = useState<Task[] | null>(null);
   const [dayNotifications, setDayNotifications] = useState<DayNotification[] | null>(null);
   const [error, setError] = useState("");
+  const [notificationError, setNotificationError] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    const endpoints = ["/health/full", "/chat/conversations", "/tasks", "/memories", "/logs", "/notifications"] as const;
     setLoading(true);
-    Promise.all([
-      api.get("/health/full"),
-      api.get("/chat/conversations"),
-      api.get("/tasks"),
-      api.get("/memories"),
-      api.get("/logs")
-    ]).then(([h, c, t, m, l]) => {
-      setHealth(h.data);
-      setDayTasks(t.data.tasks);
-      setCounts({ conversations: c.data.conversations.length, tasks: t.data.tasks.length, memories: m.data.memories.length, logs: l.data.logs.slice(0, 5) });
-      setError("");
-    }).catch(() => {
-      setError("Nao foi possivel carregar todos os indicadores agora.");
-    }).finally(() => setLoading(false));
-    api.get("/notifications", { params: { unread: true } })
-      .then((result) => setDayNotifications(result.data.notifications))
-      .catch(() => setDayNotifications(null));
+    Promise.allSettled(endpoints.map((endpoint) =>
+      endpoint === "/notifications" ? api.get(endpoint, { params: { unread: true } }) : api.get(endpoint)
+    )).then(([h, c, t, m, l, n]) => {
+      if (!active) return;
+      if (h.status === "fulfilled") setHealth(h.value.data);
+      else setError("Nao foi possivel verificar a API agora.");
+      setCounts({
+        conversations: c.status === "fulfilled" && Array.isArray(c.value.data.conversations) ? c.value.data.conversations.length : null,
+        tasks: t.status === "fulfilled" && Array.isArray(t.value.data.tasks) ? t.value.data.tasks.length : null,
+        memories: m.status === "fulfilled" && Array.isArray(m.value.data.memories) ? m.value.data.memories.length : null,
+        logs: l.status === "fulfilled" && Array.isArray(l.value.data.logs) ? l.value.data.logs.slice(0, 5) : null
+      });
+      setDayTasks(t.status === "fulfilled" && Array.isArray(t.value.data.tasks) ? t.value.data.tasks : null);
+      setDayNotifications(n.status === "fulfilled" && Array.isArray(n.value.data.notifications) ? n.value.data.notifications : null);
+      setNotificationError(n.status !== "fulfilled");
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
-  const today = localDay(new Date());
-  const relevantTasks = (dayTasks ?? []).filter((task) => task.status !== "done" && task.status !== "canceled" && task.dueDate && !Number.isNaN(Date.parse(task.dueDate)) && localDay(new Date(task.dueDate)) <= today)
-    .sort((a, b) => Date.parse(a.dueDate!) - Date.parse(b.dueDate!));
-  const overdue = relevantTasks.filter((task) => localDay(new Date(task.dueDate!)) < today);
+  const today = calendarDay(new Date());
+  const { due: relevantTasks, overdueCount } = summarizeDayTasks(dayTasks ?? [], new Date());
 
   const openAiStatus = health.integrations?.openai?.status || (health.openaiConfigured ? "configured" : "missing_key");
   const statuses = [
@@ -64,10 +62,10 @@ export function DashboardPage() {
       {loading && <div className="glass rounded-2xl p-4 text-sm text-cyan-100">Carregando telemetria operacional...</div>}
       {error && <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100">{error}</div>}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Status do JARVIS" value={loading ? "verificando" : error ? "nao verificado" : health.database === "ok" ? "API consultada" : "verificar"} icon={Zap} />
-        <MetricCard title="Conversas" value={counts.conversations} icon={MessageSquare} tone="blue" />
-        <MetricCard title="Tarefas" value={counts.tasks} icon={ListTodo} tone="violet" />
-        <MetricCard title="Memorias" value={counts.memories} icon={Brain} />
+        <MetricCard title="Status do JARVIS" value={loading ? "verificando" : error ? "nao verificado" : health.database === "ok" ? "Banco OK" : "verificar"} icon={Zap} />
+        <MetricCard title="Conversas" value={counts.conversations ?? "indisponivel"} icon={MessageSquare} tone="blue" />
+        <MetricCard title="Tarefas" value={counts.tasks ?? "indisponivel"} icon={ListTodo} tone="violet" />
+        <MetricCard title="Memorias" value={counts.memories ?? "indisponivel"} icon={Brain} />
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <Link className="btn btn-ghost" to="/voice"><Mic size={18} /> Falar com JARVIS</Link>
@@ -92,16 +90,16 @@ export function DashboardPage() {
               <ul className="space-y-2">{relevantTasks.slice(0, 5).map((task) => (
                 <li key={task.id} className="flex items-start justify-between gap-2 rounded-lg bg-white/5 p-2 text-sm text-slate-200">
                   <span>{task.title}</span>
-                  <span className={localDay(new Date(task.dueDate!)) < today ? "shrink-0 text-rose-200" : "shrink-0 text-cyan-100"}>
-                    {localDay(new Date(task.dueDate!)) < today ? "Atrasada" : "Hoje"}
+                  <span className={(calendarDay(task.dueDate!) || today) < today ? "shrink-0 text-rose-200" : "shrink-0 text-cyan-100"}>
+                    {(calendarDay(task.dueDate!) || today) < today ? "Atrasada" : "Hoje"}
                   </span>
                 </li>
               ))}</ul>}
-            {dayTasks !== null && overdue.length > 0 && <p className="mt-3 text-sm text-rose-200">{overdue.length} tarefa(s) atrasada(s).</p>}
+            {dayTasks !== null && overdueCount > 0 && <p className="mt-3 text-sm text-rose-200">{overdueCount} tarefa(s) atrasada(s).</p>}
           </div>
           <div className="rounded-xl bg-white/5 p-4">
             <h4 className="mb-3 flex items-center gap-2 font-bold text-white"><Bell size={18} /> Avisos nao lidos</h4>
-            {dayNotifications === null ? <p className="text-sm text-amber-200">Avisos indisponiveis ou carregando.</p> :
+            {dayNotifications === null ? <p className="text-sm text-amber-200">{notificationError ? "Nao foi possivel consultar notificacoes." : "Carregando notificacoes..."}</p> :
               dayNotifications.length === 0 ? <p className="text-sm text-slate-400">Nenhuma notificacao nao lida.</p> :
               <ul className="space-y-2">{dayNotifications.slice(0, 5).map((notification) => (
                 <li key={notification.id} className="rounded-lg bg-white/5 p-2 text-sm text-slate-200">{notification.message}</li>
@@ -123,8 +121,9 @@ export function DashboardPage() {
         <div className="glass rounded-2xl p-5 xl:col-span-2">
           <h3 className="mb-4 flex items-center gap-2 font-bold text-white"><ScrollText size={18} /> Ultimos comandos e logs</h3>
           <div className="space-y-3">
-            {!loading && counts.logs.length === 0 && <p className="rounded-xl bg-white/5 p-3 text-sm text-slate-400">Ainda nao ha logs recentes para exibir.</p>}
-            {counts.logs.map((log) => <div key={log.id} className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"><strong className="text-cyan-100">{log.module}</strong> {log.message}</div>)}
+            {!loading && counts.logs?.length === 0 && <p className="rounded-xl bg-white/5 p-3 text-sm text-slate-400">Ainda nao ha logs recentes para exibir.</p>}
+            {!loading && counts.logs === null && <p className="text-sm text-amber-200">Logs indisponiveis.</p>}
+            {(counts.logs ?? []).map((log) => <div key={log.id} className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"><strong className="text-cyan-100">{log.module}</strong> {log.message}</div>)}
           </div>
         </div>
         <div className="glass rounded-2xl p-5">
