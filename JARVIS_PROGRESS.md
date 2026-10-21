@@ -522,3 +522,11 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Adicionado `frontend/src/pages/Dashboard/DashboardPage.test.tsx`, com três cenários de renderização de dados reais das rotas atuais `/tasks` e `/notifications`, falha isolada de notificação e falha de API com sinalização de indisponibilidade. Commit `83468c689f55087fec2fe6e507950624bbfa290a`.
 - Estado: **IN_REVIEW / TESTES NÃO EXECUTADOS NESTA SESSÃO**. Consulta de status combinado e workflow runs por SHA retornou arrays vazios; não implica CI aprovada nem CI reprovada. Rodar `npm ci && npm run validate` em CI/runner apto antes do merge. Nenhum deploy, merge, mudança no banco ou custo de API nesta etapa.
 - Próximas ações elegíveis: investigar e corrigir checks de CI da branch; validar cenários com usuário autenticado; revisar o cálculo de prazos em fuso individual configurado e paginação/volume de notificações antes de LIFE-001 DONE_VERIFIED.
+
+
+## 2026-10-21 — LIFE-001 — conclusão de tarefas no painel
+
+- Reutilizado o endpoint autenticado existente `PATCH /tasks/:id/status` na `DashboardPage`, para concluir tarefas do bloco Meu Dia, sem nova tabela, nova autenticação ou rota.
+- Botão por tarefa com desabilitação durante operação, retorno da API verificado por `id` e `status=done`, alteração do estado visual somente **após confirmação real**, e mensagem de erro sem eliminar a tarefa quando a API falha. Commit `960be5e05566b8a9f701196fab114823249d40ff`.
+- Adicionados dois cenários de teste à `DashboardPage.test.tsx` (conclusão confirmada e falha preservando estado), com ajuste de tipagem do mock Axios. Commits `824ba24373cb76c6bb96a92d225060e29ec862c0` e `048c9dc07129033b1d671a46541f788266714881`.
+- **Validação pendente:** os testes foram escritos, mas não executados em ambiente com dependências; consultas ao status e às execuções de PR por SHA não retornaram checks. Não marcar como DONE_VERIFIED nem fazer merge/deploy sem CI + revisão. Conservar PR #2 draft.
