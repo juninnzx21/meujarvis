@@ -26,7 +26,7 @@ function renderDashboard() {
 describe("Dashboard Meu Dia com APIs existentes", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(api.patch).mockResolvedValue({ data: { task: { id: "task-old", status: "done" } } });
+    vi.mocked(api.patch).mockResolvedValue({ data: { task: { id: "task-old", status: "done" } } } as Awaited<ReturnType<typeof api.patch>>);
     vi.mocked(api.get).mockImplementation((url) =>
       Promise.resolve({ data: responses[url] }) as ReturnType<typeof api.get>
     );
