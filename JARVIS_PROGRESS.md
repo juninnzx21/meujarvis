@@ -514,3 +514,11 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Criados `daySummary.ts` e `daySummary.test.ts` para classificar tarefas com vencimento até hoje pelo timezone do navegador; 4 cenários declarados de fusos, atraso, datas inválidas e imutabilidade. **Testes ainda não executados** nesta sessão: GitHub connector permite escrita/leitura, mas não executa npm local.
 - Head publicado após alterações: `2886840599652acebcc93d18d20f0e353afc1774`. Consulta de status e PR workflow runs retornou arrays vazios naquele instante, **CI não comprovada**. Sem merge, deploy, VPS, custo de IA ou mudança nos gates.
 - Próximo passo: rodar `npm ci && npm run validate` no frontend através da CI, corrigir falhas, testar tela em staging com usuários de teste e concluir revisão independente antes de promover a tarefa.
+
+
+## 2026-10-21 — LIFE-001 — correções de UX e testes de interface
+
+- Revisão da `DashboardPage` existente: status de IA sem fallback não comprovado para OpenAI; indicadores configurados/não verificados separados, preservando o modelo e as integrações atuais. Commit `230c16f5b17e99c424e590d9d64b1e6388b346f4`.
+- Adicionado `frontend/src/pages/Dashboard/DashboardPage.test.tsx`, com três cenários de renderização de dados reais das rotas atuais `/tasks` e `/notifications`, falha isolada de notificação e falha de API com sinalização de indisponibilidade. Commit `83468c689f55087fec2fe6e507950624bbfa290a`.
+- Estado: **IN_REVIEW / TESTES NÃO EXECUTADOS NESTA SESSÃO**. Consulta de status combinado e workflow runs por SHA retornou arrays vazios; não implica CI aprovada nem CI reprovada. Rodar `npm ci && npm run validate` em CI/runner apto antes do merge. Nenhum deploy, merge, mudança no banco ou custo de API nesta etapa.
+- Próximas ações elegíveis: investigar e corrigir checks de CI da branch; validar cenários com usuário autenticado; revisar o cálculo de prazos em fuso individual configurado e paginação/volume de notificações antes de LIFE-001 DONE_VERIFIED.
