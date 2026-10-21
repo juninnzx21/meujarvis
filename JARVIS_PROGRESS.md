@@ -503,3 +503,14 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - O push do snapshot sanitizado iniciou JARVIS CI run 57. A validação local passou, mas o seed do job validate falhou antes das suítes porque SETTINGS_ENCRYPTION_KEY sintética tinha menos de 32 caracteres.
 - A chave de fixture do workflow foi alongada para satisfazer o schema e continua diferente de TOTP_ENCRYPTION_KEY. Nenhum segredo real foi adicionado.
 - Desktop e Android estavam em execução no momento da leitura; aguardando conclusão CI do novo SHA após este commit. Nenhum deploy foi tentado.
+
+
+## 2026-10-21 — LIFE-001, primeira implementação incremental em branch ChatGPT
+
+- Branch `chatgpt/jarvis-3-master-20261021` criada da `codex/publish-reviewed-20261019`; PR draft #2 em `https://github.com/juninnzx21/meujarvis/pull/2`.
+- Super prompt `docs/jarvis/JARVIS_SUPER_PROMPT_MASTER_3_0.md` criado e vinculado ao plano mestre. Extensão explícita: REUTILIZAR → ESTENDER → ADAPTAR → CRIAR SOMENTE SE NÃO EXISTIR.
+- LIFE-001 incrementado **no DashboardPage atual**, usando as APIs autenticadas já existentes `/tasks` e `/notifications`; sem migrations, dependências externas ou nova autenticação.
+- Revisão direcionada detectou acoplamento anterior de Promise.all, com risco de falha conjunta e métricas ficticiamente zeradas; painel passou a aceitar resultados independentes (Promise.allSettled), distinguindo indisponível de zero.
+- Criados `daySummary.ts` e `daySummary.test.ts` para classificar tarefas com vencimento até hoje pelo timezone do navegador; 4 cenários declarados de fusos, atraso, datas inválidas e imutabilidade. **Testes ainda não executados** nesta sessão: GitHub connector permite escrita/leitura, mas não executa npm local.
+- Head publicado após alterações: `2886840599652acebcc93d18d20f0e353afc1774`. Consulta de status e PR workflow runs retornou arrays vazios naquele instante, **CI não comprovada**. Sem merge, deploy, VPS, custo de IA ou mudança nos gates.
+- Próximo passo: rodar `npm ci && npm run validate` no frontend através da CI, corrigir falhas, testar tela em staging com usuários de teste e concluir revisão independente antes de promover a tarefa.
