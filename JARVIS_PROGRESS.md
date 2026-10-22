@@ -554,3 +554,32 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - `DashboardPage.test.tsx` agora limpa o DOM após cada caso. `DashboardPage.tsx` compara datas apenas quando ambas são válidas, removendo erros de tipos nulos no `typecheck`.
 - Validação local em `frontend`: `npm run validate` passou: typecheck, 10 arquivos/54 testes, build. O build emite um aviso de chunk JavaScript acima de 500 kB. `git diff --check` passou.
 - CI remoto pós-correção ainda precisa ser executado; PR permanece draft, sem merge ou deploy.
+
+## 2026-10-22 — auditoria pós-CI de LIFE-001 e staging
+
+- PR #2 permanece aberto em rascunho: https://github.com/juninnzx21/meujarvis/pull/2. HEAD do branch `chatgpt/jarvis-3-master-20261021` confirmado como `89eacaf2c3007b5eea6b529f09609a5208404083`.
+- GitHub Actions run `39828531504` para esse SHA concluiu `success`; `validate`, `desktop` e `android` estão completos com sucesso. Não valida staging ou produção.
+- Revisão do Meu Dia confirmou uso das rotas existentes autenticadas `/tasks` e `/notifications`, filtros de usuário no backend e atualização de tarefa com `id` + `userId`. Não houve sessão E2E com usuário real.
+- O resumo de prazos segue o fuso local do navegador. O perfil `User` não tem timezone próprio. A API limita a consulta de notificações a 100 e o painel mostra até cinco.
+- LIFE-001 continua parcial: agenda, finanças, hábitos e demais fontes do escopo 3.0 não foram integrados; não declarar conclusão.
+- Compose de staging e asserções estáticas equivalentes ao workflow validados com placeholders sintéticos: quatro serviços esperados, bind loopback, sem nomes globais/privileged, scheduler desativado e sem chaves de integrações externas. Sem Docker Desktop Linux daemon ativo, nenhum container foi iniciado. Segredos ausentes fazem a configuração falhar fechada.
+- Não foi encontrada central de aprovação de release no frontend/backend; aprovação financeira e confirmação do assistente são fluxos diferentes, sem ligação a deploy.
+- Próximo trabalho local: definir e implementar gate de aprovação de release ligado a SHA e RBAC, sem executar deploy; primeiro mapear o fluxo atual e evitar botão sem consumidor. Staging, VPS e produção continuam bloqueados.
+- Checkpoint de código: `89eacaf2c3007b5eea6b529f09609a5208404083`. Checkpoint documental `125dccff0f75abb2696ef27994d5aab633c750ec` foi publicado somente no branch do PR #2; run `39831971266` estava na fila na última consulta.
+
+## 2026-10-22 — LIFE-001 — resumo financeiro e rotinas no Meu Dia
+
+- `DashboardPage` agora consome `/finance/reports/summary` e `/routines` além das fontes já existentes. A rota financeira e a listagem de rotinas usam o middleware de autenticação e filtram dados por `req.user.id` no backend.
+- Apresenta saldo total, entradas e saídas do mês; lista até quatro rotinas e seu estado. Não executa rotinas. Estados de erro e vazio ficam separados, e valores inválidos/indisponíveis não são exibidos como zero.
+- Testes frontend cobrem dados de resumo/rotinas, isolamento de falhas e ausência de execução de rotina. `frontend npm run validate`: typecheck PASS, 10 arquivos/56 testes PASS, build PASS; aviso existente de bundle JS acima de 500 kB. `git diff --check` PASS.
+- Commits: código `7fe587ce8f7a53e610cbeadc899ed993c9417346`; documentação `1484b4a5684808a41f1277669a78c89acdc138c0`. Ambos enviados por fast-forward somente à branch do PR #2. GitHub Actions `39852087330` passou no SHA `1484b4a`: `validate`, `desktop`, `android` todos success.
+- Não houve backend/schema, migração, chamada externa, credencial, Docker, VPS, staging ou produção. LIFE-001 continua parcial; timezone configurável, agenda, hábitos dedicados e E2E autenticado permanecem pendentes.
+
+## 2026-10-22 — continuação — gates de staging e release
+
+- Auditoria atual confirmou worktree limpa na branch `codex/jarvis-pr2-ci-fix-20261022`, HEAD `815a79ebc8c8767174a7c7b5bd1335f7560a8810`; branch remota do PR aponta ao mesmo SHA. PR #2 permanece aberto e draft deliberado; `gh` CLI não está instalado, então o snapshot da issue confirma apenas estado aberto e o corpo mantém a intenção draft.
+- CI `39852514814` passou em `validate`, `desktop`, `android`. Metadados GitHub confirmaram artefatos correspondentes ao mesmo run/SHA e ainda válidos: web 210.112 bytes (sha256 `7bb7ddaa6acca3f3fabdc71afdf5ef41d31970f64233b09e418bae85f3dda749`), Windows 111.134.725 bytes (`6b17bae265faaac44b4e737a64912586ce9b2d09d2dbbb9a4be807a19b13c17d`) e Android test 4.808.861 bytes (`057ed3ab92d0219a50f8f587f13a276a14259dac85f711327863fbd7a56c5ec7`). A validação é de disponibilidade/proveniência/digest, não inspeção interna ou assinatura de loja.
+- Docker ainda falha ao conectar a `dockerDesktopLinuxEngine`; nenhum container foi criado. Staging, health autenticado, backup, restore e rollback não foram testados. Sem conexão à VPS; faltam usuário não-root e fingerprint do host por canal confiável.
+- Inspecionados `.github/workflows/deploy-plan.yml` (plan-only/fail-closed) e `release-downloads.yml` (publicação por tags, gate de ancestralidade/CI no SHA exato). Nenhum deploy da VPS existe; settings externos de branch protection, tags e Environment permanecem não verificados.
+- Criado `docs/jarvis/RELEASE_APPROVAL_DESIGN.md` com identidade imutável SHA+digest, checagem de CI/branch, aprovação admin com MFA step-up, expiração, consumo único, auditoria append-only e gates separados de backup/rollback/GitHub Environment. É somente desenho; nenhuma funcionalidade de aprovação ou deploy foi implementada.
+- Próximas tarefas: revisão independente do desenho e decisão de TTL/política de aprovador; desbloquear staging com Docker/segredos sintéticos e obter conta/fingerprint SSH confiáveis; depois implementar APIs/UI de approval em escopo separado. Nenhum merge, release, deploy, VPS, scheduler ou chamada paga.

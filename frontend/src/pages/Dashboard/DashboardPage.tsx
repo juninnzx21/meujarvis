@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, Bot, Brain, CalendarDays, Database, Home, ListTodo, MessageSquare, Mic, Plus, ScrollText, Share2, Smartphone, Zap } from "lucide-react";
+import { Bell, Bot, Brain, CalendarDays, Database, Home, ListTodo, MessageSquare, Mic, Plus, ScrollText, Share2, Smartphone, WalletCards, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MetricCard } from "../../components/MetricCard";
 import { StatusPill } from "../../components/StatusPill";
@@ -8,6 +8,13 @@ import type { Task } from "../../types";
 import { calendarDay, summarizeDayTasks } from "./daySummary";
 
 type DayNotification = { id: string; message: string; createdAt: string; readAt?: string | null };
+type DayRoutine = { id: string; name: string; description?: string | null; enabled: boolean; triggerType: string };
+type DayFinanceSummary = { totalBalance: string | number; monthIncome: string | number; monthExpenses: string | number };
+
+function money(value: string | number) {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
+}
 
 export function DashboardPage() {
   const [health, setHealth] = useState<Record<string, any>>({});
@@ -15,20 +22,24 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [dayTasks, setDayTasks] = useState<Task[] | null>(null);
   const [dayNotifications, setDayNotifications] = useState<DayNotification[] | null>(null);
+  const [dayRoutines, setDayRoutines] = useState<DayRoutine[] | null>(null);
+  const [financeSummary, setFinanceSummary] = useState<DayFinanceSummary | null>(null);
   const [error, setError] = useState("");
   const [notificationError, setNotificationError] = useState(false);
+  const [routineError, setRoutineError] = useState(false);
+  const [financeError, setFinanceError] = useState(false);
   const [taskActionBusy, setTaskActionBusy] = useState<string | null>(null);
   const [taskActionError, setTaskActionError] = useState("");
 
   useEffect(() => {
     let active = true;
-    const endpoints = ["/health/full", "/chat/conversations", "/tasks", "/memories", "/logs", "/notifications"] as const;
+    const endpoints = ["/health/full", "/chat/conversations", "/tasks", "/memories", "/logs", "/notifications", "/finance/reports/summary", "/routines"] as const;
     setLoading(true);
     setError("");
     setNotificationError(false);
     Promise.allSettled(endpoints.map((endpoint) =>
       endpoint === "/notifications" ? api.get(endpoint, { params: { unread: true } }) : api.get(endpoint)
-    )).then(([h, c, t, m, l, n]) => {
+    )).then(([h, c, t, m, l, n, f, r]) => {
       if (!active) return;
       if (h.status === "fulfilled") setHealth(h.value.data);
       else { setHealth({}); setError("Nao foi possivel verificar a API agora."); }
@@ -41,6 +52,13 @@ export function DashboardPage() {
       setDayTasks(t.status === "fulfilled" && Array.isArray(t.value.data.tasks) ? t.value.data.tasks : null);
       setDayNotifications(n.status === "fulfilled" && Array.isArray(n.value.data.notifications) ? n.value.data.notifications : null);
       setNotificationError(n.status !== "fulfilled");
+      const summary = f.status === "fulfilled" ? f.value.data : null;
+      const hasFinanceSummary = Boolean(summary && [summary.totalBalance, summary.monthIncome, summary.monthExpenses].every((value) => typeof value === "string" || typeof value === "number"));
+      setFinanceSummary(hasFinanceSummary ? summary : null);
+      setFinanceError(!hasFinanceSummary);
+      const routines = r.status === "fulfilled" && Array.isArray(r.value.data.routines) ? r.value.data.routines : null;
+      setDayRoutines(routines);
+      setRoutineError(routines === null);
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
@@ -136,6 +154,28 @@ export function DashboardPage() {
                 <li key={notification.id} className="rounded-lg bg-white/5 p-2 text-sm text-slate-200">{notification.message}</li>
               ))}</ul>}
             <Link className="mt-3 inline-block text-sm text-cyan-100 underline" to="/notifications">Abrir notificacoes</Link>
+          </div>
+          <div className="rounded-xl bg-white/5 p-4">
+            <h4 className="mb-3 flex items-center gap-2 font-bold text-white"><WalletCards size={18} /> Resumo financeiro do mês</h4>
+            {financeSummary === null ? <p className="text-sm text-amber-200">{financeError ? "Resumo financeiro indisponivel." : "Carregando resumo financeiro..."}</p> :
+              <dl className="grid gap-2 text-sm sm:grid-cols-3">
+                <div><dt className="text-slate-400">Saldo total</dt><dd className="font-semibold text-white">{money(financeSummary.totalBalance) ?? "Indisponivel"}</dd></div>
+                <div><dt className="text-slate-400">Entradas</dt><dd className="font-semibold text-emerald-200">{money(financeSummary.monthIncome) ?? "Indisponivel"}</dd></div>
+                <div><dt className="text-slate-400">Saidas</dt><dd className="font-semibold text-purple-200">{money(financeSummary.monthExpenses) ?? "Indisponivel"}</dd></div>
+              </dl>}
+            <Link className="mt-3 inline-block text-sm text-cyan-100 underline" to="/finance">Abrir financeiro</Link>
+          </div>
+          <div className="rounded-xl bg-white/5 p-4">
+            <h4 className="mb-3 flex items-center gap-2 font-bold text-white"><Zap size={18} /> Rotinas</h4>
+            {dayRoutines === null ? <p className="text-sm text-amber-200">{routineError ? "Nao foi possivel consultar rotinas." : "Carregando rotinas..."}</p> :
+              dayRoutines.length === 0 ? <p className="text-sm text-slate-400">Nenhuma rotina cadastrada.</p> :
+              <ul className="space-y-2">{dayRoutines.slice(0, 4).map((routine) => (
+                <li key={routine.id} className="flex items-center justify-between gap-2 rounded-lg bg-white/5 p-2 text-sm text-slate-200">
+                  <span className="min-w-0 truncate">{routine.name}</span>
+                  <span className={routine.enabled ? "shrink-0 text-emerald-200" : "shrink-0 text-slate-400"}>{routine.enabled ? "Ativa" : "Desativada"}</span>
+                </li>
+              ))}</ul>}
+            <Link className="mt-3 inline-block text-sm text-cyan-100 underline" to="/routines">Abrir rotinas</Link>
           </div>
         </div>
       </div>
