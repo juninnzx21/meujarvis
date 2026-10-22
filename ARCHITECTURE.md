@@ -149,6 +149,8 @@ As memorias cobrem identidade, stack, preferencias de resposta, validacao, promp
 
 - `commands`: central declarativa de comandos com safety e execucao auditada.
 - `routines`: rotinas persistidas com `Routine` e `RoutineRun`.
+
+O Dashboard “Meu Dia” compõe dados já autenticados de tarefas, notificações não lidas, resumo financeiro e rotinas. As rotinas são exibidas somente para consulta e nunca iniciadas pelo carregamento do Dashboard; cada módulo mantém estado de falha independente.
 - `reports`: relatorios de resumo diario, tarefas, sistema e atividade.
 - `notifications`: notificacoes internas por usuario com leitura individual ou em massa.
 - `tasks`: campo `reminderAt` e filtros para vencidas/hoje.

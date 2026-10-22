@@ -383,4 +383,37 @@ Somente dados e chaves sintéticos. Nenhuma migration foi aplicada nesta rodada,
 
 Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch é substituído por mock que rejeita qualquer chamada, impedindo tráfego externo antes da asserção. A revisão estática confirmou o bloqueio; transportes futuros via APIs nativas ou SDK ainda precisam de cobertura própria. ValidateOnly completo passou: PostgreSQL descartável/migrations, backend 177/177, frontend 49/49, Agent Sync 17/17, zero skips, builds/typechecks/dry-run/diff-check. Sem chamada externa ou produção.
 
+## LIFE-001 — validação frontend PR #2 — 2026-10-22
+
+- Execução remota observada: GitHub Actions `39635859317`; jobs Android e Desktop passaram. `validate` falhou no frontend com 2 testes de Dashboard ambíguos: testes anteriores deixavam elementos no DOM entre casos.
+- Correção local: adicionar `cleanup()` após cada teste e tornar explícita a validação de datas nulas no rótulo de atraso.
+- `frontend npm run validate`: PASS — TypeScript, 10 arquivos/54 testes, build. `git diff --check`: PASS. Aviso de bundle >500 kB permanece informativo.
+- Sem chamadas de IA, acesso à VPS, deploy ou merge. É necessário aguardar CI remoto do novo SHA antes de considerar o gate validado.
+
 \n
+
+## Auditoria posterior do PR #2 — 2026-10-22
+
+- HEAD remoto do branch `chatgpt/jarvis-3-master-20261021`: `89eacaf2c3007b5eea6b529f09609a5208404083`.
+- GitHub Actions run `39828531504`: conclusão geral `success`; jobs `validate`, `desktop` e `android` concluídos com sucesso.
+- Inspeção estática: rotas de tarefas/notificações exigem `authMiddleware`, filtram registros por `req.user.id`; atualização de tarefa restringe por `id` e `userId`. Nenhum E2E com credencial/sessão real executado.
+- O timezone do resumo é o timezone do navegador; não há configuração timezone no modelo `User`. A listagem de notificações limita a 100 registros, com cinco exibidos no dashboard.
+- `docker compose config --quiet` e asserções estáticas equivalentes ao workflow `staging-preflight.yml` PASS com valores exclusivamente sintéticos; serviços esperados, bind loopback, ausência de nomes globais/privileged, scheduler desligado e sem credenciais externas. Sem variáveis obrigatórias a configuração falha fechada. Docker daemon indisponível; nenhum container foi iniciado/consultado.
+- Não foram feitos requests a provedores de IA, chamadas pagas, conexão SSH, staging, deploy, merge ou alteração VPS.
+
+## LIFE-001 — resumo financeiro e rotinas no Meu Dia — 2026-10-22
+
+- Alteração local da `DashboardPage`: leitura dos endpoints existentes `/finance/reports/summary` e `/routines`; a listagem de rotinas é somente leitura e não chama `POST /:id/run`.
+- Revisão estática dos handlers: `finance/routes.ts` aplica `authMiddleware` ao router e chama `summary(req.user.id)`; `routines/routes.ts` aplica `authMiddleware` e busca `Routine` por `userId`. A consulta do resumo financeiro aplica `userId` em contas, agregações e transações.
+- Testes Vitest adicionados para exibição de valores reais mockados, rotinas ativas/desativadas, erro isolado dos módulos e ausência de execução automática. `frontend npm run validate`: TypeScript PASS; Vitest 10/10 arquivos, 56/56 testes; Vite build PASS. O build emite aviso de chunk >500 kB, sem falha.
+- Não executados: validação backend com PostgreSQL e E2E autenticado em staging/VPS/produção. Docker Linux daemon não estava disponível; não foram iniciados serviços. Nenhuma chamada externa ou paga.
+- Atualização pós-push: GitHub Actions `39852087330`, SHA `1484b4a5684808a41f1277669a78c89acdc138c0`, jobs `validate`, `desktop` e `android` concluídos em `success`. Isso valida CI do branch, não staging ou produção.
+
+## LIFE-001 / staging / artefatos — checkpoint 2026-10-22
+
+- Estado remoto: issue/PR #2 aberto; branch `chatgpt/jarvis-3-master-20261021` apontava para SHA `815a79ebc8c8767174a7c7b5bd1335f7560a8810`, igual ao HEAD local. PR body mantém a revisão em rascunho. `gh` CLI não instalado; snapshot via conector retornou estado `open`.
+- Run `39852514814` para o SHA exato terminou `success` nos jobs `validate`, `desktop`, `android`.
+- A API de artefatos informa estes itens ativos (expiração 2026-11-21) e vinculados ao run/SHA: web `jarvis-web-815a79ebc8c8767174a7c7b5bd1335f7560a8810`, 210112 bytes, sha256 `7bb7ddaa6acca3f3fabdc71afdf5ef41d31970f64233b09e418bae85f3dda749`; Windows `.exe`, 111134725 bytes, sha256 `6b17bae265faaac44b4e737a64912586ce9b2d09d2dbbb9a4be807a19b13c17d`; Android debug/test APK, 4808861 bytes, sha256 `057ed3ab92d0219a50f8f587f13a276a14259dac85f711327863fbd7a56c5ec7`. Arquivos não foram baixados, executados ou inspecionados internamente; esses dados não comprovam assinatura de loja, instalação/saúde ou prontidão de release.
+- `docker info` falhou: pipe `dockerDesktopLinuxEngine` ausente. Nenhum staging iniciou; health E2E autenticado, backup, restauração e rollback não executados. Nenhuma conexão VPS (bloqueada por usuário não-root e fingerprint SHA256 ausentes).
+- Revisão estática: `deploy-plan.yml` não pode publicar; `release-downloads.yml` trata publicação pública por tag e exige ancestralidade em main + CI de SHA exato. Rulesets, proteção de tags e GitHub Environments não foram verificados. Nenhum deploy de VPS está implementado.
+- Adicionado desenho técnico em `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`; não é implementação nem evidência de aprovação.

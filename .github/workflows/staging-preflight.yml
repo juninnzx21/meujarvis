@@ -1,0 +1,50 @@
+name: JARVIS staging configuration preflight (no deployment)
+
+on:
+  push:
+    branches:
+      - chatgpt/jarvis-3-master-20261021
+    paths:
+      - docker-compose.staging.yml
+      - deploy/staging/**
+      - .github/workflows/staging-preflight.yml
+      - backend/.dockerignore
+      - frontend/.dockerignore
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging-config:
+    runs-on: ubuntu-latest
+    env:
+      STAGING_POSTGRES_PASSWORD: ci_only_not_deployed_staging_password
+      STAGING_DATABASE_URL: postgresql://jarvis_staging:ci_only_not_deployed_staging_password@postgres:5432/jarvis_staging?schema=public
+      STAGING_JWT_SECRET: ci_only_not_deployed_jwt_secret_32_chars
+      STAGING_SETTINGS_ENCRYPTION_KEY: ci_only_not_deployed_settings_key_32_chars
+      STAGING_TOTP_ENCRYPTION_KEY: ci_only_not_deployed_totp_key_32_chars
+      STAGING_HOST_PORT: "18080"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate independent staging Compose without starting containers
+        run: docker compose --project-name jarvis3staging -f docker-compose.staging.yml config --quiet
+      - name: Assert fail-closed isolation rules
+        shell: python
+        run: |
+          import json, subprocess
+          cmd = ["docker", "compose", "--project-name", "jarvis3staging", "-f", "docker-compose.staging.yml", "config", "--format", "json"]
+          data = json.loads(subprocess.check_output(cmd, text=True))
+          services = data["services"]
+          assert set(services) == {"postgres", "backend", "frontend", "gateway"}
+          assert not any("container_name" in value or "privileged" in value for value in services.values())
+          assert all(not entry.get("ports") for name, entry in services.items() if name != "gateway")
+          assert all(entry.get("host_ip") == "127.0.0.1" for entry in services["gateway"]["ports"])
+          env = services["backend"]["environment"]
+          assert env["SCHEDULER_ENABLED"] == "false"
+          assert env["WHATSAPP_AUTO_REPLY"] == "false"
+          assert env["ALLOW_DEMO_LOGIN"] == "false"
+          assert not env.get("OPENAI_API_KEY") and not env.get("GEMINI_API_KEY")
+          assert not env.get("EVOLUTION_API_KEY") and not env.get("HOME_ASSISTANT_TOKEN")
+          assert data["name"] == "jarvis3staging"
+          print("Staging isolation policy: PASS (configuration only, no deploy)")

@@ -1,5 +1,11 @@
 # Changelog de implementação
 
+## 2026-10-22 — JARVIS 3.0 gates: CI artifacts and release approval design
+
+- Confirmada a execução GitHub Actions `39852514814` como success no SHA `815a79e` para validate/desktop/android. Artefatos: nome, run/SHA, disponibilidade, tamanho e digest SHA-256 conferidos pela API; arquivos binários não inspecionados.
+- Confirmado bloqueio local de staging: pipe Docker Linux indisponível. Nenhum container foi iniciado. VPS permanece sem conexão aguardando usuário não-root e fingerprint confiável.
+- Adicionado `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`; desenho técnico somente, sem API/UI/workflow de deploy. Rulesets/Environments remotos não verificados.
+
 ## 2026-10-16 — baseline e governança (documentação local, sem commit)
 
 - Adicionados plano mestre, progresso append-only, estado JSON, runbook, decisões, evidências, registro de segurança e este changelog.
@@ -61,3 +67,11 @@ Adicionado em branch isolada o núcleo TOTP RFC 6238 e os testes determinístico
 - Adicionados contadores HTTP voláteis e alertas internos genéricos de 5xx, deduplicados por rota/status por 60 segundos; o painel diferencia falhas e histórico indisponível e não trata somente configuração como operação.
 - Validação: backend 153/153, zero skips, PostgreSQL descartável verificado; integração app 43/43 após asserção CORS; frontend 49/49 e build. Evidências em `docs/jarvis/TEST_EVIDENCE.md`.
 - Limites: sem probes ativos, notificações externas, persistência dos contadores, smoke test VPS ou deploy. Revisão independente pendente.
+
+## 2026-10-22 — auditoria PR #2 / LIFE-001
+
+- CI remota confirmada para `89eacaf2c3007b5eea6b529f09609a5208404083` (run `39828531504`, jobs `validate`, `desktop`, `android` aprovados).
+- Auditoria registrou o escopo parcial do Meu Dia, autorização por usuário nas rotas existentes, fuso local do navegador e limites da listagem de notificações.
+- Preflight de configuração do Compose de staging passou com placeholders sintéticos; Docker daemon indisponível, sem inicializar serviços.
+- Asserções estáticas equivalentes a `staging-preflight.yml` também passaram: quatro serviços esperados, bind em loopback, sem containers nomeados/privileged, scheduler desligado e sem credenciais externas.
+- PR draft preservado; nenhuma ação em produção, VPS, merge, scheduler ou API paga.

@@ -258,7 +258,7 @@ npm run build
 ## Modulos
 
 - Autenticacao com JWT, registro, login, senha bcrypt e usuario demo.
-- Dashboard premium com status, indicadores, estados de loading/error e logs recentes.
+- Dashboard premium com status, indicadores, estados de loading/error, logs recentes e “Meu Dia” (tarefas, notificações, resumo financeiro e rotinas em leitura).
 - Chat com historico, persistencia, orquestracao por intencoes, fallback seguro de OpenAI e endpoint SSE em `/api/chat/stream`.
 - Voz via Web Speech API e SpeechSynthesis, historico local de comandos e aviso de privacidade.
 - Memorias CRUD, criacao automatica por comandos e busca relevante por termos.
