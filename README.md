@@ -549,3 +549,6 @@ Cobertura, limites dos dublês, resultados locais e procedimento de revisão: [M
 ## SEC-002 — gate de destino da rotação
 
 A CLI `settings:rotate` aceita somente `--dry-run`. Antes de rotação, criação de backup ou restauração, o sistema exige identidade positiva do PostgreSQL descartável por Docker e SQL; rotação/restauração confirmam a conexão transacional que executa a operação. Hostname loopback, nome com `test` e flags não liberam outros bancos. `enc:v1` e `enc:v2` também exigem exatamente cinco segmentos; formatos com sufixos são rejeitados. Testes atuais e limitações: [SEC-002-VALIDATION](docs/jarvis/tasks/SEC-002-VALIDATION.md). A revisão independente do código não tem achados abertos conhecidos; SEC-002 permanece em progresso até o gate formal `reviewed_continue`.
+
+### Checkpoint local LIFE-001 (22/10/2026)
+Timezone IANA persistido por usu�rio e divis�o do frontend por rota foram implementados na branch codex/life001-timezone-20261022. Valida��o local: frontend 57/57 e bundle inicial 283.78 KB (antes 662.49 KB); backend 118 aprovados e 61 testes de integra��o ignorados pela indisponibilidade do Docker PostgreSQL. Migration, staging e produ��o n�o validados.

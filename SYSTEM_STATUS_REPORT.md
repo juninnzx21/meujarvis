@@ -558,3 +558,6 @@ Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e 
 ## JARVIS 3.0 — Meu Dia (2026-10-22)
 
 Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. CI do PR #2 passou no SHA `1484b4a` (`validate`, `desktop`, `android`). Ainda pendem revisão e E2E autenticado/staging; timezone é o do navegador. Não é release nem deploy.
+
+## LIFE-001 � atualiza��o de valida��o
+Timezone individual e code splitting por rota implementados na branch isolada. Frontend 57/57 testes e build aprovados; chunk inicial 283.78 KB (antes 662.49 KB). Backend 118 testes passaram; 61 foram ignorados pelo gate PostgreSQL. Migration e E2E de banco continuam n�o executados por indisponibilidade do Docker Linux. Trabalho parcial, ainda requer revis�o e staging.

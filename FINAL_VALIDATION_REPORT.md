@@ -548,3 +548,6 @@ RevisÃ£o independente estÃ¡tica confirmou que o teste substitui fetch por implem
 ## JARVIS 3.0 â€” LIFE-001 incremental â€” 2026-10-22
 
 â€œMeu Diaâ€ passou a exibir resumo financeiro mensal e rotinas jÃ¡ cadastradas por meio das APIs autenticadas existentes. Testes asseguram tratamento de falhas e que nenhuma rotina Ã© disparada no carregamento. Frontend `npm run validate`: typecheck PASS, Vitest 56/56 em 10 arquivos, build PASS (aviso de bundle >500 kB). GitHub Actions `39852087330` no SHA `1484b4a5684808a41f1277669a78c89acdc138c0` aprovou `validate`, `desktop` e `android`. Backend/DB/E2E autenticado em staging nÃ£o foram executados porque Docker Linux estava indisponÃ­vel. Sem VPS, produÃ§Ã£o, chamadas pagas, merge ou deploy.
+
+## LIFE-001 — atualização local 2026-10-22
+Implementada divisão das páginas em chunks lazy. Frontend npm run validate: 57/57; build aprovado; chunk inicial medido em 283.78 KB contra 662.49 KB antes. Backend: 118 testes aprovados, 61 ignorados pelo gate PostgreSQL. A migration de timezone não foi aplicada. Sem staging/produção; agenda e hábitos dedicados permanecem fora do escopo concluído.

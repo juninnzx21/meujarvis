@@ -425,3 +425,10 @@ Ap√≥s revis√£o independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - `docker info` falhou: pipe `dockerDesktopLinuxEngine` ausente. Nenhum staging iniciou; health E2E autenticado, backup, restaura√ß√£o e rollback n√£o executados. Nenhuma conex√£o VPS (bloqueada por usu√°rio n√£o-root e fingerprint SHA256 ausentes).
 - Revis√£o est√°tica: `deploy-plan.yml` n√£o pode publicar; `release-downloads.yml` trata publica√ß√£o p√∫blica por tag e exige ancestralidade em main + CI de SHA exato. Rulesets, prote√ß√£o de tags e GitHub Environments n√£o foram verificados. Nenhum deploy de VPS est√° implementado.
 - Adicionado desenho t√©cnico em `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`; n√£o √© implementa√ß√£o nem evid√™ncia de aprova√ß√£o.
+
+## LIFE-001 ó timezone persistente e divis„o de rotas ó 2026-10-22
+
+- Frontend: npm run validate aprovado, 57/57 testes. O build passou e reduziu o chunk inicial de 662.49 KB para 283.78 KB com carregamento sob demanda das p·ginas.
+- Backend: npm run validate aprovado em typecheck, seed typecheck e build; Vitest registrou 118 aprovados e 61 ignorados porque o Docker PostgreSQL n„o estava disponÌvel. Os ignorados n„o contam como aprovaÁ„o.
+- A migration de timezone e integraÁ„o autenticada com DB n„o foram aplicadas/testadas. Sem staging ou produÁ„o.
+- git diff --check aprovado.

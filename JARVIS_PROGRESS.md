@@ -582,3 +582,10 @@ N√£o reescreva nem remova entradas antigas. Cada execu√ß√£o acrescenta um bloco 
 - Inspecionados `.github/workflows/deploy-plan.yml` (plan-only/fail-closed) e `release-downloads.yml` (publica√ß√£o por tags, gate de ancestralidade/CI no SHA exato). Nenhum deploy da VPS existe; settings externos de branch protection, tags e Environment permanecem n√£o verificados.
 - Criado `docs/jarvis/RELEASE_APPROVAL_DESIGN.md` com identidade imut√°vel SHA+digest, checagem de CI/branch, aprova√ß√£o admin com MFA step-up, expira√ß√£o, consumo √∫nico, auditoria append-only e gates separados de backup/rollback/GitHub Environment. √â somente desenho; nenhuma funcionalidade de aprova√ß√£o ou deploy foi implementada.
 - Pr√≥ximas tarefas: revis√£o independente do desenho e decis√£o de TTL/pol√≠tica de aprovador; desbloquear staging com Docker/segredos sint√©ticos e obter conta/fingerprint SSH confi√°veis; depois implementar APIs/UI de approval em escopo separado. Nenhum merge, release, deploy, VPS, scheduler ou chamada paga.
+
+## 2026-10-22 ó LIFE-001 ó fuso salvo e divis„o de bundle
+
+- A branch codex/life001-timezone-20261022 implementa timezone IANA por usu·rio, migration aditiva, endpoints autenticados de perfil prÛprio e configuraÁ„o na tela de ConfiguraÁıes. O Meu Dia usa o fuso salvo para classificar prazos.
+- frontend/src/App.tsx agora carrega as p·ginas por rota com React.lazy e Suspense. Build medido antes/depois: chunk inicial de 662.49 KB para 283.78 KB (reduÁ„o aproximada de 57.2%); testes n„o indicaram regress„o de rotas.
+- ValidaÁ„o independente: backend npm run validate ó 118 aprovados, 61 ignorados por gate de PostgreSQL; frontend npm run validate ó 57/57, build aprovado. git diff --check aprovado.
+- Limite: Docker Linux indisponÌvel; migration e testes de integraÁ„o DB n„o foram executados. Agenda e modelo dedicado de h·bitos n„o est„o implementados; LIFE-001 permanece parcial e sujeito ‡ revis„o.
