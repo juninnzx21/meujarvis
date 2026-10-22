@@ -591,3 +591,8 @@ N√£o reescreva nem remova entradas antigas. Cada execu√ß√£o acrescenta um bloco 
 - Limite: Docker Linux indisponÌvel; migration e testes de integraÁ„o DB n„o foram executados. Agenda e modelo dedicado de h·bitos n„o est„o implementados; LIFE-001 permanece parcial e sujeito ‡ revis„o.
 
 - Commit local LIFE-001: timezone persistente em 5be436a; divis√£o de rotas e evid√™ncias atualizadas em ac24cd36d6512926a4a8eca6b241918046037ae9. Worktree limpa; push/deploy ainda n√£o executados.
+
+## Publica√ß√£o para revis√£o ‚Äî LIFE-001 ‚Äî 2026-10-22
+
+- Branch codex/life001-timezone-20261022 publicada sem force push; PR #4 aberto em draft contra chatgpt/jarvis-3-master-20261021 (HEAD e45ba261). CI do GitHub ainda n√£o retornou execu√ß√£o para este commit.
+- Commits: 5be436a (timezone), ac24cd3 (divis√£o de rotas e evid√™ncias), 3584de7 (checkpoint). PR: https://github.com/juninnzx21/meujarvis/pull/4

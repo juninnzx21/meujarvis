@@ -510,8 +510,8 @@
     "timestampUtc": "2026-10-22T21:15:00Z",
     "status": "PARTIAL_IN_REVIEW",
     "branch": "codex/life001-timezone-20261022",
-    "commit": "ac24cd36d6512926a4a8eca6b241918046037ae9",
-    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/2",
+    "commit": "3584de799a52c0514091f5134c7d800b927a69ee",
+    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/4",
     "ciRun": "39852514814; success for SHA 815a79ebc8c8767174a7c7b5bd1335f7560a8810; validate, desktop and android jobs passed",
     "scopeValidated": "Persisted per-user timezone and route lazy loading; frontend tests 57/57; initial bundle 283.78 KB vs 662.49 KB; backend 118 pass and 61 DB-gated skips.",
     "limitations": [
@@ -526,7 +526,8 @@
     "schedulerEnabled": false,
     "paidCalls": false,
     "timezoneCommit": "5be436a51a3df030d02e86064345c92e4602238b",
-    "bundleOptimizationCommit": "ac24cd36d6512926a4a8eca6b241918046037ae9"
+    "bundleOptimizationCommit": "ac24cd36d6512926a4a8eca6b241918046037ae9",
+    "remoteCi": "PENDING_NO_RUN_RETURNED"
   },
   "releaseApprovalDesign": {
     "timestampUtc": "2026-10-22T21:15:00Z",
@@ -548,7 +549,10 @@
     "remaining": "Agenda and dedicated habits are not implemented; authenticated staging E2E and independent review pending",
     "stagingProduction": "NOT_TESTED",
     "schedulerEnabled": false,
-    "commit": "ac24cd36d6512926a4a8eca6b241918046037ae9"
+    "commit": "ac24cd36d6512926a4a8eca6b241918046037ae9",
+    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/4",
+    "remoteBranch": "codex/life001-timezone-20261022",
+    "remoteCi": "PENDING_NO_RUN_RETURNED"
   },
   "docsCheckpointCommit": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
   "masterContinuity": {
