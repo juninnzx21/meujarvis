@@ -589,3 +589,5 @@ NÃ£o reescreva nem remova entradas antigas. Cada execuÃ§Ã£o acrescenta um bloco 
 - frontend/src/App.tsx agora carrega as páginas por rota com React.lazy e Suspense. Build medido antes/depois: chunk inicial de 662.49 KB para 283.78 KB (redução aproximada de 57.2%); testes não indicaram regressão de rotas.
 - Validação independente: backend npm run validate — 118 aprovados, 61 ignorados por gate de PostgreSQL; frontend npm run validate — 57/57, build aprovado. git diff --check aprovado.
 - Limite: Docker Linux indisponível; migration e testes de integração DB não foram executados. Agenda e modelo dedicado de hábitos não estão implementados; LIFE-001 permanece parcial e sujeito à revisão.
+
+- Commit local LIFE-001: timezone persistente em 5be436a; divisÃ£o de rotas e evidÃªncias atualizadas em ac24cd36d6512926a4a8eca6b241918046037ae9. Worktree limpa; push/deploy ainda nÃ£o executados.
