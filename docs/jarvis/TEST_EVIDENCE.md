@@ -408,3 +408,12 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - Testes Vitest adicionados para exibição de valores reais mockados, rotinas ativas/desativadas, erro isolado dos módulos e ausência de execução automática. `frontend npm run validate`: TypeScript PASS; Vitest 10/10 arquivos, 56/56 testes; Vite build PASS. O build emite aviso de chunk >500 kB, sem falha.
 - Não executados: validação backend com PostgreSQL e E2E autenticado em staging/VPS/produção. Docker Linux daemon não estava disponível; não foram iniciados serviços. Nenhuma chamada externa ou paga.
 - Atualização pós-push: GitHub Actions `39852087330`, SHA `1484b4a5684808a41f1277669a78c89acdc138c0`, jobs `validate`, `desktop` e `android` concluídos em `success`. Isso valida CI do branch, não staging ou produção.
+
+## LIFE-001 / staging / artefatos — checkpoint 2026-10-22
+
+- Estado remoto: issue/PR #2 aberto; branch `chatgpt/jarvis-3-master-20261021` apontava para SHA `815a79ebc8c8767174a7c7b5bd1335f7560a8810`, igual ao HEAD local. PR body mantém a revisão em rascunho. `gh` CLI não instalado; snapshot via conector retornou estado `open`.
+- Run `39852514814` para o SHA exato terminou `success` nos jobs `validate`, `desktop`, `android`.
+- A API de artefatos informa estes itens ativos (expiração 2026-11-21) e vinculados ao run/SHA: web `jarvis-web-815a79ebc8c8767174a7c7b5bd1335f7560a8810`, 210112 bytes, sha256 `7bb7ddaa6acca3f3fabdc71afdf5ef41d31970f64233b09e418bae85f3dda749`; Windows `.exe`, 111134725 bytes, sha256 `6b17bae265faaac44b4e737a64912586ce9b2d09d2dbbb9a4be807a19b13c17d`; Android debug/test APK, 4808861 bytes, sha256 `057ed3ab92d0219a50f8f587f13a276a14259dac85f711327863fbd7a56c5ec7`. Arquivos não foram baixados, executados ou inspecionados internamente; esses dados não comprovam assinatura de loja, instalação/saúde ou prontidão de release.
+- `docker info` falhou: pipe `dockerDesktopLinuxEngine` ausente. Nenhum staging iniciou; health E2E autenticado, backup, restauração e rollback não executados. Nenhuma conexão VPS (bloqueada por usuário não-root e fingerprint SHA256 ausentes).
+- Revisão estática: `deploy-plan.yml` não pode publicar; `release-downloads.yml` trata publicação pública por tag e exige ancestralidade em main + CI de SHA exato. Rulesets, proteção de tags e GitHub Environments não foram verificados. Nenhum deploy de VPS está implementado.
+- Adicionado desenho técnico em `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`; não é implementação nem evidência de aprovação.

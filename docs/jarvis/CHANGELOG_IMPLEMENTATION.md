@@ -1,5 +1,11 @@
 # Changelog de implementação
 
+## 2026-10-22 — JARVIS 3.0 gates: CI artifacts and release approval design
+
+- Confirmada a execução GitHub Actions `39852514814` como success no SHA `815a79e` para validate/desktop/android. Artefatos: nome, run/SHA, disponibilidade, tamanho e digest SHA-256 conferidos pela API; arquivos binários não inspecionados.
+- Confirmado bloqueio local de staging: pipe Docker Linux indisponível. Nenhum container foi iniciado. VPS permanece sem conexão aguardando usuário não-root e fingerprint confiável.
+- Adicionado `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`; desenho técnico somente, sem API/UI/workflow de deploy. Rulesets/Environments remotos não verificados.
+
 ## 2026-10-16 — baseline e governança (documentação local, sem commit)
 
 - Adicionados plano mestre, progresso append-only, estado JSON, runbook, decisões, evidências, registro de segurança e este changelog.
