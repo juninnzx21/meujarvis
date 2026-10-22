@@ -47,6 +47,10 @@ export function DashboardPage() {
 
   const today = calendarDay(new Date());
   const { due: relevantTasks, overdueCount } = summarizeDayTasks(dayTasks ?? [], new Date());
+  const isOverdue = (dueDate: string) => {
+    const dueDay = calendarDay(dueDate);
+    return today !== null && dueDay !== null && dueDay < today;
+  };
 
   async function completeDayTask(taskId: string) {
     if (taskActionBusy) return;
@@ -112,8 +116,8 @@ export function DashboardPage() {
               <ul className="space-y-2">{relevantTasks.slice(0, 5).map((task) => (
                 <li key={task.id} className="flex items-start justify-between gap-2 rounded-lg bg-white/5 p-2 text-sm text-slate-200">
                   <span className="min-w-0 flex-1">{task.title}</span>
-                  <span className={(calendarDay(task.dueDate!) || today) < today ? "shrink-0 text-rose-200" : "shrink-0 text-cyan-100"}>
-                    {(calendarDay(task.dueDate!) || today) < today ? "Atrasada" : "Hoje"}
+                  <span className={isOverdue(task.dueDate!) ? "shrink-0 text-rose-200" : "shrink-0 text-cyan-100"}>
+                    {isOverdue(task.dueDate!) ? "Atrasada" : "Hoje"}
                   </span>
                   <button type="button" disabled={taskActionBusy !== null} onClick={() => void completeDayTask(task.id)}
                     aria-label={`Concluir tarefa: ${task.title}`}

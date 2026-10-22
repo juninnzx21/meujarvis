@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../services/api";
 import { DashboardPage } from "./DashboardPage";
 
@@ -24,6 +24,8 @@ function renderDashboard() {
 }
 
 describe("Dashboard Meu Dia com APIs existentes", () => {
+  afterEach(() => cleanup());
+
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(api.patch).mockResolvedValue({ data: { task: { id: "task-old", status: "done" } } } as Awaited<ReturnType<typeof api.patch>>);

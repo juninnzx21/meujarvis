@@ -540,3 +540,10 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - `.github/workflows/staging-preflight.yml`: preflight apenas de sintaxe/configuração e regras de isolamento, com placeholders de CI; sem SSH, migrações ou deploy.
 - `docs/jarvis/STAGING_VPS_RUNBOOK.md`: check de recursos, exigência de conta SSH não-root e host key verificada, Environment staging, banco isolado, migração segura, smoke E2E e rollback.
 - **Não executado nesta sessão**: docker compose config na VPS, GitHub Actions, build/run/health real, snapshot, migração, DNS ou publicação. Nenhum gate existente promovido.
+
+## 2026-10-22 — LIFE-001 — correção de validação do frontend
+
+- GitHub Actions run `39635859317` do PR draft #2 falhou somente no job `validate`/frontend; `android` e `desktop` passaram. A falha era a consulta ambígua do botão porque a suíte não limpava o DOM entre testes.
+- `DashboardPage.test.tsx` agora limpa o DOM após cada caso. `DashboardPage.tsx` compara datas apenas quando ambas são válidas, removendo erros de tipos nulos no `typecheck`.
+- Validação local em `frontend`: `npm run validate` passou: typecheck, 10 arquivos/54 testes, build. O build emite um aviso de chunk JavaScript acima de 500 kB. `git diff --check` passou.
+- CI remoto pós-correção ainda precisa ser executado; PR permanece draft, sem merge ou deploy.

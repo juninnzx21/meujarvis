@@ -383,4 +383,11 @@ Somente dados e chaves sintéticos. Nenhuma migration foi aplicada nesta rodada,
 
 Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch é substituído por mock que rejeita qualquer chamada, impedindo tráfego externo antes da asserção. A revisão estática confirmou o bloqueio; transportes futuros via APIs nativas ou SDK ainda precisam de cobertura própria. ValidateOnly completo passou: PostgreSQL descartável/migrations, backend 177/177, frontend 49/49, Agent Sync 17/17, zero skips, builds/typechecks/dry-run/diff-check. Sem chamada externa ou produção.
 
+## LIFE-001 — validação frontend PR #2 — 2026-10-22
+
+- Execução remota observada: GitHub Actions `39635859317`; jobs Android e Desktop passaram. `validate` falhou no frontend com 2 testes de Dashboard ambíguos: testes anteriores deixavam elementos no DOM entre casos.
+- Correção local: adicionar `cleanup()` após cada teste e tornar explícita a validação de datas nulas no rótulo de atraso.
+- `frontend npm run validate`: PASS — TypeScript, 10 arquivos/54 testes, build. `git diff --check`: PASS. Aviso de bundle >500 kB permanece informativo.
+- Sem chamadas de IA, acesso à VPS, deploy ou merge. É necessário aguardar CI remoto do novo SHA antes de considerar o gate validado.
+
 \n
