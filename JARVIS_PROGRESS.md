@@ -564,5 +564,6 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 
 - `DashboardPage` agora consome `/finance/reports/summary` e `/routines` além das fontes já existentes. A rota financeira e a listagem de rotinas usam o middleware de autenticação e filtram dados por `req.user.id` no backend.
 - Apresenta saldo total, entradas e saídas do mês; lista até quatro rotinas e seu estado. Não executa rotinas. Estados de erro e vazio ficam separados, e valores inválidos/indisponíveis não são exibidos como zero.
-- Testes frontend cobrem dados de resumo/rotinas, isolamento de falhas e ausência de execução de rotina. `frontend npm run validate`: typecheck PASS, 10 arquivos/56 testes PASS, build PASS; aviso existente de bundle JS acima de 500 kB. `git diff --check` será registrado após a revisão final.
+- Testes frontend cobrem dados de resumo/rotinas, isolamento de falhas e ausência de execução de rotina. `frontend npm run validate`: typecheck PASS, 10 arquivos/56 testes PASS, build PASS; aviso existente de bundle JS acima de 500 kB. `git diff --check` PASS.
+- Commits: código `7fe587ce8f7a53e610cbeadc899ed993c9417346`; documentação `1484b4a5684808a41f1277669a78c89acdc138c0`. Ambos enviados por fast-forward somente à branch do PR #2. GitHub Actions `39852087330` passou no SHA `1484b4a`: `validate`, `desktop`, `android` todos success.
 - Não houve backend/schema, migração, chamada externa, credencial, Docker, VPS, staging ou produção. LIFE-001 continua parcial; timezone configurável, agenda, hábitos dedicados e E2E autenticado permanecem pendentes.

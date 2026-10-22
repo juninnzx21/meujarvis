@@ -553,4 +553,4 @@ Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e 
 \n
 ## JARVIS 3.0 — Meu Dia (2026-10-22)
 
-Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. Ainda pendem CI no novo SHA, revisão, E2E autenticado e staging; timezone é o do navegador. Não é release nem deploy.
+Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. CI do PR #2 passou no SHA `1484b4a` (`validate`, `desktop`, `android`). Ainda pendem revisão e E2E autenticado/staging; timezone é o do navegador. Não é release nem deploy.
