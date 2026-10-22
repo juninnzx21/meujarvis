@@ -499,10 +499,10 @@
     "productionReady": false
   },
   "nextLocalCheckpoint": {
-    "task": "RELEASE-APPROVAL-001",
-    "status": "DESIGN_READY_FOR_INDEPENDENT_REVIEW",
-    "nextTaskId": "LIFE-001-TIMEZONE-001",
-    "reason": "PR #2 head 815a79ebc8c8767174a7c7b5bd1335f7560a8810 CI run 39852514814 passed validate, desktop and android. Artifacts are present, unexpired, and metadata links them to the same SHA; binaries were not inspected. Docker Linux daemon is unavailable, blocking staging, authenticated E2E, backup, restore and rollback. VPS read-only remains blocked until a non-root username and trusted SHA256 host fingerprint are supplied. Release approval remains a design only."
+    "task": "REL-001",
+    "status": "IMPLEMENTED_LOCAL_IN_REVIEW",
+    "nextTaskId": "LIFE-001",
+    "reason": "REL-001 approval API/UI and disabled deploy adapter committed locally as d8d6cb3. Backend validation 131 passed/60 PostgreSQL-gated skips; focused tests 14/14; frontend 56/56. PostgreSQL migration/E2E, staging, backup/restore, rollback and operational health gates remain blocked."
   },
   "life001Checkpoint": {
     "timestampUtc": "2026-10-22T21:20:11Z",
@@ -538,7 +538,9 @@
       "backupRestore": false,
       "healthChecks": false
     },
-    "productionTouched": false
+    "productionTouched": false,
+    "commit": "d8d6cb3240f1de6550fa1b145ad269a46bf6fec0",
+    "branch": "codex/rel-001-approval-20261022"
   },
   "docsCheckpointCommit": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
   "masterContinuity": {

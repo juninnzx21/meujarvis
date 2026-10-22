@@ -587,3 +587,5 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Docker Desktop Linux não responde; migrations, E2E autenticado com PostgreSQL, staging, backup, restore e rollback não foram executados. A build web ainda excede 500 KB antes da divisão de rotas incluída no branch LIFE-001 separado.
 - REL-001 permanece IN_PROGRESS e exige revisão independente. Nenhum push, merge, workflow de deploy, VPS, produção, scheduler ou chamada paga nesta etapa.
 - Backend final: `npm run validate` passou com 131 testes aprovados e 60 pulados por falta de PostgreSQL Docker; suíte focada de release/MFA passou 14/14. Frontend validado em 56/56; build inicial ainda ~671 KB no branch REL (a divisão de rotas está no branch LIFE separado).
+
+- Commit local REL-001: d8d6cb3240f1de6550fa1b145ad269a46bf6fec0. Worktree limpo; push/deploy não executados nesta etapa.
