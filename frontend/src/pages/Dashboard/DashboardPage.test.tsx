@@ -21,7 +21,8 @@ const responses: Record<string, unknown> = {
   "/routines": { routines: [
     { id: "routine-active", name: "Revisar agenda", enabled: true, triggerType: "manual" },
     { id: "routine-off", name: "Resumo noturno", enabled: false, triggerType: "schedule" }
-  ] }
+  ] },
+  "/settings/profile": { profile: { timezone: "America/Sao_Paulo" } }
 };
 
 function renderDashboard() {
@@ -57,6 +58,18 @@ describe("Dashboard Meu Dia com APIs existentes", () => {
     expect(vi.mocked(api.get)).toHaveBeenCalledWith("/finance/reports/summary");
     expect(vi.mocked(api.get)).toHaveBeenCalledWith("/routines");
     expect(vi.mocked(api.patch)).not.toHaveBeenCalled();
+  });
+
+  it("uses the authenticated account's saved timezone for the My Day deadline", async () => {
+    vi.mocked(api.get).mockImplementation((url) => Promise.resolve({
+      data: url === "/settings/profile" ? { profile: { timezone: "UTC" } }
+        : url === "/tasks" ? { tasks: [{ id: "boundary", title: "Prazo no limite", status: "pending", dueDate: "2026-10-22T01:30:00.000Z" }] }
+        : responses[url]
+    }) as ReturnType<typeof api.get>);
+    renderDashboard();
+    expect(await screen.findByText("Prazo no limite")).toBeInTheDocument();
+    expect(screen.getByText("Hoje")).toBeInTheDocument();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith("/settings/profile");
   });
 
   it("mantem tarefas e outros modulos quando notificacoes falham", async () => {

@@ -516,7 +516,6 @@
     "scopeValidated": "Dashboard reads existing authenticated tasks, notifications, monthly finance summary and routines endpoints; routines remain read-only. Frontend local validate passed with 56 tests.",
     "limitations": [
       "No authenticated staging or production E2E",
-      "User profile has no persistent timezone; dashboard uses browser timezone",
       "Agenda, dedicated habits and remaining LIFE-001 sources are not implemented",
       "No release approval center or operational deployment workflow",
       "Docker Desktop Linux daemon unavailable; staging services not started",
@@ -534,6 +533,18 @@
     "implementation": "ABSENT",
     "productionDeploy": "NOT_IMPLEMENTED",
     "productionTouched": false
+  },
+  "life001TimezoneCheckpoint": {
+    "status": "IMPLEMENTED_VALIDATED_LOCAL_DB_INTEGRATION_BLOCKED",
+    "branch": "codex/life001-timezone-20261022",
+    "baseCommit": "e45ba261752d09c2feb97e6644fe0bceece47497",
+    "scope": "Persist IANA timezone per authenticated user; dashboard uses the saved zone for day boundaries",
+    "defaultTimezone": "America/Sao_Paulo",
+    "migration": "backend/prisma/migrations/20261022170000_user_timezone/migration.sql",
+    "localValidation": "backend generate/typecheck/seed typecheck/build pass; backend 118 pass and 61 skipped; frontend validate 57 pass; prisma schema validates",
+    "databaseIntegration": "BLOCKED_NO_DOCKER_LINUX_DAEMON; integration suite skip is not a pass",
+    "stagingProduction": "NOT_TESTED",
+    "schedulerEnabled": false
   },
   "docsCheckpointCommit": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
   "masterContinuity": {

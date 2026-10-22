@@ -19,6 +19,10 @@ O módulo `tools/agent-sync` roda no PC do operador, separado do backend que ate
 
 O sistema e dividido em frontend React/Vite e backend Express/TypeScript. O backend expoe API REST em `/api`, usa Prisma para persistencia em PostgreSQL e centraliza integracoes em servicos isolados.
 
+## Preferências pessoais e datas
+
+`User.timezone` guarda o identificador IANA por usuário, com padrão `America/Sao_Paulo`. `/api/settings/profile` e `/api/settings/profile/timezone` usam o middleware JWT e derivam o proprietário de `req.user.id`; o cliente não pode enviar um `userId`. O resumo Meu Dia calcula dia civil explicitamente com esse fuso.
+
 ## Mobile/PWA
 
 O frontend tambem opera como PWA instalavel:

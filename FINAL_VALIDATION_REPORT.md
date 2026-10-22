@@ -1,5 +1,9 @@
 # FINAL_VALIDATION_REPORT
 
+## LIFE-001-TIMEZONE-001 — checkpoint local
+
+Adicionada preferência de fuso IANA por usuário e seu uso pelo Meu Dia. A migration mantém compatibilidade com contas existentes usando `America/Sao_Paulo`. Backend validate passou geração Prisma, typechecks, build e 118 testes; 61 testes em 3 arquivos foram pulados pelo gate PostgreSQL. Frontend validate passou typecheck, 57 testes e build; permanece aviso de bundle >500 kB. `docker info` falha com pipe `dockerDesktopLinuxEngine` ausente; migration e integração DB não foram executadas. Nenhuma validação VPS/staging ou deploy.
+
 ## Revisão OBS-001 e correção de escopo — 2026-10-18
 
 - A revisão independente detectou exposição dos logs globais e contagens financeiras de todas as contas por `/api/health/full` a qualquer usuário autenticado. A correção local filtra dados por proprietário e permite visão global apenas a administradores.

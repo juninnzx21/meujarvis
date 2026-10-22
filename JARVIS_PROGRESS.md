@@ -568,6 +568,12 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Commits: código `7fe587ce8f7a53e610cbeadc899ed993c9417346`; documentação `1484b4a5684808a41f1277669a78c89acdc138c0`. Ambos enviados por fast-forward somente à branch do PR #2. GitHub Actions `39852087330` passou no SHA `1484b4a`: `validate`, `desktop`, `android` todos success.
 - Não houve backend/schema, migração, chamada externa, credencial, Docker, VPS, staging ou produção. LIFE-001 continua parcial; timezone configurável, agenda, hábitos dedicados e E2E autenticado permanecem pendentes.
 
+## LIFE-001-TIMEZONE-001 — implementação isolada
+
+- Branch `codex/life001-timezone-20261022`, baseada em `e45ba261752d09c2feb97e6644fe0bceece47497`. Adiciona timezone IANA persistido no `User` com default `America/Sao_Paulo`, endpoints autenticados de perfil próprio, validação Zod via Intl e configuração em Configurações.
+- `DashboardPage` carrega `/settings/profile` e usa o timezone salvo para classificar prazos; testes frontend cobrem limite diário em UTC. Testes backend unitários de validação e integração autenticada/isolamento foram adicionados.
+- Migration Prisma é aditiva e compatível com usuários existentes. Backend `npm run validate`: geração Prisma, typecheck, typecheck:seed e build passaram; Vitest 118 passaram e 61 foram pulados em 3 arquivos pelo gate PostgreSQL. Frontend `npm run validate`: typecheck, 57 testes e build passaram (aviso bundle >500 kB). Integração da API com DB não foi executada: `docker info` falha pelo pipe `dockerDesktopLinuxEngine` ausente; migration não aplicada. Sem alterações REL-001, VPS, staging, deploy, push ou scheduler.
+
 ## 2026-10-22 — continuação — gates de staging e release
 
 - Auditoria atual confirmou worktree limpa na branch `codex/jarvis-pr2-ci-fix-20261022`, HEAD `815a79ebc8c8767174a7c7b5bd1335f7560a8810`; branch remota do PR aponta ao mesmo SHA. PR #2 permanece aberto e draft deliberado; `gh` CLI não está instalado, então o snapshot da issue confirma apenas estado aberto e o corpo mantém a intenção draft.

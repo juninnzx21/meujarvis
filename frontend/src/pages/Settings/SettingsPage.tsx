@@ -16,12 +16,18 @@ export function SettingsPage() {
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [mfaMessage, setMfaMessage] = useState("");
   const [mfaBusy, setMfaBusy] = useState(false);
+  const [timezone, setTimezone] = useState("America/Sao_Paulo");
+  const [timezoneSaved, setTimezoneSaved] = useState(false);
+  const [timezoneError, setTimezoneError] = useState("");
 
   useEffect(() => {
     Promise.all([api.get("/settings"), api.get("/health/full")]).then(([settingsRes, healthRes]) => {
       setSettings(settingsRes.data.settings);
       setHealth(healthRes.data);
     });
+    api.get("/settings/profile").then((response) => {
+      if (typeof response.data.profile?.timezone === "string") setTimezone(response.data.profile.timezone);
+    }).catch(() => setTimezoneError("Não foi possível carregar o fuso horário salvo."));
   }, []);
 
   useEffect(() => {
@@ -44,10 +50,27 @@ export function SettingsPage() {
     setTimeout(() => setSaved(false), 1600);
   }
 
+  async function saveTimezone() {
+    setTimezoneError(""); setTimezoneSaved(false);
+    try {
+      const response = await api.patch("/settings/profile/timezone", { timezone });
+      setTimezone(response.data.profile.timezone); setTimezoneSaved(true);
+      setTimeout(() => setTimezoneSaved(false), 2000);
+    } catch { setTimezoneError("Fuso inválido ou não foi possível salvar. Use um identificador IANA, como America/Sao_Paulo."); }
+  }
+
   return (
     <section className="space-y-5">
       <h2 className="text-3xl font-black text-white">Configuracoes</h2>
       <div className="glass space-y-5 rounded-2xl p-5">
+        <div className="rounded-xl border border-white/10 p-4">
+          <label className="block text-sm font-semibold text-slate-300" htmlFor="profile-timezone">Fuso horário pessoal (IANA)</label>
+          <input id="profile-timezone" className="input mt-2" value={timezone} maxLength={64} onChange={(event) => setTimezone(event.target.value)} placeholder="America/Sao_Paulo" />
+          <p className="mt-2 text-xs text-slate-400">Usado para classificar prazos do Meu Dia. Exemplo: America/Sao_Paulo, Europe/Lisbon ou UTC.</p>
+          <button type="button" className="btn btn-ghost mt-3" onClick={() => void saveTimezone()}>Salvar fuso horário</button>
+          {timezoneSaved && <span role="status" className="ml-3 text-sm text-emerald-200">Fuso salvo.</span>}
+          {timezoneError && <p role="alert" className="mt-2 text-sm text-rose-200">{timezoneError}</p>}
+        </div>
         <label className="block text-sm font-semibold text-slate-300">
           Nome do assistente
           <input className="input mt-2" value={settings.assistant_name || ""} onChange={(e) => setSettings({ ...settings, assistant_name: e.target.value })} />

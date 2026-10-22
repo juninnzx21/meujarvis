@@ -740,6 +740,17 @@ describe.skipIf(process.env.JARVIS_AGENT_SYNC_TEST_DATABASE_CONFIGURED !== "true
     expect(cleared.body.status).toBe("not_configured");
   });
 
+  it("persists only the authenticated user's IANA timezone and rejects invalid zones", async () => {
+    const defaultProfile = await request(app).get("/api/settings/profile").set(auth()).expect(200);
+    expect(defaultProfile.body.profile.timezone).toBe("America/Sao_Paulo");
+    const savedProfile = await request(app).patch("/api/settings/profile/timezone").set(auth()).send({ timezone: "Europe/Lisbon" }).expect(200);
+    expect(savedProfile.body.profile.timezone).toBe("Europe/Lisbon");
+    await request(app).patch("/api/settings/profile/timezone").set(auth()).send({ timezone: "Mars/Olympus" }).expect(400);
+    await request(app).patch("/api/settings/profile/timezone").set(auth()).send({ timezone: "UTC", extra: true }).expect(400);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { timezone: true } })).timezone).toBe("Europe/Lisbon");
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: unrelatedFixtureUserId }, select: { timezone: true } })).timezone).toBe("America/Sao_Paulo");
+  });
+
   it("validates WhatsApp phone numbers and sends through a mocked Evolution API", async () => {
     await request(app).post("/api/whatsapp/send").set(auth()).send({ phone: "abc", content: "teste", confirmed: true }).expect(400);
 

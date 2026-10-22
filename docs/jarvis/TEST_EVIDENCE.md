@@ -409,6 +409,14 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - Não executados: validação backend com PostgreSQL e E2E autenticado em staging/VPS/produção. Docker Linux daemon não estava disponível; não foram iniciados serviços. Nenhuma chamada externa ou paga.
 - Atualização pós-push: GitHub Actions `39852087330`, SHA `1484b4a5684808a41f1277669a78c89acdc138c0`, jobs `validate`, `desktop` e `android` concluídos em `success`. Isso valida CI do branch, não staging ou produção.
 
+## LIFE-001-TIMEZONE-001 — validação local
+
+- Escopo: migration aditiva `User.timezone` default `America/Sao_Paulo`; GET/PATCH autenticados no perfil da sessão; validação IANA; UI Configurações; Dashboard usa fuso salvo.
+- Testes adicionados: `backend/src/modules/settings/timezone.test.ts`; caso de integração API valida default, update, rejeição de valor inválido/payload extra e preservação do timezone de outro usuário; teste do Dashboard valida fronteira diária em UTC.
+- Backend `npm run validate`: Prisma Client gerado; typecheck e typecheck:seed passaram; Vitest 21 arquivos/118 testes passaram e 3 arquivos/61 testes foram pulados pelo gate PostgreSQL; build passou. Integração autenticada do perfil está entre os testes bloqueados por DB, não é considerada aprovada.
+- Frontend `npm run validate`: typecheck passou; Vitest 10 arquivos/57 testes passou; Vite build passou com aviso de bundle acima de 500 kB.
+- `docker info` falhou porque o pipe `dockerDesktopLinuxEngine` não existe; migration não aplicada e integração DB não executada. Staging/produção não foram acessados.
+
 ## LIFE-001 / staging / artefatos — checkpoint 2026-10-22
 
 - Estado remoto: issue/PR #2 aberto; branch `chatgpt/jarvis-3-master-20261021` apontava para SHA `815a79ebc8c8767174a7c7b5bd1335f7560a8810`, igual ao HEAD local. PR body mantém a revisão em rascunho. `gh` CLI não instalado; snapshot via conector retornou estado `open`.

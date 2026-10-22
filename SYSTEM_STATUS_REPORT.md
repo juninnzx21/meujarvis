@@ -1,5 +1,9 @@
 # SYSTEM_STATUS_REPORT
 
+## LIFE-001 — fuso horário por usuário
+
+Implementação local: `User.timezone` com padrão `America/Sao_Paulo`, migration compatível para registros existentes, endpoints autenticados do próprio perfil e controle em Configurações. Meu Dia usa o fuso persistido na classificação de prazos. Backend: 118 testes passaram, 61 foram pulados por gate de banco; frontend: 57 passaram; typechecks/builds passaram. Docker indisponível, portanto migration e teste autenticado com DB estão bloqueados; staging/produção não verificados.
+
 ## Revisão de observabilidade e isolamento — 2026-10-18
 
 - Revisão do OBS-001 encontrou que `/api/health/full` permitia a qualquer usuário autenticado consultar falhas e contagens globais. A implementação local subsequente filtra logs e dados financeiros por usuário e limita o agregado global ao papel `admin`.
