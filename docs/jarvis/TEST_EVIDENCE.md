@@ -398,5 +398,5 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - GitHub Actions run `39828531504`: conclusão geral `success`; jobs `validate`, `desktop` e `android` concluídos com sucesso.
 - Inspeção estática: rotas de tarefas/notificações exigem `authMiddleware`, filtram registros por `req.user.id`; atualização de tarefa restringe por `id` e `userId`. Nenhum E2E com credencial/sessão real executado.
 - O timezone do resumo é o timezone do navegador; não há configuração timezone no modelo `User`. A listagem de notificações limita a 100 registros, com cinco exibidos no dashboard.
-- `docker compose config --quiet` PASS com valores exclusivamente sintéticos; sem variáveis obrigatórias a configuração falha fechada. Docker daemon indisponível; nenhum container foi iniciado/consultado.
+- `docker compose config --quiet` e asserções estáticas equivalentes ao workflow `staging-preflight.yml` PASS com valores exclusivamente sintéticos; serviços esperados, bind loopback, ausência de nomes globais/privileged, scheduler desligado e sem credenciais externas. Sem variáveis obrigatórias a configuração falha fechada. Docker daemon indisponível; nenhum container foi iniciado/consultado.
 - Não foram feitos requests a provedores de IA, chamadas pagas, conexão SSH, staging, deploy, merge ou alteração VPS.

@@ -67,4 +67,5 @@ Adicionado em branch isolada o núcleo TOTP RFC 6238 e os testes determinístico
 - CI remota confirmada para `89eacaf2c3007b5eea6b529f09609a5208404083` (run `39828531504`, jobs `validate`, `desktop`, `android` aprovados).
 - Auditoria registrou o escopo parcial do Meu Dia, autorização por usuário nas rotas existentes, fuso local do navegador e limites da listagem de notificações.
 - Preflight de configuração do Compose de staging passou com placeholders sintéticos; Docker daemon indisponível, sem inicializar serviços.
+- Asserções estáticas equivalentes a `staging-preflight.yml` também passaram: quatro serviços esperados, bind em loopback, sem containers nomeados/privileged, scheduler desligado e sem credenciais externas.
 - PR draft preservado; nenhuma ação em produção, VPS, merge, scheduler ou API paga.
