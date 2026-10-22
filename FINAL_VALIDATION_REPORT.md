@@ -1,5 +1,9 @@
 # FINAL_VALIDATION_REPORT
 
+## LIFE-001-TIMEZONE-001 — checkpoint local
+
+Adicionada preferência de fuso IANA por usuário e seu uso pelo Meu Dia. A migration mantém compatibilidade com contas existentes usando `America/Sao_Paulo`. Backend validate passou geração Prisma, typechecks, build e 118 testes; 61 testes em 3 arquivos foram pulados pelo gate PostgreSQL. Frontend validate passou typecheck, 57 testes e build; permanece aviso de bundle >500 kB. `docker info` falha com pipe `dockerDesktopLinuxEngine` ausente; migration e integração DB não foram executadas. Nenhuma validação VPS/staging ou deploy.
+
 ## Revisão OBS-001 e correção de escopo — 2026-10-18
 
 - A revisão independente detectou exposição dos logs globais e contagens financeiras de todas as contas por `/api/health/full` a qualquer usuário autenticado. A correção local filtra dados por proprietário e permite visão global apenas a administradores.
@@ -544,3 +548,6 @@ Revisão independente estática confirmou que o teste substitui fetch por implem
 ## JARVIS 3.0 — LIFE-001 incremental — 2026-10-22
 
 “Meu Dia” passou a exibir resumo financeiro mensal e rotinas já cadastradas por meio das APIs autenticadas existentes. Testes asseguram tratamento de falhas e que nenhuma rotina é disparada no carregamento. Frontend `npm run validate`: typecheck PASS, Vitest 56/56 em 10 arquivos, build PASS (aviso de bundle >500 kB). GitHub Actions `39852087330` no SHA `1484b4a5684808a41f1277669a78c89acdc138c0` aprovou `validate`, `desktop` e `android`. Backend/DB/E2E autenticado em staging não foram executados porque Docker Linux estava indisponível. Sem VPS, produção, chamadas pagas, merge ou deploy.
+
+## LIFE-001 � atualiza��o local 2026-10-22
+Implementada divis�o das p�ginas em chunks lazy. Frontend npm run validate: 57/57; build aprovado; chunk inicial medido em 283.78 KB contra 662.49 KB antes. Backend: 118 testes aprovados, 61 ignorados pelo gate PostgreSQL. A migration de timezone n�o foi aplicada. Sem staging/produ��o; agenda e h�bitos dedicados permanecem fora do escopo conclu�do.

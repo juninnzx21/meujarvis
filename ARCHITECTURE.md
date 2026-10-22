@@ -19,6 +19,10 @@ O módulo `tools/agent-sync` roda no PC do operador, separado do backend que ate
 
 O sistema e dividido em frontend React/Vite e backend Express/TypeScript. O backend expoe API REST em `/api`, usa Prisma para persistencia em PostgreSQL e centraliza integracoes em servicos isolados.
 
+## Preferências pessoais e datas
+
+`User.timezone` guarda o identificador IANA por usuário, com padrão `America/Sao_Paulo`. `/api/settings/profile` e `/api/settings/profile/timezone` usam o middleware JWT e derivam o proprietário de `req.user.id`; o cliente não pode enviar um `userId`. O resumo Meu Dia calcula dia civil explicitamente com esse fuso.
+
 ## Mobile/PWA
 
 O frontend tambem opera como PWA instalavel:
@@ -357,3 +361,6 @@ Desacoplamento estrito entre `SETTINGS_ENCRYPTION_KEY` e `JWT_SECRET`. Novas con
 A chave NVIDIA continua criptografada por usuário em `Setting`, e o catálogo curado continua disponível para configurar o modelo. A execução de chat, transcrição, síntese, teste de inferência e teste de saúde remoto está desativada pela política backend `NVIDIA_ZERO_SPEND`. A regra é persistida transacionalmente por usuário junto aos parâmetros NVIDIA, registra modelo/endpoints e operações LLM/STT/TTS, fixa budget de R$ 0,00 por mês-calendário em `America/Sao_Paulo` e bloqueia quando preço, quota ou entitlement não estão provados. Tentativas negadas gravam somente metadados de operação, modelo e período, sem chave, texto ou áudio.
 
 Quando NVIDIA está selecionada como IA principal, o roteador só tenta Ollama local; não chama OpenAI ou Gemini automaticamente. STT NVIDIA retorna bloqueio sem cair para OpenAI. NVIDIA é removida do fallback remoto TTS; se for configurada como preferência, apenas Piper local pode ser tentado. OpenAI, Gemini, Ollama, Fish Audio e ElevenLabs preservam suas configurações independentes. A documentação oficial consultada sobre endpoints NIM, acesso ao catálogo e APIs NVCF não comprova gratuidade ou teto de gastos para esta conta; não foram feitas chamadas NVIDIA reais.
+
+#### Carregamento do frontend por rota
+As p�ginas autenticadas e p�blicas s�o carregadas sob demanda via React.lazy/Suspense, reduzindo o bundle inicial. O build local LIFE-001 mediu 283.78 KB para o chunk inicial, frente a 662.49 KB antes da divis�o. Rotas mant�m seus componentes existentes.

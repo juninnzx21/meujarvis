@@ -24,6 +24,7 @@ export function DashboardPage() {
   const [dayNotifications, setDayNotifications] = useState<DayNotification[] | null>(null);
   const [dayRoutines, setDayRoutines] = useState<DayRoutine[] | null>(null);
   const [financeSummary, setFinanceSummary] = useState<DayFinanceSummary | null>(null);
+  const [userTimezone, setUserTimezone] = useState("America/Sao_Paulo");
   const [error, setError] = useState("");
   const [notificationError, setNotificationError] = useState(false);
   const [routineError, setRoutineError] = useState(false);
@@ -33,13 +34,13 @@ export function DashboardPage() {
 
   useEffect(() => {
     let active = true;
-    const endpoints = ["/health/full", "/chat/conversations", "/tasks", "/memories", "/logs", "/notifications", "/finance/reports/summary", "/routines"] as const;
+    const endpoints = ["/health/full", "/chat/conversations", "/tasks", "/memories", "/logs", "/notifications", "/finance/reports/summary", "/routines", "/settings/profile"] as const;
     setLoading(true);
     setError("");
     setNotificationError(false);
     Promise.allSettled(endpoints.map((endpoint) =>
       endpoint === "/notifications" ? api.get(endpoint, { params: { unread: true } }) : api.get(endpoint)
-    )).then(([h, c, t, m, l, n, f, r]) => {
+    )).then(([h, c, t, m, l, n, f, r, profile]) => {
       if (!active) return;
       if (h.status === "fulfilled") setHealth(h.value.data);
       else { setHealth({}); setError("Nao foi possivel verificar a API agora."); }
@@ -59,14 +60,15 @@ export function DashboardPage() {
       const routines = r.status === "fulfilled" && Array.isArray(r.value.data.routines) ? r.value.data.routines : null;
       setDayRoutines(routines);
       setRoutineError(routines === null);
+      if (profile.status === "fulfilled" && typeof profile.value.data.profile?.timezone === "string") setUserTimezone(profile.value.data.profile.timezone);
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
 
-  const today = calendarDay(new Date());
-  const { due: relevantTasks, overdueCount } = summarizeDayTasks(dayTasks ?? [], new Date());
+  const today = calendarDay(new Date(), userTimezone);
+  const { due: relevantTasks, overdueCount } = summarizeDayTasks(dayTasks ?? [], new Date(), userTimezone);
   const isOverdue = (dueDate: string) => {
-    const dueDay = calendarDay(dueDate);
+    const dueDay = calendarDay(dueDate, userTimezone);
     return today !== null && dueDay !== null && dueDay < today;
   };
 

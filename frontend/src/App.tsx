@@ -1,44 +1,50 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./layouts/AppLayout";
 import { useAuth } from "./contexts/AuthContext";
-import { AutomationsPage } from "./pages/Automations/AutomationsPage";
-import { BrainAgentsPage, BrainFeedbackPage, BrainMemoryPage, BrainPage, BrainToolsPage } from "./pages/Brain/BrainPages";
-import { ChatPage } from "./pages/Chat/ChatPage";
-import { CommandsPage } from "./pages/Commands/CommandsPage";
-import { ComputerPage } from "./pages/Computer/ComputerPage";
-import { DashboardPage } from "./pages/Dashboard/DashboardPage";
-import { DocumentsPage } from "./pages/Documents/DocumentsPage";
-import { DownloadsCenterPage } from "./pages/Downloads/DownloadsCenterPage";
-import { IntegrationEventsPage } from "./pages/Integrations/IntegrationEventsPage";
-import { IntegrationSettingsPage } from "./pages/Integrations/IntegrationSettingsPage";
-import { IntegrationSetupSummaryPage } from "./pages/Integrations/IntegrationSetupSummaryPage";
-import { IntegrationWizardPage } from "./pages/Integrations/IntegrationWizardPage";
-import { HomeAssistantSetupPage } from "./pages/Integrations/HomeAssistantSetupPage";
-import { IntegrationsPage } from "./pages/Integrations/IntegrationsPage";
-import { JarvisModePage } from "./pages/JarvisMode/JarvisModePage";
-import { FinancePage } from "./pages/Finance/FinancePage";
-import { FinanceAccountsPage } from "./pages/Finance/FinanceAccountsPage";
-import { FinanceCategoriesPage } from "./pages/Finance/FinanceCategoriesPage";
-import { FinanceImportPage } from "./pages/Finance/FinanceImportPage";
-import { FinanceReportsPage } from "./pages/Finance/FinanceReportsPage";
-import { FinanceReviewPage } from "./pages/Finance/FinanceReviewPage";
-import { FinanceTransactionsPage } from "./pages/Finance/FinanceTransactionsPage";
-import { InstallPage } from "./pages/Install/InstallPage";
-import { LoginPage } from "./pages/Login/LoginPage";
-import { LogsPage } from "./pages/Logs/LogsPage";
-import { MemoryPage } from "./pages/Memory/MemoryPage";
-import { MobileAssistantPage } from "./pages/MobileAssistant/MobileAssistantPage";
-import { N8nPage } from "./pages/N8n/N8nPage";
-import { NotificationsPage } from "./pages/Notifications/NotificationsPage";
-import { ReportsPage } from "./pages/Reports/ReportsPage";
-import { RoutinesPage } from "./pages/Routines/RoutinesPage";
-import { SettingsPage } from "./pages/Settings/SettingsPage";
-import { VoiceSettingsPage } from "./pages/Settings/VoiceSettingsPage";
-import { SmartHomePage } from "./pages/SmartHome/SmartHomePage";
-import { StatusPage } from "./pages/Status/StatusPage";
-import { TasksPage } from "./pages/Tasks/TasksPage";
-import { VoicePage } from "./pages/Voice/VoicePage";
-import { WhatsAppPage } from "./pages/WhatsApp/WhatsAppPage";
+
+const AutomationsPage = lazy(() => import("./pages/Automations/AutomationsPage").then((page) => ({ default: page.AutomationsPage })));
+const BrainAgentsPage = lazy(() => import("./pages/Brain/BrainPages").then((page) => ({ default: page.BrainAgentsPage })));
+const BrainFeedbackPage = lazy(() => import("./pages/Brain/BrainPages").then((page) => ({ default: page.BrainFeedbackPage })));
+const BrainMemoryPage = lazy(() => import("./pages/Brain/BrainPages").then((page) => ({ default: page.BrainMemoryPage })));
+const BrainPage = lazy(() => import("./pages/Brain/BrainPages").then((page) => ({ default: page.BrainPage })));
+const BrainToolsPage = lazy(() => import("./pages/Brain/BrainPages").then((page) => ({ default: page.BrainToolsPage })));
+const ChatPage = lazy(() => import("./pages/Chat/ChatPage").then((page) => ({ default: page.ChatPage })));
+const CommandsPage = lazy(() => import("./pages/Commands/CommandsPage").then((page) => ({ default: page.CommandsPage })));
+const ComputerPage = lazy(() => import("./pages/Computer/ComputerPage").then((page) => ({ default: page.ComputerPage })));
+const DashboardPage = lazy(() => import("./pages/Dashboard/DashboardPage").then((page) => ({ default: page.DashboardPage })));
+const DocumentsPage = lazy(() => import("./pages/Documents/DocumentsPage").then((page) => ({ default: page.DocumentsPage })));
+const DownloadsCenterPage = lazy(() => import("./pages/Downloads/DownloadsCenterPage").then((page) => ({ default: page.DownloadsCenterPage })));
+const IntegrationEventsPage = lazy(() => import("./pages/Integrations/IntegrationEventsPage").then((page) => ({ default: page.IntegrationEventsPage })));
+const IntegrationSettingsPage = lazy(() => import("./pages/Integrations/IntegrationSettingsPage").then((page) => ({ default: page.IntegrationSettingsPage })));
+const IntegrationSetupSummaryPage = lazy(() => import("./pages/Integrations/IntegrationSetupSummaryPage").then((page) => ({ default: page.IntegrationSetupSummaryPage })));
+const IntegrationWizardPage = lazy(() => import("./pages/Integrations/IntegrationWizardPage").then((page) => ({ default: page.IntegrationWizardPage })));
+const HomeAssistantSetupPage = lazy(() => import("./pages/Integrations/HomeAssistantSetupPage").then((page) => ({ default: page.HomeAssistantSetupPage })));
+const IntegrationsPage = lazy(() => import("./pages/Integrations/IntegrationsPage").then((page) => ({ default: page.IntegrationsPage })));
+const JarvisModePage = lazy(() => import("./pages/JarvisMode/JarvisModePage").then((page) => ({ default: page.JarvisModePage })));
+const FinancePage = lazy(() => import("./pages/Finance/FinancePage").then((page) => ({ default: page.FinancePage })));
+const FinanceAccountsPage = lazy(() => import("./pages/Finance/FinanceAccountsPage").then((page) => ({ default: page.FinanceAccountsPage })));
+const FinanceCategoriesPage = lazy(() => import("./pages/Finance/FinanceCategoriesPage").then((page) => ({ default: page.FinanceCategoriesPage })));
+const FinanceImportPage = lazy(() => import("./pages/Finance/FinanceImportPage").then((page) => ({ default: page.FinanceImportPage })));
+const FinanceReportsPage = lazy(() => import("./pages/Finance/FinanceReportsPage").then((page) => ({ default: page.FinanceReportsPage })));
+const FinanceReviewPage = lazy(() => import("./pages/Finance/FinanceReviewPage").then((page) => ({ default: page.FinanceReviewPage })));
+const FinanceTransactionsPage = lazy(() => import("./pages/Finance/FinanceTransactionsPage").then((page) => ({ default: page.FinanceTransactionsPage })));
+const InstallPage = lazy(() => import("./pages/Install/InstallPage").then((page) => ({ default: page.InstallPage })));
+const LoginPage = lazy(() => import("./pages/Login/LoginPage").then((page) => ({ default: page.LoginPage })));
+const LogsPage = lazy(() => import("./pages/Logs/LogsPage").then((page) => ({ default: page.LogsPage })));
+const MemoryPage = lazy(() => import("./pages/Memory/MemoryPage").then((page) => ({ default: page.MemoryPage })));
+const MobileAssistantPage = lazy(() => import("./pages/MobileAssistant/MobileAssistantPage").then((page) => ({ default: page.MobileAssistantPage })));
+const N8nPage = lazy(() => import("./pages/N8n/N8nPage").then((page) => ({ default: page.N8nPage })));
+const NotificationsPage = lazy(() => import("./pages/Notifications/NotificationsPage").then((page) => ({ default: page.NotificationsPage })));
+const ReportsPage = lazy(() => import("./pages/Reports/ReportsPage").then((page) => ({ default: page.ReportsPage })));
+const RoutinesPage = lazy(() => import("./pages/Routines/RoutinesPage").then((page) => ({ default: page.RoutinesPage })));
+const SettingsPage = lazy(() => import("./pages/Settings/SettingsPage").then((page) => ({ default: page.SettingsPage })));
+const VoiceSettingsPage = lazy(() => import("./pages/Settings/VoiceSettingsPage").then((page) => ({ default: page.VoiceSettingsPage })));
+const SmartHomePage = lazy(() => import("./pages/SmartHome/SmartHomePage").then((page) => ({ default: page.SmartHomePage })));
+const StatusPage = lazy(() => import("./pages/Status/StatusPage").then((page) => ({ default: page.StatusPage })));
+const TasksPage = lazy(() => import("./pages/Tasks/TasksPage").then((page) => ({ default: page.TasksPage })));
+const VoicePage = lazy(() => import("./pages/Voice/VoicePage").then((page) => ({ default: page.VoicePage })));
+const WhatsAppPage = lazy(() => import("./pages/WhatsApp/WhatsAppPage").then((page) => ({ default: page.WhatsAppPage })));
 
 function Private({ children }: { children: React.ReactNode }) {
   const { user, ready } = useAuth();
@@ -49,6 +55,7 @@ function Private({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <Suspense fallback={<div role="status" className="grid min-h-[40vh] place-items-center text-cyan-100">Carregando tela...</div>}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/install" element={<InstallPage />} />
@@ -96,5 +103,6 @@ export default function App() {
         <Route path="status" element={<StatusPage />} />
       </Route>
     </Routes>
+    </Suspense>
   );
 }

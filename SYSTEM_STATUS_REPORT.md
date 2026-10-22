@@ -1,5 +1,9 @@
 # SYSTEM_STATUS_REPORT
 
+## LIFE-001 — fuso horário por usuário
+
+Implementação local: `User.timezone` com padrão `America/Sao_Paulo`, migration compatível para registros existentes, endpoints autenticados do próprio perfil e controle em Configurações. Meu Dia usa o fuso persistido na classificação de prazos. Backend: 118 testes passaram, 61 foram pulados por gate de banco; frontend: 57 passaram; typechecks/builds passaram. Docker indisponível, portanto migration e teste autenticado com DB estão bloqueados; staging/produção não verificados.
+
 ## Revisão de observabilidade e isolamento — 2026-10-18
 
 - Revisão do OBS-001 encontrou que `/api/health/full` permitia a qualquer usuário autenticado consultar falhas e contagens globais. A implementação local subsequente filtra logs e dados financeiros por usuário e limita o agregado global ao papel `admin`.
@@ -554,3 +558,6 @@ Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e 
 ## JARVIS 3.0 — Meu Dia (2026-10-22)
 
 Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. CI do PR #2 passou no SHA `1484b4a` (`validate`, `desktop`, `android`). Ainda pendem revisão e E2E autenticado/staging; timezone é o do navegador. Não é release nem deploy.
+
+## LIFE-001 � atualiza��o de valida��o
+Timezone individual e code splitting por rota implementados na branch isolada. Frontend 57/57 testes e build aprovados; chunk inicial 283.78 KB (antes 662.49 KB). Backend 118 testes passaram; 61 foram ignorados pelo gate PostgreSQL. Migration e E2E de banco continuam n�o executados por indisponibilidade do Docker Linux. Trabalho parcial, ainda requer revis�o e staging.

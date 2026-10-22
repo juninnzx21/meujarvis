@@ -1,5 +1,9 @@
 # Changelog de implementação
 
+## LIFE-001-TIMEZONE-001 — fuso horário pessoal
+
+- Adiciona timezone IANA persistido no perfil por migration compatível, rotas de perfil autenticadas, configuração por usuário e cálculo local do Meu Dia com o fuso salvo. Backend 118 testes passaram/61 bloqueados por DB; frontend 57 testes passaram; typechecks/builds passaram. Integração real com DB não validada.
+
 ## 2026-10-22 — JARVIS 3.0 gates: CI artifacts and release approval design
 
 - Confirmada a execução GitHub Actions `39852514814` como success no SHA `815a79e` para validate/desktop/android. Artefatos: nome, run/SHA, disponibilidade, tamanho e digest SHA-256 conferidos pela API; arquivos binários não inspecionados.

@@ -195,6 +195,7 @@ model User {
   email                      String                 @unique
   passwordHash               String
   role                       UserRole               @default(user)
+  timezone                   String                 @default("America/Sao_Paulo")
   totpEnabled                Boolean                @default(false)
   totpSecretEncrypted        String?
   totpPendingSecretEncrypted String?
