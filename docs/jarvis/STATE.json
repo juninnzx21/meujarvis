@@ -493,18 +493,38 @@
     "taskStatus": "IN_PROGRESS"
   },
   "ciCdLocalReview": {
-    "timestampUtc": "2026-10-19T04:40:27Z",
+    "timestampUtc": "2026-10-22T18:29:38Z",
     "releaseWorkflowGate": "Requires successful JARVIS CI push run on main for exact release SHA plus ancestry in main",
-    "remoteActionsValidation": "PENDING",
+    "remoteActionsValidation": "PASS on PR #2 branch SHA 89eacaf2c3007b5eea6b529f09609a5208404083; run 39828531504 jobs validate, desktop, android success; staging/production unverified",
     "branchProtectionAndTagRules": "NOT_VERIFIED",
     "deployWorkflow": "PLAN_ONLY_NO_PRODUCTION_DEPLOY",
     "productionReady": false
   },
   "nextLocalCheckpoint": {
-    "task": "NVIDIA-001",
-    "status": "LOCAL_IMPLEMENTATION_COMMITTED_AWAITING_INDEPENDENT_REVIEW",
+    "task": "LIFE-001",
+    "status": "PARTIAL_CI_PASSED_AWAITING_REVIEW_AND_AUTHENTICATED_STAGING",
     "nextTaskId": null,
-    "reason": "No other local task eligible in dry-run; OBS smoke needs authorized remote access, SEC-002 formal review gate pending, AUTH-001 remote CI and protected key check pending, AI-001 depends on OBS-001."
+    "reason": "PR #2 dashboard uses existing authenticated task/notification routes and its CI passed. Remaining LIFE-001 scope and configurable per-user timezone are not implemented; authenticated staging validation is blocked because Docker daemon is unavailable locally and VPS SSH identity/account remain unconfirmed. Release-approval workflow is absent; design it before adding a nonfunctional UI."
+  },
+  "life001Checkpoint": {
+    "timestampUtc": "2026-10-22T18:29:38Z",
+    "status": "PARTIAL_IN_REVIEW",
+    "branch": "chatgpt/jarvis-3-master-20261021",
+    "commit": "89eacaf2c3007b5eea6b529f09609a5208404083",
+    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/2",
+    "ciRun": "39828531504; success; validate, desktop and android jobs passed",
+    "scopeValidated": "Dashboard reuses authenticated tasks/notifications APIs; backend reads and task update are user-scoped; local staging Compose configuration passed with synthetic placeholders",
+    "limitations": [
+      "No authenticated staging or production E2E",
+      "User profile has no persistent timezone; dashboard uses browser timezone",
+      "LIFE-001 agenda, finance, habits and remaining sources are not implemented",
+      "No release approval center or operational deployment workflow",
+      "Docker Desktop Linux daemon unavailable; staging services not started"
+    ],
+    "productionTouched": false,
+    "mergeDeploy": false,
+    "schedulerEnabled": false,
+    "paidCalls": false
   },
   "docsCheckpointCommit": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
   "masterContinuity": {

@@ -547,3 +547,14 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - `DashboardPage.test.tsx` agora limpa o DOM após cada caso. `DashboardPage.tsx` compara datas apenas quando ambas são válidas, removendo erros de tipos nulos no `typecheck`.
 - Validação local em `frontend`: `npm run validate` passou: typecheck, 10 arquivos/54 testes, build. O build emite um aviso de chunk JavaScript acima de 500 kB. `git diff --check` passou.
 - CI remoto pós-correção ainda precisa ser executado; PR permanece draft, sem merge ou deploy.
+
+## 2026-10-22 — auditoria pós-CI de LIFE-001 e staging
+
+- PR #2 permanece aberto em rascunho: https://github.com/juninnzx21/meujarvis/pull/2. HEAD do branch `chatgpt/jarvis-3-master-20261021` confirmado como `89eacaf2c3007b5eea6b529f09609a5208404083`.
+- GitHub Actions run `39828531504` para esse SHA concluiu `success`; `validate`, `desktop` e `android` estão completos com sucesso. Não valida staging ou produção.
+- Revisão do Meu Dia confirmou uso das rotas existentes autenticadas `/tasks` e `/notifications`, filtros de usuário no backend e atualização de tarefa com `id` + `userId`. Não houve sessão E2E com usuário real.
+- O resumo de prazos segue o fuso local do navegador. O perfil `User` não tem timezone próprio. A API limita a consulta de notificações a 100 e o painel mostra até cinco.
+- LIFE-001 continua parcial: agenda, finanças, hábitos e demais fontes do escopo 3.0 não foram integrados; não declarar conclusão.
+- Compose de staging validado apenas como configuração com placeholders sintéticos. Sem Docker Desktop Linux daemon ativo, nenhum container foi iniciado. Segredos ausentes fazem a configuração falhar fechada.
+- Não foi encontrada central de aprovação de release no frontend/backend; aprovação financeira e confirmação do assistente são fluxos diferentes, sem ligação a deploy.
+- Próximo trabalho local: definir e implementar gate de aprovação de release ligado a SHA e RBAC, sem executar deploy; primeiro mapear o fluxo atual e evitar botão sem consumidor. Staging, VPS e produção continuam bloqueados.

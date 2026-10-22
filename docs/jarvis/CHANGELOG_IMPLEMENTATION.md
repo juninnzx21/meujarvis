@@ -61,3 +61,10 @@ Adicionado em branch isolada o núcleo TOTP RFC 6238 e os testes determinístico
 - Adicionados contadores HTTP voláteis e alertas internos genéricos de 5xx, deduplicados por rota/status por 60 segundos; o painel diferencia falhas e histórico indisponível e não trata somente configuração como operação.
 - Validação: backend 153/153, zero skips, PostgreSQL descartável verificado; integração app 43/43 após asserção CORS; frontend 49/49 e build. Evidências em `docs/jarvis/TEST_EVIDENCE.md`.
 - Limites: sem probes ativos, notificações externas, persistência dos contadores, smoke test VPS ou deploy. Revisão independente pendente.
+
+## 2026-10-22 — auditoria PR #2 / LIFE-001
+
+- CI remota confirmada para `89eacaf2c3007b5eea6b529f09609a5208404083` (run `39828531504`, jobs `validate`, `desktop`, `android` aprovados).
+- Auditoria registrou o escopo parcial do Meu Dia, autorização por usuário nas rotas existentes, fuso local do navegador e limites da listagem de notificações.
+- Preflight de configuração do Compose de staging passou com placeholders sintéticos; Docker daemon indisponível, sem inicializar serviços.
+- PR draft preservado; nenhuma ação em produção, VPS, merge, scheduler ou API paga.

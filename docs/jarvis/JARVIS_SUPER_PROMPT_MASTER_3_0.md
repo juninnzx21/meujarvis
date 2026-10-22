@@ -1,5 +1,5 @@
 # JARVIS 3.0 — SUPER PROMPT MASTER (CONSOLIDADO)
-> Fonte: `juninnzx21/meujarvis`. Complementa, não substitui, `JARVIS_MASTER_PLAN.md`, `JARVIS_PROGRESS.md`, `docs/jarvis/STATE.json`, `AGENTS.md` e documentos de segurança. Estado inicial: **ESPECIFICAÇÃO PUBLICADA — IMPLEMENTAÇÃO E VALIDACÃO PENDENTES**.
+> Fonte: `juninnzx21/meujarvis`. Complementa, não substitui, `JARVIS_MASTER_PLAN.md`, `JARVIS_PROGRESS.md`, `docs/jarvis/STATE.json`, `AGENTS.md` e documentos de segurança. Estado em 2026-10-22: **ESPECIFICAÇÃO PUBLICADA — LIFE-001 PARCIAL EM PR #2; demais entregas pendentes**.
 > Elaborado em 2026-10-21. Revalidar GitHub, dependências e ambientes a cada ciclo.
 
 ## 1. Missão
