@@ -417,3 +417,13 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - `docker info` falhou: pipe `dockerDesktopLinuxEngine` ausente. Nenhum staging iniciou; health E2E autenticado, backup, restauração e rollback não executados. Nenhuma conexão VPS (bloqueada por usuário não-root e fingerprint SHA256 ausentes).
 - Revisão estática: `deploy-plan.yml` não pode publicar; `release-downloads.yml` trata publicação pública por tag e exige ancestralidade em main + CI de SHA exato. Rulesets, proteção de tags e GitHub Environments não foram verificados. Nenhum deploy de VPS está implementado.
 - Adicionado desenho técnico em `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`; não é implementação nem evidência de aprovação.
+
+## REL-001 — API e interface de aprovação local — 2026-10-22
+
+- Base real: PR #2 aberto em draft, HEAD remoto `e45ba261752d09c2feb97e6644fe0bceece47497`; branch isolada `codex/rel-001-approval-20261022`.
+- Backend: `prisma validate`, `prisma generate`, `npm run typecheck`, `typecheck:seed` e build passaram. `npm run validate`: **131 pass / 60 skip**; skips são integrações condicionadas ao PostgreSQL descartável, indisponível porque Docker Desktop Linux não conecta ao pipe.
+- Testes direcionados de release/MFA: **14/14 pass**, incluindo run/checks/artifact SHA+digest, branch errada, artefato expirado/ID incompatível, permissões, bloqueio de autoaprovação do solicitante, step-up MFA com grant hash, token sintético limitado ao host permitido e bloqueio de resultado de validação obsoleto.
+- Frontend `npm run validate`: typecheck, **56/56 testes**, build pass. Build isolada do branch REL ainda mostrou chunk inicial ~671 KB; branch LIFE-001 separado reduziu o chunk inicial para ~284 KB.
+- Migração ainda não aplicada. Sem banco/E2E, não comprovados: transação em PostgreSQL real, isolamento entre usuários, migration/reversão, staging, backup/restore, rollback e health autenticado. Os quatro gates operacionais ficam false; `deploymentAdapter` desabilitado.
+- Nenhuma API externa paga, segredo, VPS, produção, deploy, push ou merge usada nesta execução. GitHub Actions ainda não executou nos branches de trabalho.
+- `GITHUB_RELEASE_READ_TOKEN` opcional é encaminhado somente ao host fixo da API oficial do GitHub; sem token a consulta de branch protection bloqueia. Teste mockado confirma destino fixo e ausência do header quando não configurado.

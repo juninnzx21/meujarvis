@@ -576,3 +576,21 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Inspecionados `.github/workflows/deploy-plan.yml` (plan-only/fail-closed) e `release-downloads.yml` (publicação por tags, gate de ancestralidade/CI no SHA exato). Nenhum deploy da VPS existe; settings externos de branch protection, tags e Environment permanecem não verificados.
 - Criado `docs/jarvis/RELEASE_APPROVAL_DESIGN.md` com identidade imutável SHA+digest, checagem de CI/branch, aprovação admin com MFA step-up, expiração, consumo único, auditoria append-only e gates separados de backup/rollback/GitHub Environment. É somente desenho; nenhuma funcionalidade de aprovação ou deploy foi implementada.
 - Próximas tarefas: revisão independente do desenho e decisão de TTL/política de aprovador; desbloquear staging com Docker/segredos sintéticos e obter conta/fingerprint SSH confiáveis; depois implementar APIs/UI de approval em escopo separado. Nenhum merge, release, deploy, VPS, scheduler ou chamada paga.
+
+## 2026-10-22 — REL-001 — primeiro gate local de aprovação
+
+- Branch isolada `codex/rel-001-approval-20261022`, baseada no HEAD real e atualizado do PR #2: `e45ba261752d09c2feb97e6644fe0bceece47497`. PR #2 confirmado aberto, draft, sem merge, base `codex/publish-reviewed-20261019`.
+- Implementados modelos Prisma de candidatos, aprovações, auditoria append-only e concessão MFA de uso único; rotas admin para criar, listar, validar e aprovar candidatos; interface `/releases`; `/api/auth/mfa/step-up` com contador TOTP e concessão persistida em transação.
+- A validação verifica via API GitHub run/checks no SHA completo, branch `main`, IDs e digest do artefato, e status de branch protection. Gate de proteção não verificável, resposta desconhecida, artefato expirado ou qualquer gate operacional pendente falha fechado. Um token de posse impede que validações concorrentes apliquem resultados antigos.
+- `staging`, backup/restore, rollback e health permanecem explicitamente falsos. `deploymentAdapter.enabled` é `false`, sem endpoint de deploy, segredos, escrita remota ou aprovação liberável neste estado.
+- Testes focados: evidências GitHub e bloqueios de aprovação, papel admin, autoaprovação pelo solicitante, step-up MFA, destino do token opcional e concorrência. `npx vitest run src/modules/releases src/modules/auth/stepUp.test.ts`: **14/14**; `npm run validate` backend: **131 aprovados, 60 ignorados** sem PostgreSQL descartável. `npm run validate` frontend: **56/56** e build aprovados. `prisma validate/generate` e typechecks aprovados.
+- Docker Desktop Linux não responde; migrations, E2E autenticado com PostgreSQL, staging, backup, restore e rollback não foram executados. A build web ainda excede 500 KB antes da divisão de rotas incluída no branch LIFE-001 separado.
+- REL-001 permanece IN_PROGRESS e exige revisão independente. Nenhum push, merge, workflow de deploy, VPS, produção, scheduler ou chamada paga nesta etapa.
+- Backend final: `npm run validate` passou com 131 testes aprovados e 60 pulados por falta de PostgreSQL Docker; suíte focada de release/MFA passou 14/14. Frontend validado em 56/56; build inicial ainda ~671 KB no branch REL (a divisão de rotas está no branch LIFE separado).
+
+- Commit local REL-001: d8d6cb3240f1de6550fa1b145ad269a46bf6fec0. Worktree limpo; push/deploy não executados nesta etapa.
+
+## Publicação para revisão — REL-001 — 2026-10-22
+
+- Branch codex/rel-001-approval-20261022 publicada sem force push; PR #3 aberto em draft contra chatgpt/jarvis-3-master-20261021 (HEAD e45ba261). CI do GitHub ainda não retornou execução para este commit.
+- Commits: d8d6cb3 (implementação) e 6bbec25 (checkpoint e evidências). PR: https://github.com/juninnzx21/meujarvis/pull/3

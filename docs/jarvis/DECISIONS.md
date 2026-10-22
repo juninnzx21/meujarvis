@@ -245,3 +245,10 @@ Manter PostgreSQL e URLs de teste exclusivamente no coordenador local. O sandbox
 ## ADR-0025 — NVIDIA_ZERO_SPEND fail-closed — 2026-10-19
 
 Decisão: manter R$ 0,00 como orçamento mensal e negar no backend todas as operações hospedadas NVIDIA, seus testes e fallback pago enquanto não houver evidência confiável, específica da conta/modelo/operação, de entitlement sem cobrança e limites rígidos. Persistir a política por usuário junto às configurações, sem permitir que editar uma preferência no banco habilite inference. TTS local Piper é o fallback possível para a configuração NVIDIA; os outros provedores existentes permanecem intactos para suas próprias rotas. Não realizar chamadas reais para investigar preço ou quota. Reavaliar somente com documentação/console oficial verificável e aprovação explícita de orçamento diferente de zero.
+
+## ADR-0026 — gate de aprovação de release fail-closed — 2026-10-22
+
+- REL-001 cria candidatos ligados a SHA completo e artefato GitHub por ID/digest; backend revalida run, checks, branch e proteção antes de aceitar futura aprovação. Respostas incompletas ou indisponibilidade bloqueiam.
+- A aprovação exige admin, TOTP step-up de cinco minutos e aprovador distinto de quem abriu o candidato; consumo e mudança de status são transacionais e serializáveis. Resultado de validação concorrente só é aplicado se ainda detiver seu token de posse.
+- O painel e o adaptador de deploy permanecem sem execução de deploy. Staging, backup/restore, rollback e health não comprovados tornam impossível chegar a `READY_FOR_APPROVAL` ou `APPROVED` neste estado.
+- Pendências antes de consumidor de deploy: identidade verificável do agente implementador, TTL da aprovação, retenção de auditoria e revisão independente. Não inventar política ou liberar deploy antes dos gates operacionais.

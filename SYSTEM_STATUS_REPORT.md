@@ -554,3 +554,11 @@ Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e 
 ## JARVIS 3.0 — Meu Dia (2026-10-22)
 
 Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. CI do PR #2 passou no SHA `1484b4a` (`validate`, `desktop`, `android`). Ainda pendem revisão e E2E autenticado/staging; timezone é o do navegador. Não é release nem deploy.
+
+## JARVIS 3.0 — LIFE-001 timezone e divisão por rota — 2026-10-22
+
+O perfil suporta timezone IANA por usuário, padrão `America/Sao_Paulo`, usado para classificar datas do Meu Dia. A migration e a alteração de perfil foram implementadas no branch isolado `codex/life001-timezone-20261022`; E2E com PostgreSQL e integração/revisão ainda faltam. O frontend agora carrega telas com imports dinâmicos por rota: build local inicial ficou em 283.78 KB (antes ~662 KB), sem aviso >500 KB. `npm run validate`: typecheck, 57 testes e build aprovados; backend `npm run validate`: 118 pass, 61 skip por ausência do PostgreSQL descartável. Não é conclusão de LIFE-001 nem publicação.
+
+## JARVIS 3.0 — REL-001 gate de aprovação — 2026-10-22
+
+A implementação local do módulo de aprovação está em `codex/rel-001-approval-20261022`, derivado de e45ba26. A API/UI exigem admin, validam SHA/run/checks/artifact/digest no GitHub, requerem step-up TOTP e bloqueiam autoaprovação pelo solicitante. Todos os gates operacionais permanecem bloqueados e o deploy adapter está desabilitado. Backend `npm run validate`: 131 pass e 60 skip; testes direcionados 14/14; frontend 56/56/build. Docker/PostgreSQL não disponível, então migration e E2E não executados. Sem revisão independente, push, merge ou deploy.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "runId": "6b2d39d2-4dcb-4243-9c90-6e032daa7f0b",
-  "lastRunUtc": "2026-10-19T04:40:27Z",
+  "lastRunUtc": "2026-10-22T21:20:11Z",
   "activeTaskId": null,
   "tasks": [
     {
@@ -138,7 +138,7 @@
     },
     {
       "id": "REL-001",
-      "status": "TODO"
+      "status": "IN_PROGRESS"
     },
     {
       "id": "CONSOL-001",
@@ -147,6 +147,10 @@
     {
       "id": "OBS-002",
       "status": "IN_REVIEW"
+    },
+    {
+      "id": "LIFE-001",
+      "status": "IN_PROGRESS"
     }
   ],
   "blockers": [
@@ -157,19 +161,13 @@
     "VPS-ACCESS-001: endpoint [VPS_ENDPOINT_REDACTED]:22014 confirmado pelo usuário; faltam conta SSH não-root e fingerprint SHA256 da host key por canal confiável. Nenhuma conexão feita.",
     "CI/CD: branch codex/agent-sync-v1-20261017 não encontrada no GitHub; commit atual não tem CI remoto e não foi publicado. PR #1 aponta para outro branch/head.",
     "Produção: não há workflow de deploy; regras de branch/environment GitHub, VPS/Compose/healthcheck e restore/rollback em staging não foram verificados.",
-    "Agent Sync/scheduler permanecem pausados; OPENAI_API_KEY ausente; nenhuma chamada paga, push, merge, deploy ou mudança VPS."
+    "Agent Sync/scheduler permanecem pausados; OPENAI_API_KEY ausente; nenhuma chamada paga, push, merge, deploy ou mudança VPS.",
+    "REL-001: independent review, PostgreSQL migration/E2E, staging, backup/restore, rollback, health checks, approval TTL and implementation-agent identity policy remain pending; deployment adapter disabled.",
+    "LIFE-001: timezone migration and authenticated E2E require disposable PostgreSQL; agenda and dedicated habits remain pending."
   ],
-  "lastCommit": "dd27c5770354c893e379040ccaf0e9f545f84084",
-  "nextTaskId": null,
-  "checkpoint": {
-    "branch": "codex/agent-sync-v1-20261017",
-    "initialSha": "e98b6770e01b4f71c6acb18f70bd8881cbf7fff0",
-    "finalSha": "dd27c5770354c893e379040ccaf0e9f545f84084",
-    "workingTreeChanges": "NVIDIA_ZERO_SPEND backend block and tests, release exact-SHA CI success gate, docs/state/VPS endpoint checkpoint committed locally; no push.",
-    "status": "LOCAL_VALIDATION_PASSED_AWAITING_INDEPENDENT_REVIEW_AND_EXTERNAL_GATES",
-    "task": "NVIDIA-001",
-    "worktree": "E:\\jarvis-home-assistant\\.codex-worktrees\\jarvis-auth-001-20261017"
-  },
+  "lastCommit": "REL-001 worktree based on e45ba261752d09c2feb97e6644fe0bceece47497; local implementation pending checkpoint commit",
+  "nextTaskId": "REL-001-INDEPENDENT-REVIEW",
+  "checkpoint": "REL-001 local implementation and LIFE-001 timezone/route-splitting completed in separate worktrees; both awaiting isolated commits and independent review",
   "vpsAccess": {
     "status": "BLOCKED_PENDING_NON_ROOT_ACCOUNT_AND_TRUSTED_HOST_FINGERPRINT",
     "proposal": "docs/jarvis/VPS_ACCESS.md",
@@ -501,26 +499,25 @@
     "productionReady": false
   },
   "nextLocalCheckpoint": {
-    "task": "RELEASE-APPROVAL-001",
-    "status": "DESIGN_READY_FOR_INDEPENDENT_REVIEW",
-    "nextTaskId": "LIFE-001-TIMEZONE-001",
-    "reason": "PR #2 head 815a79ebc8c8767174a7c7b5bd1335f7560a8810 CI run 39852514814 passed validate, desktop and android. Artifacts are present, unexpired, and metadata links them to the same SHA; binaries were not inspected. Docker Linux daemon is unavailable, blocking staging, authenticated E2E, backup, restore and rollback. VPS read-only remains blocked until a non-root username and trusted SHA256 host fingerprint are supplied. Release approval remains a design only."
+    "task": "REL-001",
+    "status": "IMPLEMENTED_LOCAL_IN_REVIEW",
+    "nextTaskId": "LIFE-001",
+    "reason": "REL-001 approval API/UI and disabled deploy adapter committed locally as d8d6cb3. Backend validation 131 passed/60 PostgreSQL-gated skips; focused tests 14/14; frontend 56/56. PostgreSQL migration/E2E, staging, backup/restore, rollback and operational health gates remain blocked."
   },
   "life001Checkpoint": {
-    "timestampUtc": "2026-10-22T21:15:00Z",
+    "timestampUtc": "2026-10-22T21:20:11Z",
     "status": "PARTIAL_IN_REVIEW",
-    "branch": "codex/jarvis-pr2-ci-fix-20261022 (PR head: chatgpt/jarvis-3-master-20261021)",
-    "commit": "815a79ebc8c8767174a7c7b5bd1335f7560a8810",
-    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/2",
-    "ciRun": "39852514814; success for SHA 815a79ebc8c8767174a7c7b5bd1335f7560a8810; validate, desktop and android jobs passed",
-    "scopeValidated": "Dashboard reads existing authenticated tasks, notifications, monthly finance summary and routines endpoints; routines remain read-only. Frontend local validate passed with 56 tests.",
+    "branch": "codex/life001-timezone-20261022",
+    "basePrHead": "e45ba261752d09c2feb97e6644fe0bceece47497",
+    "commit": "5be436a51a3df030d02e86064345c92e4602238b",
+    "scopeValidated": "Per-user IANA timezone profile; Meu Dia uses saved timezone; route-level code splitting",
+    "backendValidation": "118 pass, 61 skipped without disposable PostgreSQL",
+    "frontendValidation": "57 pass; build initial chunk about 284 KB (prior about 662 KB)",
     "limitations": [
-      "No authenticated staging or production E2E",
-      "User profile has no persistent timezone; dashboard uses browser timezone",
-      "Agenda, dedicated habits and remaining LIFE-001 sources are not implemented",
-      "No release approval center or operational deployment workflow",
-      "Docker Desktop Linux daemon unavailable; staging services not started",
-      "CI artifact metadata was verified but artifact binaries were not downloaded or inspected"
+      "Migration and authenticated database tests not run because Docker Linux daemon unavailable",
+      "Agenda and dedicated habits remain unimplemented",
+      "No staging or production E2E",
+      "Bundle change is local and awaits review/CI"
     ],
     "productionTouched": false,
     "mergeDeploy": false,
@@ -528,12 +525,25 @@
     "paidCalls": false
   },
   "releaseApprovalDesign": {
-    "timestampUtc": "2026-10-22T21:15:00Z",
-    "status": "DESIGN_READY_FOR_INDEPENDENT_REVIEW",
+    "timestampUtc": "2026-10-22T21:20:11Z",
+    "status": "IMPLEMENTED_LOCAL_IN_REVIEW",
     "document": "docs/jarvis/RELEASE_APPROVAL_DESIGN.md",
-    "implementation": "ABSENT",
-    "productionDeploy": "NOT_IMPLEMENTED",
-    "productionTouched": false
+    "implementation": "API_UI_MFA_STEP_UP_SHA_DIGEST_GATES_LOCAL_ONLY",
+    "productionDeploy": "DISABLED",
+    "migrationApplied": false,
+    "databaseE2e": "BLOCKED_DOCKER_POSTGRES_UNAVAILABLE",
+    "operationalGates": {
+      "staging": false,
+      "rollback": false,
+      "backupRestore": false,
+      "healthChecks": false
+    },
+    "productionTouched": false,
+    "commit": "6bbec250898c79d302a2570020442dcc7c34210a",
+    "branch": "codex/rel-001-approval-20261022",
+    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/3",
+    "remoteBranch": "codex/rel-001-approval-20261022",
+    "remoteCi": "PENDING_NO_RUN_RETURNED"
   },
   "docsCheckpointCommit": "fd53ad93ada8674761efb42fa2b46fcb58492cc1",
   "masterContinuity": {

@@ -40,3 +40,13 @@ Checkpoint mais recente — 2026-10-18: revisão direcionada encontrou e fechou 
 - Evidência: testes locais e integração no PostgreSQL descartável, sem requests NVIDIA; backend 177/177, frontend 49/49, Agent Sync 17/17, zero skips.
 - Residual: não há prova de entitlement/custo zero da conta nem validação de consumo real; a implementação é bloqueio preventivo, não monitor de faturamento. Manter NVIDIA sem execução até evidência oficial específica e nova decisão do proprietário.
 - Estado: mitigado localmente, aguardando revisão independente e checkpoint; nenhum segredo real utilizado.
+
+## REL-001 — gate de aprovação de release — 2026-10-22
+
+- **Estado:** implementação local em revisão; não habilitada para produção.
+- Candidato fica ligado ao SHA completo, run de CI, branch, target, ID/digest/tamanho do artefato; evidência é buscada no GitHub pelo backend, nunca aceita do navegador como fato. Branch diferente de `main`, proteção não verificável, digest/ID incompatível, artefato expirado ou evidência indisponível bloqueiam.
+- Admin precisa passar MFA step-up recente; grant guarda hash do identificador e é consumido junto da aprovação em transação serializável. Validação concorrente usa token de posse para impedir gravação de resultado obsoleto. Solicitante do candidato não pode aprovar o próprio pedido.
+- **Bloqueios:** staging, backup/restore, rollback e health checks não foram comprovados e continuam gates `false`; deployment adapter é sempre disabled. O fluxo não associa a conta JARVIS à identidade GitHub do agente; hoje a regra bloqueia o solicitante registrado, e revisão deve decidir se será necessária identidade verificável própria do implementador. TTL da aprovação precisa ser definido antes de qualquer consumidor de deploy.
+- Schema/migration ainda não aplicado por indisponibilidade do Docker/PostgreSQL. Não classificar REL-001 como `DONE_VERIFIED` nem aprovar release/deploy. Evidência em `docs/jarvis/RELEASE_APPROVAL_DESIGN.md` e `docs/jarvis/TEST_EVIDENCE.md`.
+- A consulta de status e artefatos no GitHub usa `GITHUB_RELEASE_READ_TOKEN` opcional, guardado somente no backend; requer permissões de leitura limitadas ao repositório. Sem token, a checagem de branch protection bloqueia o fluxo.
+- Implementada configuração opcional `GITHUB_RELEASE_READ_TOKEN`, apenas no backend; sem credencial, branch protection não validada bloqueia o fluxo. Permissões esperadas são Actions:read, Checks:read e Administration:read no repositório. Testes usaram somente token sintético com fetch mockado.
