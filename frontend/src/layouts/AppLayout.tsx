@@ -19,6 +19,7 @@ const items = [
   { to: "/computer", label: "Computador", icon: Laptop },
   { to: "/routines", label: "Rotinas", icon: Activity },
   { to: "/reports", label: "Relatorios", icon: ScrollText },
+  { to: "/releases", label: "Aprovar releases", icon: PackageCheck, adminOnly: true },
   { to: "/documents", label: "Documentos", icon: FileText },
   { to: "/integrations", label: "Integracoes", icon: Cable },
   { to: "/finance", label: "Financeiro", icon: WalletCards },
@@ -68,7 +69,7 @@ export function AppLayout() {
           </div>
         </div>
         <nav className="space-y-1">
-          {items.map(({ to, label, icon: Icon }) => (
+          {items.filter((item) => !("adminOnly" in item) || item.adminOnly !== true || user?.role === "admin").map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-cyan-400/15 text-cyan-100" : "text-slate-300 hover:bg-white/5"}`}>
               <Icon size={18} /> {label}
               {to === "/notifications" && unreadCount > 0 && <span className="ml-auto rounded-full bg-cyan-400 px-2 py-0.5 text-xs font-black text-slate-950">{unreadCount}</span>}

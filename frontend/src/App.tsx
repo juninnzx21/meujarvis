@@ -31,6 +31,7 @@ import { MobileAssistantPage } from "./pages/MobileAssistant/MobileAssistantPage
 import { N8nPage } from "./pages/N8n/N8nPage";
 import { NotificationsPage } from "./pages/Notifications/NotificationsPage";
 import { ReportsPage } from "./pages/Reports/ReportsPage";
+import { ReleaseApprovalsPage } from "./pages/Releases/ReleaseApprovalsPage";
 import { RoutinesPage } from "./pages/Routines/RoutinesPage";
 import { SettingsPage } from "./pages/Settings/SettingsPage";
 import { VoiceSettingsPage } from "./pages/Settings/VoiceSettingsPage";
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="downloads" element={<DownloadsCenterPage />} />
         <Route path="routines" element={<RoutinesPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="releases" element={<ReleaseApprovalsPage />} />
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="integrations/setup-wizard" element={<IntegrationWizardPage />} />

@@ -27,6 +27,7 @@ const totpLoginSchema = z.object({ challengeToken: z.string().min(20), code: z.s
 const setupStartSchema = z.object({ setupToken: z.string().min(20) });
 const setupConfirmSchema = z.object({ setupToken: z.string().min(20), code: z.string().trim().length(6) });
 const disableSchema = z.object({ password: z.string().min(8), code: z.string().trim().min(6).max(32) });
+const stepUpSchema = z.object({ code: z.string().trim().length(6).regex(/^\d{6}$/) });
 
 type AuthUser = { id: string; email: string; name: string; role: string; authVersion: number };
 
@@ -148,6 +149,45 @@ router.post("/login/totp", validate(totpLoginSchema), asyncHandler(async (req, r
   if (!current || current.role !== "admin") return res.status(401).json({ message: "Conta indisponivel" });
   await writeSystemLog({ userId: current.id, module: "auth", action: "login_mfa", message: "Login administrativo com MFA realizado" });
   return res.json({ user: { id: current.id, name: current.name, email: current.email, role: current.role }, token: sign({ ...current, authVersion: current.authVersion }) });
+}));
+
+router.post("/mfa/step-up", authMiddleware, validate(stepUpSchema), asyncHandler(async (req, res) => {
+  if (!requireEncryptionKey(res)) return;
+  const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
+  if (!user || !isAdmin(user) || !user.totpEnabled || !user.totpSecretEncrypted) {
+    return res.status(403).json({ message: "Aprovação de release exige MFA administrativo ativo" });
+  }
+
+  let counter: bigint | null;
+  try {
+    counter = matchTotpCounter(decryptTotpSecret(user.totpSecretEncrypted), req.body.code);
+  } catch {
+    return res.status(503).json({ message: "MFA indisponivel. Verifique a chave de cifragem do backend." });
+  }
+  if (counter === null || (user.totpLastCounter !== null && counter <= user.totpLastCounter)) {
+    return res.status(401).json({ message: "Codigo MFA invalido, expirado ou ja utilizado" });
+  }
+
+  const jti = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  const granted = await prisma.$transaction(async (tx) => {
+    const consumed = await tx.user.updateMany({
+      where: { id: user.id, authVersion: user.authVersion, totpEnabled: true, totpLastCounter: user.totpLastCounter },
+      data: { totpLastCounter: counter }
+    });
+    if (consumed.count !== 1) return false;
+    await tx.mfaStepUpGrant.create({ data: {
+      userId: user.id,
+      authVersion: user.authVersion,
+      tokenHash: crypto.createHash("sha256").update(jti).digest("hex"),
+      expiresAt
+    } });
+    return true;
+  });
+  if (!granted) return res.status(409).json({ message: "Codigo MFA ja utilizado; gere um novo codigo" });
+  const token = jwt.sign({ sub: user.id, ver: user.authVersion, purpose: "mfa_step_up", jti }, env.JWT_SECRET, { expiresIn: "5m" });
+  await writeSystemLog({ userId: user.id, module: "auth", action: "mfa_step_up_granted", message: "Verificacao MFA adicional concedida por cinco minutos" });
+  return res.json({ token, expiresAt: expiresAt.toISOString() });
 }));
 
 router.get("/mfa/status", authMiddleware, asyncHandler(async (req, res) => {

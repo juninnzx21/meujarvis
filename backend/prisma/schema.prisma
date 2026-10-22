@@ -12,6 +12,16 @@ enum UserRole {
   user
 }
 
+enum ReleaseCandidateStatus {
+  DRAFT
+  TESTING
+  READY_FOR_APPROVAL
+  APPROVED
+  REJECTED
+  EXPIRED
+  DEPLOYED
+}
+
 enum MessageRole {
   user
   assistant
@@ -220,6 +230,80 @@ model User {
   systemLogs                 SystemLog[]
   settings                   Setting[]
   whatsappMessages           WhatsAppMessage[]
+  releaseCandidatesCreated   ReleaseCandidate[]     @relation("ReleaseCandidateCreator")
+  releaseApprovals           ReleaseApproval[]
+  releaseAuditEvents         ReleaseAuditEvent[]
+  mfaStepUpGrants            MfaStepUpGrant[]
+}
+
+model ReleaseCandidate {
+  id              String                 @id @default(cuid())
+  repository      String
+  commitSha       String                 @db.VarChar(40)
+  sourceBranch    String
+  version         String
+  target          String
+  workflowRunId   BigInt
+  artifactId      BigInt
+  artifactName    String?
+  artifactDigest  String?
+  artifactSize    BigInt?
+  ciRunUrl        String?
+  gates           Json?
+  validationToken String?                @unique
+  blockedReasons  String[]               @default([])
+  status          ReleaseCandidateStatus @default(DRAFT)
+  createdById     String
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  createdBy       User                   @relation("ReleaseCandidateCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  approval        ReleaseApproval?
+  auditEvents     ReleaseAuditEvent[]
+
+  @@unique([repository, commitSha, target, artifactId])
+  @@index([status, createdAt])
+  @@index([createdById, createdAt])
+}
+
+model ReleaseApproval {
+  id             String           @id @default(cuid())
+  candidateId    String           @unique
+  approverId     String?
+  approverEmail  String
+  reason         String           @db.VarChar(1000)
+  commitSha      String           @db.VarChar(40)
+  artifactDigest String
+  createdAt      DateTime         @default(now())
+  candidate      ReleaseCandidate @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  approver       User?            @relation(fields: [approverId], references: [id], onDelete: SetNull)
+}
+
+model ReleaseAuditEvent {
+  id          String           @id @default(cuid())
+  candidateId String
+  actorUserId String?
+  actorEmail  String?
+  eventType   String
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  candidate   ReleaseCandidate @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  actor       User?            @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([candidateId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model MfaStepUpGrant {
+  id          String    @id @default(cuid())
+  userId      String
+  authVersion Int
+  tokenHash   String    @unique @db.VarChar(64)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model Conversation {

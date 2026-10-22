@@ -23,6 +23,7 @@ export const envSchema = z.object({
   JWT_SECRET: trimmedString.pipe(z.string().min(24, "JWT_SECRET precisa ter ao menos 24 caracteres")),
   JWT_EXPIRES_IN: trimmedString.default("7d"),
   CORS_ORIGIN: trimmedString.default("http://localhost:5173"),
+  GITHUB_RELEASE_READ_TOKEN: optionalTrimmedString,
   OPENAI_API_KEY: optionalTrimmedString,
   OPENAI_MODEL: trimmedString.default("gpt-4o-mini"),
   GEMINI_API_KEY: optionalTrimmedString,

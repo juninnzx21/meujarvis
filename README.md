@@ -545,3 +545,9 @@ Cobertura, limites dos dublês, resultados locais e procedimento de revisão: [M
 ## SEC-002 — gate de destino da rotação
 
 A CLI `settings:rotate` aceita somente `--dry-run`. Antes de rotação, criação de backup ou restauração, o sistema exige identidade positiva do PostgreSQL descartável por Docker e SQL; rotação/restauração confirmam a conexão transacional que executa a operação. Hostname loopback, nome com `test` e flags não liberam outros bancos. `enc:v1` e `enc:v2` também exigem exatamente cinco segmentos; formatos com sufixos são rejeitados. Testes atuais e limitações: [SEC-002-VALIDATION](docs/jarvis/tasks/SEC-002-VALIDATION.md). A revisão independente do código não tem achados abertos conhecidos; SEC-002 permanece em progresso até o gate formal `reviewed_continue`.
+
+## Gate de release REL-001
+
+A UI de revisão está em `/releases`. O backend compara artefato e CI com SHA completo na branch protegida, grava trilha de auditoria, exige admin e MFA step-up de uso único, e bloqueia solicitante autoaprovando. O deployment adapter segue desativado. Aprovações não podem ser liberadas até staging, backup/restore, rollback e health serem comprovados; o provisionamento e a validade da aprovação ainda precisam de revisão independente.
+
+Para que o backend consulte branch protection, configure opcionalmente `GITHUB_RELEASE_READ_TOKEN` no ambiente backend com um token restrito ao repositório e apenas permissões de leitura de Actions, Checks e Administration. Sem ele, os candidatos continuam bloqueados; o token nunca vai ao navegador e só é enviado ao host fixo `api.github.com`. Não coloque esse valor no chat, frontend, Git ou logs. Veja `docs/jarvis/RELEASE_APPROVAL_DESIGN.md`.

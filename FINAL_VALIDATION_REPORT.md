@@ -544,3 +544,9 @@ Revisão independente estática confirmou que o teste substitui fetch por implem
 ## JARVIS 3.0 — LIFE-001 incremental — 2026-10-22
 
 “Meu Dia” passou a exibir resumo financeiro mensal e rotinas já cadastradas por meio das APIs autenticadas existentes. Testes asseguram tratamento de falhas e que nenhuma rotina é disparada no carregamento. Frontend `npm run validate`: typecheck PASS, Vitest 56/56 em 10 arquivos, build PASS (aviso de bundle >500 kB). GitHub Actions `39852087330` no SHA `1484b4a5684808a41f1277669a78c89acdc138c0` aprovou `validate`, `desktop` e `android`. Backend/DB/E2E autenticado em staging não foram executados porque Docker Linux estava indisponível. Sem VPS, produção, chamadas pagas, merge ou deploy.
+
+## JARVIS 3.0 — REL-001 e LIFE-001 — 2026-10-22
+
+REL-001 foi implementada localmente em branch isolada com modelos de release, rotas administrativas, validação de evidência GitHub, auditoria, MFA step-up transacional e UI sem capacidade de deploy. Testes direcionados passaram 14/14; backend validate passou com 131 testes aprovados e 60 integrações puladas por Docker/PostgreSQL indisponível; frontend validate passou com 56/56 e build. Migration, transações contra banco real e E2E autenticado continuam pendentes; staging, backup/restore, rollback e health gates seguem falsos. Nenhuma VPS, produção, merge, deploy ou scheduler foi tocado.
+
+LIFE-001 adicionou timezone IANA por usuário e divisão por rota; o bundle inicial caiu de ~662 KB para ~284 KB. Frontend validate passou com 57/57; backend passou com 118 testes e 61 skips sem DB. O código segue em branch isolada e aguardando revisão/integridade de migration. Nenhum dado de calendário foi presumido.
