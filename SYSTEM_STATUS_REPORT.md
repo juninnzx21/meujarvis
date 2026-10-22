@@ -551,3 +551,6 @@ ValidateOnly passou após regressão que bloqueia fetch externo no teste NVIDIA:
 Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e não existe remotamente. Não houve push; revisar dados operacionais privados do histórico antes de publicação. VPS sem conexão: faltam usuário não-root e fingerprint confiável. Gates não foram promovidos e scheduler segue pausado.
 
 \n
+## JARVIS 3.0 — Meu Dia (2026-10-22)
+
+Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. Ainda pendem CI no novo SHA, revisão, E2E autenticado e staging; timezone é o do navegador. Não é release nem deploy.

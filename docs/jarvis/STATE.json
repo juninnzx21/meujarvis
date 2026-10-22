@@ -504,20 +504,20 @@
     "task": "LIFE-001",
     "status": "PARTIAL_CI_PASSED_AWAITING_REVIEW_AND_AUTHENTICATED_STAGING",
     "nextTaskId": null,
-    "reason": "PR #2 dashboard uses existing authenticated task/notification routes and its CI passed. Remaining LIFE-001 scope and configurable per-user timezone are not implemented; authenticated staging validation is blocked because Docker daemon is unavailable locally and VPS SSH identity/account remain unconfirmed. Release-approval workflow is absent; design it before adding a nonfunctional UI."
+    "reason": "Meu Dia now also reads existing authenticated financial summary and routines endpoints; frontend validate passes locally (56 tests). New SHA still needs PR CI and review. Agenda, dedicated habits, per-user timezone and authenticated E2E remain; staging is blocked because Docker daemon is unavailable and VPS SSH account/host fingerprint are unconfirmed. Release-approval workflow is absent; design before UI."
   },
   "life001Checkpoint": {
-    "timestampUtc": "2026-10-22T18:29:38Z",
+    "timestampUtc": "2026-10-22T20:52:00Z",
     "status": "PARTIAL_IN_REVIEW",
-    "branch": "chatgpt/jarvis-3-master-20261021",
-    "commit": "89eacaf2c3007b5eea6b529f09609a5208404083",
+    "branch": "codex/jarvis-pr2-ci-fix-20261022 (PR head: chatgpt/jarvis-3-master-20261021)",
+    "commit": "7fe587ce8f7a53e610cbeadc899ed993c9417346",
     "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/2",
-    "ciRun": "39828531504; success; validate, desktop and android jobs passed",
-    "scopeValidated": "Dashboard reuses authenticated tasks/notifications APIs; backend reads and task update are user-scoped; local staging Compose configuration passed with synthetic placeholders",
+    "ciRun": "39832369224; success for SHA 750d0100d885eb3440126ee3c1d2e645419a2525 only; new dashboard code awaits CI",
+    "scopeValidated": "Dashboard reads existing authenticated tasks, notifications, monthly finance summary and routines endpoints; routines remain read-only. Frontend local validate passed with 56 tests.",
     "limitations": [
       "No authenticated staging or production E2E",
       "User profile has no persistent timezone; dashboard uses browser timezone",
-      "LIFE-001 agenda, finance, habits and remaining sources are not implemented",
+      "Agenda, dedicated habits and remaining LIFE-001 sources are not implemented",
       "No release approval center or operational deployment workflow",
       "Docker Desktop Linux daemon unavailable; staging services not started"
     ],

@@ -559,3 +559,10 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Não foi encontrada central de aprovação de release no frontend/backend; aprovação financeira e confirmação do assistente são fluxos diferentes, sem ligação a deploy.
 - Próximo trabalho local: definir e implementar gate de aprovação de release ligado a SHA e RBAC, sem executar deploy; primeiro mapear o fluxo atual e evitar botão sem consumidor. Staging, VPS e produção continuam bloqueados.
 - Checkpoint de código: `89eacaf2c3007b5eea6b529f09609a5208404083`. Checkpoint documental `125dccff0f75abb2696ef27994d5aab633c750ec` foi publicado somente no branch do PR #2; run `39831971266` estava na fila na última consulta.
+
+## 2026-10-22 — LIFE-001 — resumo financeiro e rotinas no Meu Dia
+
+- `DashboardPage` agora consome `/finance/reports/summary` e `/routines` além das fontes já existentes. A rota financeira e a listagem de rotinas usam o middleware de autenticação e filtram dados por `req.user.id` no backend.
+- Apresenta saldo total, entradas e saídas do mês; lista até quatro rotinas e seu estado. Não executa rotinas. Estados de erro e vazio ficam separados, e valores inválidos/indisponíveis não são exibidos como zero.
+- Testes frontend cobrem dados de resumo/rotinas, isolamento de falhas e ausência de execução de rotina. `frontend npm run validate`: typecheck PASS, 10 arquivos/56 testes PASS, build PASS; aviso existente de bundle JS acima de 500 kB. `git diff --check` será registrado após a revisão final.
+- Não houve backend/schema, migração, chamada externa, credencial, Docker, VPS, staging ou produção. LIFE-001 continua parcial; timezone configurável, agenda, hábitos dedicados e E2E autenticado permanecem pendentes.

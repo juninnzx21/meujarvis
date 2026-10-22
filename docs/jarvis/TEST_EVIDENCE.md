@@ -400,3 +400,10 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - O timezone do resumo é o timezone do navegador; não há configuração timezone no modelo `User`. A listagem de notificações limita a 100 registros, com cinco exibidos no dashboard.
 - `docker compose config --quiet` e asserções estáticas equivalentes ao workflow `staging-preflight.yml` PASS com valores exclusivamente sintéticos; serviços esperados, bind loopback, ausência de nomes globais/privileged, scheduler desligado e sem credenciais externas. Sem variáveis obrigatórias a configuração falha fechada. Docker daemon indisponível; nenhum container foi iniciado/consultado.
 - Não foram feitos requests a provedores de IA, chamadas pagas, conexão SSH, staging, deploy, merge ou alteração VPS.
+
+## LIFE-001 — resumo financeiro e rotinas no Meu Dia — 2026-10-22
+
+- Alteração local da `DashboardPage`: leitura dos endpoints existentes `/finance/reports/summary` e `/routines`; a listagem de rotinas é somente leitura e não chama `POST /:id/run`.
+- Revisão estática dos handlers: `finance/routes.ts` aplica `authMiddleware` ao router e chama `summary(req.user.id)`; `routines/routes.ts` aplica `authMiddleware` e busca `Routine` por `userId`. A consulta do resumo financeiro aplica `userId` em contas, agregações e transações.
+- Testes Vitest adicionados para exibição de valores reais mockados, rotinas ativas/desativadas, erro isolado dos módulos e ausência de execução automática. `frontend npm run validate`: TypeScript PASS; Vitest 10/10 arquivos, 56/56 testes; Vite build PASS. O build emite aviso de chunk >500 kB, sem falha.
+- Não executados: validação backend com PostgreSQL, E2E autenticado, staging/VPS/produção e GitHub Actions para o novo SHA. Docker Linux daemon não estava disponível; não foram iniciados serviços. Nenhuma chamada externa ou paga.

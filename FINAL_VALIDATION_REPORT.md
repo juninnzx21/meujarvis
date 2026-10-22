@@ -541,3 +541,6 @@ Resultado LOCAL_VALIDATION_OK: PostgreSQL Docker+SQL e migrations PASS; backend 
 Revisão independente estática confirmou que o teste substitui fetch por implementação que rejeita localmente e verifica nenhuma chamada, com Axios também coberto. NVIDIA permanece bloqueada por NVIDIA_ZERO_SPEND; entitlement/custo zero da conta não comprovados. Sem chamadas externas ou operações remotas.
 
 \n
+## JARVIS 3.0 — LIFE-001 incremental — 2026-10-22
+
+“Meu Dia” passou a exibir resumo financeiro mensal e rotinas já cadastradas por meio das APIs autenticadas existentes. Testes asseguram tratamento de falhas e que nenhuma rotina é disparada no carregamento. Frontend `npm run validate`: typecheck PASS, Vitest 56/56 em 10 arquivos, build PASS (aviso de bundle >500 kB). Backend/DB/E2E não repetidos porque Docker Linux indisponível; GitHub Actions para o novo SHA ainda pendente. Sem staging, VPS, produção, chamadas pagas, merge ou deploy.
