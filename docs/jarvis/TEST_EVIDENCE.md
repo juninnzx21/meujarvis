@@ -391,3 +391,19 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - Sem chamadas de IA, acesso à VPS, deploy ou merge. É necessário aguardar CI remoto do novo SHA antes de considerar o gate validado.
 
 \n
+
+## STAGING VPS — preflight local 2026-10-22
+
+- Docker Compose 5.6.0: `config --quiet` aprovado com valores sintéticos.
+- Dez asserções aprovadas: serviços esperados; projeto e volume de staging próprios; nenhuma porta de serviço exceto gateway em loopback 127.0.0.1:18080; sem container_name/privileged; health checks e resource limits nos quatro serviços; rede interna; integrações pagas/WhatsApp/scheduler desativados.
+- Teste fail-closed: sem variáveis de staging, o Compose recusou a configuração por ausência dos segredos obrigatórios. Nenhum valor real utilizado.
+- `docker info` falhou por ausência do pipe `dockerDesktopLinuxEngine`. Nenhum container/build/runtime foi executado.
+- SSH não tentado: arquivo de configuração ausente e fingerprint/conta ainda sem confirmação independente. Sem auditoria VPS, migration, E2E, backup, restauração, rollback ou health runtime.
+
+## STAGING VPS — preflight local 2026-10-22 (configuração endurecida)
+
+- Docker Compose 5.6.0: `config --quiet` aprovado com valores sintéticos.
+- Dez asserções passaram: serviços esperados; projeto e volume de staging próprios; nenhum serviço exceto gateway publica porta; gateway apenas em 127.0.0.1:18080; nenhum container_name/privileged; health checks e limites em todos; Postgres/backend/frontend apenas na rede interna; gateway na rede interna e bridge de publicação; integrações externas/scheduler desativados.
+- Teste fail-closed aprovado sem variáveis de staging: Compose recusou configuração por segredos obrigatórios ausentes. Nenhum valor real usado.
+- `docker info` falhou devido ao pipe `dockerDesktopLinuxEngine` ausente. Nenhum container ou build foi executado.
+- SSH não tentado: config SSH inexistente; fingerprint e permissões da conta ainda não foram confirmadas independentemente. Sem migration, E2E, backup, restauração, rollback ou health runtime.

@@ -541,6 +541,13 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - `docs/jarvis/STAGING_VPS_RUNBOOK.md`: check de recursos, exigência de conta SSH não-root e host key verificada, Environment staging, banco isolado, migração segura, smoke E2E e rollback.
 - **Não executado nesta sessão**: docker compose config na VPS, GitHub Actions, build/run/health real, snapshot, migração, DNS ou publicação. Nenhum gate existente promovido.
 
+## 2026-10-22 — staging — hardening local e acesso bloqueado
+
+- Compose isolado atualizado com rede interna para DB/backend/frontend, bridge separada só para gateway, health checks e limites máximos agregados de 1,216 MiB e 1,50 CPU para os quatro serviços. Publicação continua somente em `127.0.0.1:18080`; integrações pagas, WhatsApp e scheduler permanecem desativados.
+- Preflight local com Docker Compose 5.6.0 e valores sintéticos passou em dez asserções de isolamento; sem variáveis, a configuração falha fechado. Nenhum container foi iniciado.
+- Docker daemon Linux local indisponível; build, runtime e teste E2E de staging não puderam ser feitos. Sem acesso remoto: SSH config não existe e a fingerprint fornecida ainda precisa de confirmação independente. Não houve conexão à VPS.
+- Limites do Compose são tetos conservadores, não prova de capacidade da VPS. Revalidar memória/CPU/disco ao vivo e montar imagens fora da VPS antes de iniciar.
+
 ## 2026-10-22 — LIFE-001 — correção de validação do frontend
 
 - GitHub Actions run `39635859317` do PR draft #2 falhou somente no job `validate`/frontend; `android` e `desktop` passaram. A falha era a consulta ambígua do botão porque a suíte não limpava o DOM entre testes.

@@ -1,6 +1,13 @@
 name: JARVIS staging configuration preflight (no deployment)
 
 on:
+  pull_request:
+    paths:
+      - docker-compose.staging.yml
+      - deploy/staging/**
+      - .github/workflows/staging-preflight.yml
+      - backend/.dockerignore
+      - frontend/.dockerignore
   push:
     branches:
       - chatgpt/jarvis-3-master-20261021
@@ -40,6 +47,10 @@ jobs:
           assert not any("container_name" in value or "privileged" in value for value in services.values())
           assert all(not entry.get("ports") for name, entry in services.items() if name != "gateway")
           assert all(entry.get("host_ip") == "127.0.0.1" for entry in services["gateway"]["ports"])
+          assert all("healthcheck" in entry for entry in services.values())
+          for entry in services.values():
+            limits = entry["deploy"]["resources"]["limits"]
+            assert limits.get("memory") and limits.get("cpus")
           env = services["backend"]["environment"]
           assert env["SCHEDULER_ENABLED"] == "false"
           assert env["WHATSAPP_AUTO_REPLY"] == "false"
@@ -47,4 +58,10 @@ jobs:
           assert not env.get("OPENAI_API_KEY") and not env.get("GEMINI_API_KEY")
           assert not env.get("EVOLUTION_API_KEY") and not env.get("HOME_ASSISTANT_TOKEN")
           assert data["name"] == "jarvis3staging"
+          assert data["networks"]["staging_private"]["internal"] is True
+          assert set(services["gateway"]["networks"]) == {"staging_private", "staging_edge"}
+          assert all(set(services[name]["networks"]) == {"staging_private"} for name in ["postgres", "backend", "frontend"])
+          assert "staging_edge" in data["networks"]
+          postgres_volume = services["postgres"]["volumes"][0]
+          assert postgres_volume["source"] == "staging_postgres" and not postgres_volume.get("external", False)
           print("Staging isolation policy: PASS (configuration only, no deploy)")

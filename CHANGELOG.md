@@ -17,3 +17,14 @@ As mudanças notáveis do JARVIS são registradas neste arquivo.
 - Versão dos pacotes Desktop e Android: `2.0.0`. A API de produção ainda precisa receber `APP_VERSION=2.0.0` no ambiente de deploy para refletir o mesmo número no health.
 
 Validação desta revisão: backend typecheck/build e 18 testes sem dependência de banco passaram; frontend typecheck/build e 35 testes passaram; Desktop typecheck/build e 4 testes passaram. Integração backend com banco e build Android aguardam ambiente apropriado.
+
+## 2026-10-22 — Staging isolado (preparação local)
+- Acrescentados health checks e limites máximos aos quatro serviços do Compose de staging; rede interna e bind local mantidos/reforçados.
+- Workflow de preflight agora aceita pull requests e valida recursos, health checks, rede e volume; configuração validada com valores sintéticos.
+- Nenhuma conexão SSH, container, migration, VPS ou produção acessada. Staging não implantado.
+
+## 2026-10-22 — Staging isolado (preparação local)
+- Adicionados health checks e limites máximos aos quatro serviços do Compose de staging.
+- Banco, backend e frontend ficam em rede interna; somente gateway também ingressa na bridge de publicação local.
+- Workflow de preflight valida configurações em pull requests usando placeholders sintéticos; configuração passou localmente e falhou fechado sem variáveis.
+- Nenhuma conexão SSH, container, migration ou produção acessada. Staging não implantado.
