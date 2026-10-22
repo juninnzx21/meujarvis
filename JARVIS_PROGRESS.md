@@ -589,3 +589,8 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Backend final: `npm run validate` passou com 131 testes aprovados e 60 pulados por falta de PostgreSQL Docker; suíte focada de release/MFA passou 14/14. Frontend validado em 56/56; build inicial ainda ~671 KB no branch REL (a divisão de rotas está no branch LIFE separado).
 
 - Commit local REL-001: d8d6cb3240f1de6550fa1b145ad269a46bf6fec0. Worktree limpo; push/deploy não executados nesta etapa.
+
+## Publicação para revisão — REL-001 — 2026-10-22
+
+- Branch codex/rel-001-approval-20261022 publicada sem force push; PR #3 aberto em draft contra chatgpt/jarvis-3-master-20261021 (HEAD e45ba261). CI do GitHub ainda não retornou execução para este commit.
+- Commits: d8d6cb3 (implementação) e 6bbec25 (checkpoint e evidências). PR: https://github.com/juninnzx21/meujarvis/pull/3
