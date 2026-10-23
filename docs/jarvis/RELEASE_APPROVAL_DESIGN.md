@@ -2,6 +2,15 @@
 
 **Status: desenho técnico; nenhum fluxo de aprovação ou deploy foi implementado.** Este documento define o contrato para uma implementação local futura. Não autoriza merge, release pública, conexão VPS ou deploy.
 
+## Decisões do proprietário — 2026-10-23
+
+- Validade da aprovação: **30 minutos**.
+- Quórum: **um administrador com MFA**, distinto do autor/implementador da alteração.
+- Targets previstos: **QA e produção**, sempre separados; uma aprovação de QA não vale para produção. O target deve estar vinculado ao SHA/digest e aos gates correspondentes.
+- A aprovação vale somente para o SHA, digest e target exatos; qualquer mudança invalida a solicitação.
+- A decisão define o gate da aprovação; não autoriza deploy nem publicação.
+- Retenção da trilha de auditoria continua pendente de decisão; até lá, nenhum evento será removido automaticamente.
+
 ## Estado verificado em 2026-10-22
 
 - O PR #2 permanece aberto; branch remota `chatgpt/jarvis-3-master-20261021`, HEAD `815a79ebc8c8767174a7c7b5bd1335f7560a8810`.
@@ -32,7 +41,7 @@
 
 ## Plano de implementação e validação
 
-1. Fazer revisão independente deste desenho e decidir TTL, política de aprovador (uma ou duas pessoas), targets e retenção da auditoria.
+1. Fazer revisão independente deste desenho. TTL e quórum foram decididos pelo proprietário em 2026-10-23. Confirmar a política de target e retenção da auditoria antes de habilitar qualquer consumidor de deploy.
 2. Implementar schema/API de candidatos e aprovações com transações serializáveis, idempotência, autorização por função e step-up MFA. Testar expirado, replay, SHA/digest alterado, aprovador revogado, cross-user, concorrência e rejeição de branch experimental.
 3. Implementar painel de revisão sem endpoint de deploy inicialmente; validar integração autenticada em staging sintético e isolamento entre usuários.
 4. Implementar consumidor de aprovação com OIDC e Environment protegido. Manter `deploy-plan.yml` sem escrita remota até backup/restore/rollback em staging comprovados e revisão independente.

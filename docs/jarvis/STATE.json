@@ -534,10 +534,17 @@
     "paidCalls": false
   },
   "releaseApprovalDesign": {
-    "timestampUtc": "2026-10-22T21:15:00Z",
+    "timestampUtc": "2026-10-23T08:34:10Z",
     "status": "DESIGN_READY_FOR_INDEPENDENT_REVIEW",
     "document": "docs/jarvis/RELEASE_APPROVAL_DESIGN.md",
     "implementation": "ABSENT",
+    "approvalTtlMinutes": 30,
+    "approverQuorum": 1,
+    "targets": ["qa", "production"],
+    "auditRetention": "UNDECIDED; automatic deletion disabled",
+    "approverRequirements": "admin with MFA, distinct from verified source author and candidate requester",
+    "ownerDecisions": "TTL and quorum confirmed 2026-10-23",
+    "remainingDesignGates": ["verified GitHub identity binding for source author", "protected-branch evidence source", "audit retention policy", "independent design review"],
     "productionDeploy": "NOT_IMPLEMENTED",
     "productionTouched": false
   },
@@ -601,7 +608,17 @@
     "frontendLocalValidate": "PASS: typecheck; 11 files/58 tests; Vite build; bundle warning above 500 kB remains",
     "localCommit": "local checkpoint on codex/qa-release-approval-20261023; not pushed",
     "approvalApi": "NOT_IMPLEMENTED; UI actions disabled",
-    "ttlAndApproverPolicy": "OWNER_DECISION_REQUIRED",
+    "approvalPolicy": {
+      "ttlMinutes": 30,
+      "approverQuorum": 1,
+      "targets": ["qa", "production"],
+      "requiresAdmin": true,
+      "requiresMfa": true,
+      "selfApprovalAllowed": false,
+      "sourceAuthorIdentity": "must be independently verified from GitHub before approval API implementation",
+      "productionDeploy": "not authorized by approval and remains disabled"
+    },
+    "ttlAndApproverPolicy": "OWNER_CONFIRMED: 30-minute TTL; one distinct admin approver with MFA",
     "vpsDnsTlsStaging": "NOT_DEPLOYED",
     "productionTouched": false,
     "schedulerEnabled": false
