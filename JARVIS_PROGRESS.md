@@ -585,3 +585,11 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Próximas tarefas: revisão independente do desenho e decisão de TTL/política de aprovador; desbloquear staging com Docker/segredos sintéticos e obter conta/fingerprint SSH confiáveis; depois implementar APIs/UI de approval em escopo separado. Nenhum merge, release, deploy, VPS, scheduler ou chamada paga.
 
 - Sincronização da branch de staging com o HEAD atual da base do PR #2 foi feita no commit de merge local `602829aa`, preservando a base e permitindo revisão incremental. O commit de implementação permanece `0fe8441`.
+
+
+## 2026-10-23 — Portal QA por subdomínio — PREPARADO, NÃO IMPLANTADO
+- Solicitação do proprietário: usar `qa.jarvis.juninnzxtec.com.br` para testes e aprovação/rejeição de releases; manter `jarvis.juninnzxtec.com.br` em produção.
+- Branch `chatgpt/qa-portal-20261023` derivada da branch `codex/staging-preflight-20261022` (PR #5), sem alterar `main` ou a VPS.
+- Adicionada rota `/qa/releases` à SPA existente e entrada de menu visível somente para admins no hostname QA/local. Página de revisão apresenta estado real: sem endpoint de candidatos, ações de Aprovar/Rejeitar **desativadas** (nenhum deploy possível).
+- Criados `docs/jarvis/QA_SUBDOMAIN_RUNBOOK.md` e `deploy/qa/qa-vhost.nginx.conf.example`, com etapas de DNS, TLS, proxy em loopback para staging, controle de acesso e gates SHA/digest/MFA.
+- Pendente: SSH funcional; inventário de proxy/recursos; DNS autoritativo; TLS; CI/build/QA E2E; backend de aprovação auditável com MFA; deploy de produção com gates. Nenhuma conexão VPS, DNS ou implantação executada.
