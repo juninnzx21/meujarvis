@@ -41,6 +41,6 @@
 ## Bloqueios atuais
 
 - Docker Desktop Linux está indisponível neste host; não foi iniciado container. E2E autenticado, backup, restauração e rollback de staging não foram executados.
-- Acesso SSH permanece somente leitura autorizado, mas está bloqueado até receber nome de usuário não-root existente e fingerprint SHA256 da host key confirmada por canal confiável. Não houve conexão.
+- Atualização em 2026-10-23: o proprietário confirmou a conta não-root `ubuntu` e verificou a host key via Contabo; o acesso é autorizado somente para leitura. As tentativas ao endpoint confirmado falharam antes da autenticação (timeout durante a troca do banner e, depois, reset). Nenhum comando remoto foi executado. Próximo passo: obter diagnóstico somente leitura pelo console autenticado da Contabo; não reiniciar SSH nem alterar firewall automaticamente.
 - Não se conhece ainda configuração remota de rulesets, reviewers de Environment ou proteção de tags.
 - A implementação deste fluxo fica pendente de revisão deste desenho; nenhum endpoint, migration ou workflow de deploy foi adicionado.

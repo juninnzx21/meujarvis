@@ -425,3 +425,11 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - Teste fail-closed aprovado sem variáveis: Compose recusou a configuração por segredos obrigatórios ausentes. Nenhum valor real usado.
 - `docker info` falhou por ausência do pipe `dockerDesktopLinuxEngine`. Nenhum container/build foi executado.
 - SSH não tentado: config ausente e identidade/permissões ainda sem confirmação independente. Sem migration, E2E, backup, restauração, rollback ou health runtime.
+
+## Portal QA e CI por branch-base — 2026-10-23
+
+- PR #6: branch `chatgpt/qa-portal-20261023`, SHA `69b3be9ebb21da9927da90a63609573e09a050c0`, base `codex/staging-preflight-20261022`, aberto/em rascunho. Snapshot reportou `mergeable=false`; PR #5 avançou desde o ancestral `9aa5dd8`.
+- GitHub connector retornou zero workflow runs e zero status checks para o SHA consultado. O workflow CI restringia eventos `pull_request` a PRs cujo branch-base fosse `main`; como QA usa base de staging, ampliado o gatilho local para qualquer base. Essa alteração não concede publicação: o workflow apenas valida e salva artefatos de build do commit.
+- Adicionados testes para as condições locais/admin e para ocultar ações da conta comum. `frontend npm run validate`: TypeScript PASS; Vitest 11 arquivos, 58/58 testes PASS; Vite build PASS. Aviso de bundle JS >500 kB continua.
+- Isso valida a SPA local; não prova CI remoto, autorização de API, isolamento de banco, TLS/DNS, staging runtime ou produção. Nenhum container, migration, VPS, DNS ou deploy executado.
+- SSH: conta não-root `ubuntu` e fingerprint foram confirmadas pelo proprietário via Contabo; conexão falhou no banner/reset antes de autenticação. Nenhum comando remoto foi enviado.

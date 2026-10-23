@@ -4,7 +4,8 @@ on:
   push:
     branches: ['**']
   pull_request:
-    branches: [main]
+    # QA and staging PRs also need the same validation gates as main-bound PRs.
+    branches: ['**']
 
 permissions:
   contents: read

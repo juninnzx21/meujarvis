@@ -508,9 +508,9 @@
   },
   "nextLocalCheckpoint": {
     "task": "STAGING-VPS-ACCESS-001",
-    "status": "PREPARATION_COMPLETE_BLOCKED_REMOTE_IDENTITY",
+    "status": "PREPARATION_COMPLETE_BLOCKED_SSH_BANNER",
     "nextTaskId": "STAGING-DEPLOY-001",
-    "reason": "Local Compose preflight with synthetic values passed and fail-closed behavior confirmed. Remote access awaits independent host fingerprint/account confirmation. No containers started; local Docker Linux daemon unavailable."
+    "reason": "Local Compose preflight passed with synthetic values. Owner confirmed non-root ubuntu account and host key through Contabo; SSH times out/resets before authentication. No remote commands or containers started; local Docker Linux daemon unavailable."
   },
   "life001Checkpoint": {
     "timestampUtc": "2026-10-22T21:15:00Z",
@@ -572,7 +572,7 @@
     "healthChecks": "postgres, backend readiness+database, frontend, gateway",
     "localComposePreflight": "PASS with synthetic values; fail closed without required staging variables; ten isolation assertions passed",
     "dockerDaemon": "UNAVAILABLE_DOCKER_DESKTOP_LINUX_PIPE",
-    "remoteAudit": "BLOCKED_HOST_FINGERPRINT_AND_ACCOUNT_CONFIRMATION",
+    "remoteAudit": "BLOCKED_SSH_BANNER_TIMEOUT_OR_RESET_BEFORE_AUTH; owner-confirmed non-root account and host fingerprint; read-only access only",
     "containersStarted": false,
     "migrationApplied": false,
     "stagingE2e": "NOT_RUN",
@@ -584,5 +584,25 @@
     "branchSyncCommit": "602829aa1e63d851c073009758849b52c62d051d",
     "remoteCi": "PENDING",
     "documentationCommit": "pending checkpoint commit"
+  },
+  "qaPortal": {
+    "timestampUtc": "2026-10-23T08:21:45Z",
+    "status": "LOCAL_UI_VALIDATED; PR_DRAFT; API_AND_ONLINE_QA_NOT_IMPLEMENTED",
+    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/6",
+    "branch": "chatgpt/qa-portal-20261023",
+    "remoteHead": "69b3be9ebb21da9927da90a63609573e09a050c0",
+    "branchBase": "codex/staging-preflight-20261022",
+    "baseTipAtValidation": "fcb029daf07a506268a37953c636238317c23eb1",
+    "prBaseSnapshot": "9aa5dd8fb415df128538d0c80762e609184e74db",
+    "draft": true,
+    "mergeableSnapshot": false,
+    "githubCiRun": "No workflow runs or status checks returned for the remote HEAD; PR-target filter was restricted to main",
+    "frontendLocalValidate": "PASS: typecheck; 11 files/58 tests; Vite build; bundle warning above 500 kB remains",
+    "localCommit": "local checkpoint on codex/qa-release-approval-20261023; not pushed",
+    "approvalApi": "NOT_IMPLEMENTED; UI actions disabled",
+    "ttlAndApproverPolicy": "OWNER_DECISION_REQUIRED",
+    "vpsDnsTlsStaging": "NOT_DEPLOYED",
+    "productionTouched": false,
+    "schedulerEnabled": false
   }
 }
