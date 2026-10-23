@@ -596,6 +596,7 @@
     "prBaseSnapshot": "9aa5dd8fb415df128538d0c80762e609184e74db",
     "draft": true,
     "mergeableSnapshot": false,
+    "localMergePreview": "CLEAN_NO_CONFLICTS; no branch merge performed",
     "githubCiRun": "No workflow runs or status checks returned for the remote HEAD; PR-target filter was restricted to main",
     "frontendLocalValidate": "PASS: typecheck; 11 files/58 tests; Vite build; bundle warning above 500 kB remains",
     "localCommit": "local checkpoint on codex/qa-release-approval-20261023; not pushed",
