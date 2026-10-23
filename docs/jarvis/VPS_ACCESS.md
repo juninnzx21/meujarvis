@@ -19,8 +19,8 @@ Depois de confirmar o destino e criar a conta de menor privilégio na VPS, adici
 Host jarvis-vps
     HostName [VPS_ENDPOINT_REDACTED]
     Port 22014
-    User jarvis-ops
-    IdentityFile ~/.ssh/jarvis_vps
+    User jarvis-codex
+    IdentityFile ~/.ssh/jarvis_codex_temp
     IdentitiesOnly yes
     BatchMode yes
     ForwardAgent no
@@ -30,11 +30,11 @@ Host jarvis-vps
     ServerAliveCountMax 3
 ```
 
-O alias não fica operacional até preencher o destino confirmado e instalar a chave pública correspondente em `authorized_keys` da conta `jarvis-ops`. Não habilitar fallback de senha, encaminhamento de agente ou encaminhamento de portas. Manter host key verification; validar o fingerprint do host por canal confiável durante a primeira autorização.
+O alias é apenas uma proposta e não deve ser instalado até pin da host key obtido no console Contabo, geração confirmada do par dedicado e criação/validação da conta temporária `jarvis-codex`. Não habilitar fallback de senha, encaminhamento de agente ou encaminhamento de portas. Manter `StrictHostKeyChecking yes`.
 
 ## Privilégios e superfície de leitura
 
-Não adicionar `jarvis-ops` ao grupo `docker`: acesso ao socket Docker equivale, na prática, a root e não é somente leitura. Não conceder shell root, sudo genérico, acesso a `.env`, arquivos de configuração com credenciais, dumps ou diretórios de dados.
+Não adicionar `jarvis-codex` ao grupo `docker`: acesso ao socket Docker equivale, na prática, a root e não é somente leitura. Não conceder shell root, sudo genérico, acesso a `.env`, arquivos de configuração com credenciais, dumps ou diretórios de dados.
 
 Para consultar logs, estado de serviços, containers e recursos, preferir um comando de diagnóstico root-owned, sem argumentos arbitrários, que exponha somente operações fixas e redija segredos. O SSH desse usuário deve restringir encaminhamentos e TTY; o sudoers, se necessário, deve permitir exclusivamente esse wrapper revisado. O wrapper deve omitir variáveis de ambiente, argumentos sensíveis, conteúdo de configurações e payloads de log que possam conter credenciais. Até esse wrapper existir e ser revisado, conceder apenas os comandos de leitura disponíveis sem privilégios, sem ampliar permissões para “fazer funcionar”.
 
@@ -56,4 +56,14 @@ Cada agente terá checkout/worktree distinto e branch própria. A branch não su
 
 ## Bloqueio atual
 
-O usuário já autorizou conexão somente leitura e confirmou o endpoint `[VPS_ENDPOINT_REDACTED]:22014`. Ainda faltam o nome da conta não-root existente e fingerprint SHA256 da host key obtido por canal confiável. Portanto, não foi criado alias operacional, não houve tentativa de login e não houve mudança remota. A tarefa fica bloqueada somente nesses dados; autorização para criar usuário/chave na VPS ou conceder privilégios não está incluída.
+O usuário confirmou o endpoint `[VPS_ENDPOINT_REDACTED]:22014` e autorizou acesso de diagnóstico somente leitura; o pedido atual também autoriza preparar a conta temporária e a chave dedicada após validar o host. A sessão anterior não recebeu banner/autenticação. O perfil local não tem host-key pin para esse endpoint, e a fingerprint anterior não aparece nos registros revisados. Portanto, não houve nova conexão nem mudança remota; validar as chaves pelo console Contabo antes de instalar usuário, chave pública ou alias operacional.
+
+## Atualização — recuperação e acesso temporário, 2026-10-23
+
+O proprietário informou que comandos PowerShell foram executados numa shell Bash da VPS como `root` e que `/etc/ssh/ssh_host_rsa_key.pub` pode ter sido sobrescrito. Ainda não há confirmação de que isso ocorreu. Tratar como incidente de integridade da host key até comparar, no console autenticado da Contabo, a chave pública com a chave privada correspondente. Procedimento somente leitura: `docs/jarvis/VPS_HOSTKEY_INCIDENT_RUNBOOK.md`. Não conectar por SSH, aceitar nova chave automaticamente, alterar chaves, reiniciar `sshd` ou mexer no firewall antes dessa verificação.
+
+Inspeção local sem ler chaves privadas: `%USERPROFILE%\.ssh\jarvis_vps` e `.pub` existem; não há arquivo `config`; não foi encontrada entrada de `known_hosts` para o endpoint confirmado. Não há par `jarvis_codex_temp` preexistente. Foi iniciado `ssh-keygen` interativo para criar essa chave temporária, em terminal do Codex aguardando que o proprietário defina uma passphrase; até concluir, a criação não está confirmada. A chave `jarvis_vps` não foi reutilizada nem aberta.
+
+O novo pedido autoriza preparar um usuário temporário `jarvis-codex`, chave ED25519 e validade inicial de sete dias, depois que a identidade do host for validada. Nada foi criado na VPS. O usuário não terá root, sudo genérico, grupo Docker, socket Docker, segredos ou escrita na produção. O primeiro acesso remoto só poderá ser de leitura e manterá `StrictHostKeyChecking yes`; a fingerprint numérica ainda precisa ser comparada com o valor observado no console/Contabo e fixada localmente.
+
+Após a passphrase, exibir somente fingerprint e chave pública da chave de usuário, instalar a pública no console preservando entradas existentes e testar a sessão sem encerrar o acesso administrativo. Se houver discrepância de host key, arquivo público suspeito ou configuração inválida, parar; sem correção ou rotação automática.

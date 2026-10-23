@@ -173,7 +173,7 @@
     "worktree": "E:\\jarvis-home-assistant\\.codex-worktrees\\jarvis-auth-001-20261017"
   },
   "vpsAccess": {
-    "status": "BLOCKED_PENDING_INDEPENDENT_HOST_FINGERPRINT_AND_ACCOUNT_CONFIRMATION",
+    "status": "BLOCKED_HOSTKEY_INTEGRITY_REQUIRES_CONTABO_CONSOLE_VERIFICATION",
     "proposal": "docs/jarvis/VPS_ACCESS.md",
     "dedicatedKeyDetected": true,
     "privateKeyContentRead": false,
@@ -182,13 +182,14 @@
     "vpsModified": false,
     "agentSyncPaused": true,
     "requiredBeforeConnection": [
-      "Informar conta não-root existente; criação exige autorização separada",
-      "Fornecer fingerprint SHA256 da host key obtido por canal confiável"
+      "Verificar no console autenticado da Contabo a correspondência entre chaves privadas e públicas de host e validar sshd -t",
+      "Confirmar fingerprint SHA256 da chave de host por canal Contabo antes de fixá-la localmente",
+      "Concluir a chave temporária local com passphrase; preparar usuário jarvis-codex somente após identidade/integridade confirmadas"
     ],
     "readOnlyConnectionAuthorized": true,
     "endpoint": "[VPS_ENDPOINT_REDACTED]:22014",
     "endpointConfirmedByUser": true,
-    "knownHostEntryPresent": true,
+    "knownHostEntryPresent": false,
     "hostFingerprintIndependentlyVerified": false,
     "usernameFromPastedPrompt": "ubuntu",
     "usernameIndependentlyConfirmed": false
@@ -534,17 +535,17 @@
     "paidCalls": false
   },
   "releaseApprovalDesign": {
-    "timestampUtc": "2026-10-23T08:34:10Z",
-    "status": "DESIGN_READY_FOR_INDEPENDENT_REVIEW",
+    "timestampUtc": "2026-10-23T08:49:30Z",
+    "status": "PARTIAL_LOCAL_API_FAIL_CLOSED",
     "document": "docs/jarvis/RELEASE_APPROVAL_DESIGN.md",
-    "implementation": "ABSENT",
+    "implementation": "PARTIAL: schema, migration and authenticated API routes are local; no trusted GitHub provenance adapter or UI integration",
     "approvalTtlMinutes": 30,
     "approverQuorum": 1,
     "targets": ["qa", "production"],
     "auditRetention": "UNDECIDED; automatic deletion disabled",
     "approverRequirements": "admin with MFA, distinct from verified source author and candidate requester",
     "ownerDecisions": "TTL and quorum confirmed 2026-10-23",
-    "remainingDesignGates": ["verified GitHub identity binding for source author", "protected-branch evidence source", "audit retention policy", "independent design review"],
+    "remainingDesignGates": ["trusted GitHub/OIDC provenance adapter", "verified OAuth binding for GitHub author and approver identities", "protected-branch/checks evidence source", "audit retention policy", "database integration/concurrency tests", "independent security review"],
     "productionDeploy": "NOT_IMPLEMENTED",
     "productionTouched": false
   },
@@ -579,7 +580,7 @@
     "healthChecks": "postgres, backend readiness+database, frontend, gateway",
     "localComposePreflight": "PASS with synthetic values; fail closed without required staging variables; ten isolation assertions passed",
     "dockerDaemon": "UNAVAILABLE_DOCKER_DESKTOP_LINUX_PIPE",
-    "remoteAudit": "BLOCKED_SSH_BANNER_TIMEOUT_OR_RESET_BEFORE_AUTH; owner-confirmed non-root account and host fingerprint; read-only access only",
+    "remoteAudit": "NOT_ATTEMPTED_THIS_SESSION; host-key integrity incident unconfirmed; no trusted host-key pin locally; do not connect until Contabo console verification",
     "containersStarted": false,
     "migrationApplied": false,
     "stagingE2e": "NOT_RUN",
@@ -593,8 +594,8 @@
     "documentationCommit": "pending checkpoint commit"
   },
   "qaPortal": {
-    "timestampUtc": "2026-10-23T08:21:45Z",
-    "status": "LOCAL_UI_VALIDATED; PR_DRAFT; API_AND_ONLINE_QA_NOT_IMPLEMENTED",
+    "timestampUtc": "2026-10-23T08:54:05Z",
+    "status": "LOCAL_UI_AND_PARTIAL_FAIL_CLOSED_API_VALIDATED; PR_DRAFT; ONLINE_QA_NOT_DEPLOYED",
     "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/6",
     "branch": "chatgpt/qa-portal-20261023",
     "remoteHead": "69b3be9ebb21da9927da90a63609573e09a050c0",
@@ -607,7 +608,7 @@
     "githubCiRun": "No workflow runs or status checks returned for the remote HEAD; PR-target filter was restricted to main",
     "frontendLocalValidate": "PASS: typecheck; 11 files/58 tests; Vite build; bundle warning above 500 kB remains",
     "localCommit": "local checkpoint on codex/qa-release-approval-20261023; not pushed",
-    "approvalApi": "NOT_IMPLEMENTED; UI actions disabled",
+    "approvalApi": "PARTIAL_LOCAL_FAIL_CLOSED: draft/list/request/approve/reject routes; browser metadata cannot satisfy source verification; no deploy consumer",
     "approvalPolicy": {
       "ttlMinutes": 30,
       "approverQuorum": 1,
@@ -615,12 +616,17 @@
       "requiresAdmin": true,
       "requiresMfa": true,
       "selfApprovalAllowed": false,
-      "sourceAuthorIdentity": "must be independently verified from GitHub before approval API implementation",
+      "sourceAuthorIdentity": "no trusted GitHub/OIDC ingestion or OAuth identity-linking adapter; browser metadata is unverified and approvals fail closed",
       "productionDeploy": "not authorized by approval and remains disabled"
     },
     "ttlAndApproverPolicy": "OWNER_CONFIRMED: 30-minute TTL; one distinct admin approver with MFA",
     "vpsDnsTlsStaging": "NOT_DEPLOYED",
     "productionTouched": false,
+    "schemaMigrationApplied": false,
+    "approvalUiApiIntegration": "NOT_IMPLEMENTED",
+    "trustedGithubProvenance": "NOT_IMPLEMENTED",
+    "deployConsumer": "NOT_IMPLEMENTED",
+    "approvalAuditRetention": "UNDECIDED; no automatic deletion",
     "schedulerEnabled": false
   }
 }

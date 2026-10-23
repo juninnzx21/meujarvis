@@ -3,10 +3,9 @@ import { ClipboardCheck, ExternalLink, LockKeyhole, ShieldAlert } from "lucide-r
 import { useAuth } from "../../contexts/AuthContext";
 
 /**
- * QA console is intentionally read-only until the signed, one-time approval
- * backend and production workflow have passed security review.
- * A disabled UI is NOT an authorization boundary; future actions must enforce
- * admin, MFA step-up, SHA+digest pinning, audit and CI gates on the server.
+ * QA console remains read-only until trusted GitHub provenance, verified author
+ * identity, CI/branch-protection gates and independent security review exist.
+ * The backend enforces its own checks; disabled buttons are not an authorization boundary.
  */
 export function QaReleasesPage() {
   const { user } = useAuth();
@@ -33,10 +32,11 @@ export function QaReleasesPage() {
       </header>
 
       <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 p-5 text-amber-100" role="status">
-        <h3 className="flex items-center gap-2 font-bold"><ShieldAlert size={19} /> Fluxo de publicação ainda não ativado</h3>
+        <h3 className="flex items-center gap-2 font-bold"><ShieldAlert size={19} /> Aprovações bloqueadas por proveniência pendente</h3>
         <p className="mt-2 text-sm">
-          A API segura de candidatos, aprovação/rejeição com MFA, verificação de SHA e o deploy protegido
-          ainda precisam ser implementados e validados. Nenhum clique nesta página altera a produção.
+          A API local registra rascunhos e aplica MFA, validade de 30 minutos, consumo único e auditoria.
+          Metadados do navegador não são prova: falta uma origem confiável do GitHub para validar autor, SHA,
+          digest, CI e proteção da branch. Esta API não inicia deploy e nenhum clique altera a produção.
         </p>
       </div>
 
@@ -44,8 +44,7 @@ export function QaReleasesPage() {
         <div className="glass rounded-2xl p-5">
           <h3 className="mb-3 text-lg font-bold text-white">Versões candidatas</h3>
           <p className="text-slate-400">
-            Nenhuma versão foi carregada. O sistema não possui um endpoint de candidatos de release
-            validado para esta tela; não serão mostradas versões ou testes fictícios.
+            Nenhuma versão foi carregada. A listagem da API ainda não está ligada a esta tela; não serão mostradas versões ou testes fictícios.
           </p>
           <a className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-100 underline"
              href="https://github.com/juninnzx21/meujarvis/pulls" target="_blank" rel="noopener noreferrer">
@@ -57,8 +56,7 @@ export function QaReleasesPage() {
             <LockKeyhole size={20} /> Decisão do proprietário
           </h3>
           <p className="mb-4 text-sm text-slate-300">
-            Quando o serviço de aprovações estiver concluído, cada decisão ficará vinculada ao SHA
-            exato, digest do artefato, identidade administrativa e validade da autorização.
+            A aprovação exige SHA e digest imutáveis, MFA e identidade GitHub distinta do autor. O gate de deploy continua desligado.
           </p>
           <div className="flex flex-wrap gap-3">
             <button type="button" disabled title="Aguardando backend de aprovação e gates de segurança"
@@ -70,7 +68,7 @@ export function QaReleasesPage() {
               Rejeitar
             </button>
           </div>
-          <p className="mt-3 text-xs text-slate-400">Controles desabilitados: nenhuma aprovação, rejeição ou deploy está funcional.</p>
+          <p className="mt-3 text-xs text-slate-400">Controles desabilitados: falta comprovar a proveniência e integrar a listagem da API.</p>
         </div>
       </div>
     </section>

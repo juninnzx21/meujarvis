@@ -19,7 +19,7 @@ describe("QA release review scaffold", () => {
     render(<MemoryRouter><QaReleasesPage /></MemoryRouter>);
 
     expect(screen.getByRole("region", { name: "Revisão de versões em QA" })).toBeInTheDocument();
-    expect(screen.getByText(/API segura de candidatos/i)).toBeInTheDocument();
+    expect(screen.getByText(/Metadados do navegador não são prova/i)).toBeInTheDocument();
     expect(screen.getByText(/Nenhuma versão foi carregada/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Aprovar e publicar" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Rejeitar" })).toBeDisabled();
