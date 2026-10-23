@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Activity, Banknote, Bell, Bot, Brain, Cable, Download, FileText, Gauge, Home, Landmark, Laptop, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PackageCheck, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
+import { Activity, Banknote, Bell, Bot, Brain, Cable, Download, FileText, Gauge, Home, Landmark, Laptop, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PackageCheck, PieChart, PlaySquare, ScrollText, Settings, ShieldCheck, Share2, Smartphone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
 import { JarvisFloatingAssistant } from "../components/JarvisFloatingAssistant";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
@@ -37,7 +37,8 @@ const items = [
   { to: "/settings", label: "Configuracoes", icon: Settings },
   { to: "/settings/voice", label: "Voz Premium", icon: Mic },
   { to: "/logs", label: "Logs", icon: ScrollText },
-  { to: "/status", label: "Status", icon: Activity }
+  { to: "/status", label: "Status", icon: Activity },
+  { to: "/qa/releases", label: "Aprovação QA", icon: ShieldCheck }
 ];
 
 const mobileItems = [
@@ -68,7 +69,7 @@ export function AppLayout() {
           </div>
         </div>
         <nav className="space-y-1">
-          {items.map(({ to, label, icon: Icon }) => (
+          {items.filter((item) => item.to !== "/qa/releases" || (user?.role === "admin" && (window.location.hostname === "qa.jarvis.juninnzxtec.com.br" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))).map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-cyan-400/15 text-cyan-100" : "text-slate-300 hover:bg-white/5"}`}>
               <Icon size={18} /> {label}
               {to === "/notifications" && unreadCount > 0 && <span className="ml-auto rounded-full bg-cyan-400 px-2 py-0.5 text-xs font-black text-slate-950">{unreadCount}</span>}
