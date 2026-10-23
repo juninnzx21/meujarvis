@@ -154,11 +154,11 @@
     "OBS-001/OBS-002: revisão independente do código sem achado P2 aberto conhecido; falta smoke operacional somente leitura no ambiente ativo.",
     "AUTH-001: hardening local passou em testes e re-revisão direcionada; CI remoto da branch e verificação protegida da chave TOTP no runtime ainda pendentes.",
     "AI-001: inelegível até OBS-001 atingir DONE_VERIFIED; provedores reais/custo não testados.",
-    "VPS-ACCESS-001: endpoint [VPS_ENDPOINT_REDACTED]:22014 confirmado pelo usuário; faltam conta SSH não-root e fingerprint SHA256 da host key por canal confiável. Nenhuma conexão feita.",
+    "VPS-ACCESS-001: usuário confirmou endpoint, conta ubuntu e fingerprint ED25519 via Contabo; SSH read-only conectou TCP mas falhou no banner/reset antes da autenticação. Nenhum comando remoto executado.",
     "CI/CD: branch codex/agent-sync-v1-20261017 não encontrada no GitHub; commit atual não tem CI remoto e não foi publicado. PR #1 aponta para outro branch/head.",
     "Produção: não há workflow de deploy; regras de branch/environment GitHub, VPS/Compose/healthcheck e restore/rollback em staging não foram verificados.",
     "Agent Sync/scheduler permanecem pausados; OPENAI_API_KEY ausente; nenhuma chamada paga, push, merge, deploy ou mudança VPS.",
-    "Staging VPS: SSH host fingerprint and account not independently confirmed; remote read-only audit not attempted.",
+    "Staging VPS: fingerprint e conta ubuntu confirmadas pelo proprietário; acesso SSH ainda falha antes da autenticação e aguarda diagnóstico no console Contabo.",
     "Staging runtime: Docker Desktop Linux daemon unavailable locally; no container/build/E2E/backup/rollback validation."
   ],
   "lastCommit": "dd27c5770354c893e379040ccaf0e9f545f84084",
@@ -572,7 +572,10 @@
     "healthChecks": "postgres, backend readiness+database, frontend, gateway",
     "localComposePreflight": "PASS with synthetic values; fail closed without required staging variables; ten isolation assertions passed",
     "dockerDaemon": "UNAVAILABLE_DOCKER_DESKTOP_LINUX_PIPE",
-    "remoteAudit": "BLOCKED_HOST_FINGERPRINT_AND_ACCOUNT_CONFIRMATION",
+    "remoteAudit": "BLOCKED_SSH_PREAUTH_BANNER_TIMEOUT_AND_RESET",
+    "remoteAccount": "ubuntu confirmed by owner; authentication not reached",
+    "hostFingerprint": "confirmed by owner via Contabo and matched to local known-host key; no private key read",
+    "sshAttempt": "TCP connected; banner exchange timed out; next attempt reset before authentication; no remote command ran",
     "containersStarted": false,
     "migrationApplied": false,
     "stagingE2e": "NOT_RUN",
@@ -582,7 +585,8 @@
     "commit": "0fe8441097e40e298660604af66e87c486511fce",
     "implementationCommit": "0fe8441097e40e298660604af66e87c486511fce",
     "branchSyncCommit": "602829aa1e63d851c073009758849b52c62d051d",
-    "remoteCi": "PENDING",
-    "documentationCommit": "pending checkpoint commit"
+    "remoteCi": "PASS run 39858634807 for 9aa5dd8fb415df128538d0c80762e609184e74db; static preflight only",
+    "stagingMigrationGuard": "PASS 9 synthetic cases: exact staging target accepted; localhost/tunnel, testprod, wrong port/user/host, host/hostaddr override, invalid URL rejected; no migration executed",
+    "documentationCommit": "pending local checkpoint"
   }
 }

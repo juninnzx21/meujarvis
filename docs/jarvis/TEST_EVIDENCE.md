@@ -425,3 +425,12 @@ Após revisão independente, o teste NVIDIA observa Axios e fetch global. fetch 
 - Teste fail-closed aprovado sem variáveis: Compose recusou a configuração por segredos obrigatórios ausentes. Nenhum valor real usado.
 - `docker info` falhou por ausência do pipe `dockerDesktopLinuxEngine`. Nenhum container/build foi executado.
 - SSH não tentado: config ausente e identidade/permissões ainda sem confirmação independente. Sem migration, E2E, backup, restauração, rollback ou health runtime.
+
+## STAGING VPS / VPS-ACCESS-001 — 2026-10-23
+
+- GitHub Actions `39858634807` para SHA `9aa5dd8fb415df128538d0c80762e609184e74db`: `success`. É validação de Compose/configuração, sem inicialização de containers.
+- Revisão estática dos health checks: Node 22 fornece `fetch` nas imagens backend/frontend; frontend usa `serve` na porta 5173; gateway usa Nginx Alpine e `wget`; backend `/api/health` executa `SELECT 1` e informa readiness degraded se o banco falha. Runtime continua não testado.
+- Correção local: Compose verifica que `DATABASE_URL` use serviço Docker `postgres`, porta 5432, database e usuário `jarvis_staging`, sem parâmetros `host`/`hostaddr`, antes de `prisma migrate deploy`; então inicia `node dist/server.js`. Nenhuma migration foi aplicada.
+- `docker compose config --quiet` e configuração JSON passaram com valores sintéticos. Nove casos passaram: destino staging correto; rejeição de localhost/túnel, `testprod`, porta/usuário/hostname incorretos, queries `host` e `hostaddr`, e URL inválida. Nenhum segredo real, build ou container usado.
+- Usuário confirmou fingerprint no canal Contabo, conta `ubuntu` e escopo read-only. SSH com strict host checking conectou TCP e expirou durante banner; nova tentativa foi resetada na porta 22014 antes de autenticação. Nenhum comando remoto foi executado. Causa ainda desconhecida; console Contabo necessário.
+- Estado: staging não implantado; VPS/produção inalteradas; backup/restore/rollback e testes E2E não executados.

@@ -27,6 +27,13 @@ services:
   backend:
     build:
       context: ./backend
+    command:
+      - sh
+      - -c
+      - >-
+        node -e "const u=new URL(process.env.DATABASE_URL);if(!['postgres:','postgresql:'].includes(u.protocol)||u.hostname!=='postgres'||u.port!=='5432'||u.pathname!=='/jarvis_staging'||decodeURIComponent(u.username)!=='jarvis_staging'||u.searchParams.has('host')||u.searchParams.has('hostaddr')){console.error('STAGING_DATABASE_TARGET_REJECTED');process.exit(1)}" &&
+        ./node_modules/.bin/prisma migrate deploy &&
+        exec node dist/server.js
     depends_on:
       postgres:
         condition: service_healthy

@@ -39,7 +39,7 @@ jobs:
       - name: Assert fail-closed isolation rules
         shell: python
         run: |
-          import json, subprocess
+          import json, os, subprocess
           cmd = ["docker", "compose", "--project-name", "jarvis3staging", "-f", "docker-compose.staging.yml", "config", "--format", "json"]
           data = json.loads(subprocess.check_output(cmd, text=True))
           services = data["services"]
@@ -48,6 +48,32 @@ jobs:
           assert all(not entry.get("ports") for name, entry in services.items() if name != "gateway")
           assert all(entry.get("host_ip") == "127.0.0.1" for entry in services["gateway"]["ports"])
           assert all("healthcheck" in entry for entry in services.values())
+          backend_command = " ".join(services["backend"]["command"])
+          assert "STAGING_DATABASE_TARGET_REJECTED" in backend_command
+          assert "u.hostname!=='postgres'" in backend_command
+          assert "u.port!=='5432'" in backend_command
+          assert "u.pathname!=='/jarvis_staging'" in backend_command
+          assert "decodeURIComponent(u.username)!=='jarvis_staging'" in backend_command
+          assert "u.searchParams.has('host')" in backend_command
+          assert "u.searchParams.has('hostaddr')" in backend_command
+          assert "prisma migrate deploy" in backend_command
+          assert backend_command.endswith("exec node dist/server.js")
+          guard = backend_command.partition('node -e "')[2].partition('" &&')[0]
+          assert guard, "missing executable staging database guard"
+          guard_cases = [
+            ("postgresql://jarvis_staging:synthetic@postgres:5432/jarvis_staging?schema=public", 0),
+            ("postgresql://jarvis_staging:synthetic@127.0.0.1:5432/jarvis_staging", 1),
+            ("postgresql://jarvis_staging:synthetic@postgres:5432/testprod", 1),
+            ("postgresql://jarvis_staging:synthetic@postgres:5433/jarvis_staging", 1),
+            ("postgresql://other:synthetic@postgres:5432/jarvis_staging", 1),
+            ("postgresql://jarvis_staging:synthetic@other:5432/jarvis_staging", 1),
+            ("postgresql://jarvis_staging:synthetic@postgres:5432/jarvis_staging?host=127.0.0.1", 1),
+            ("postgresql://jarvis_staging:synthetic@postgres:5432/jarvis_staging?hostaddr=127.0.0.1", 1),
+            ("not-a-database-url", 1),
+          ]
+          for database_url, expected in guard_cases:
+            result = subprocess.run(["node", "-e", guard], env={**os.environ, "DATABASE_URL": database_url}, capture_output=True, text=True)
+            assert result.returncode == expected, f"staging database guard mismatch for test input (expected {expected})"
           for entry in services.values():
             limits = entry["deploy"]["resources"]["limits"]
             assert limits.get("memory") and limits.get("cpus")

@@ -548,6 +548,15 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Docker daemon Linux local indisponível; build, runtime e teste E2E de staging não puderam ser feitos. Sem acesso remoto: SSH config não existe e a fingerprint fornecida ainda precisa de confirmação independente. Não houve conexão à VPS.
 - Limites do Compose são tetos conservadores, não prova de capacidade da VPS. Revalidar memória/CPU/disco ao vivo e montar imagens fora da VPS antes de iniciar.
 
+## 2026-10-23 — confirmação CI, health checks e bloqueio SSH
+
+- GitHub Actions run `39858634807` para o commit `9aa5dd8fb415df128538d0c80762e609184e74db` concluiu `success`; PR #5 permanece aberto. O job é preflight de configuração e não iniciou containers.
+- Revisão dos health checks contra as imagens/código: backend e frontend usam Node 22 nas imagens finais (fetch embutido); frontend inicia `serve` na porta 5173; gateway Nginx Alpine usa `wget`; `/api/health` consulta DB e informa `readiness=ready` somente quando o banco responde.
+- Encontrado bloqueio para banco vazio: o Dockerfile iniciava `node dist/server.js`, sem migrations. O Compose de staging agora valida protocolo, host `postgres`, porta 5432, usuário/banco `jarvis_staging` e ausência de overrides antes de rodar `prisma migrate deploy`; esta migration está configurada somente no stack de staging e não foi executada.
+- `docker compose config --quiet` e configuração JSON passaram com valores sintéticos. Nove testes do guard: destino staging exato aceito; localhost/túnel, `testprod`, porta/usuário/host incorretos, overrides `host`/`hostaddr` e URL inválida rejeitados. Nenhum build/container foi iniciado pois o daemon Docker Linux local não está disponível.
+- Usuário confirmou fingerprint via Contabo, conta `ubuntu` e autorização somente leitura. SSH em modo estrito conectou no TCP, mas expirou sem banner SSH; a tentativa seguinte recebeu `Connection reset`, antes de autenticação/comandos. Causa permanece desconhecida; diagnóstico do console Contabo pendente. VPS e produção inalteradas.
+- Próximos passos: executar diagnóstico read-only no console autenticado Contabo; depois retestar SSH e inventariar capacidade/containers. Implantar staging somente após capacidade confirmada e gate operacional. PR #5 sem merge/deploy.
+
 ## 2026-10-22 — LIFE-001 — correção de validação do frontend
 
 - GitHub Actions run `39635859317` do PR draft #2 falhou somente no job `validate`/frontend; `android` e `desktop` passaram. A falha era a consulta ambígua do botão porque a suíte não limpava o DOM entre testes.
