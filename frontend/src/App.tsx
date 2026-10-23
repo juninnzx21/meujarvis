@@ -31,6 +31,7 @@ import { MobileAssistantPage } from "./pages/MobileAssistant/MobileAssistantPage
 import { N8nPage } from "./pages/N8n/N8nPage";
 import { NotificationsPage } from "./pages/Notifications/NotificationsPage";
 import { ReportsPage } from "./pages/Reports/ReportsPage";
+import { QaReleasesPage } from "./pages/QA/QaReleasesPage";
 import { RoutinesPage } from "./pages/Routines/RoutinesPage";
 import { SettingsPage } from "./pages/Settings/SettingsPage";
 import { VoiceSettingsPage } from "./pages/Settings/VoiceSettingsPage";
@@ -94,6 +95,7 @@ export default function App() {
         <Route path="settings/voice" element={<VoiceSettingsPage />} />
         <Route path="logs" element={<LogsPage />} />
         <Route path="status" element={<StatusPage />} />
+        <Route path="qa/releases" element={<QaReleasesPage />} />
       </Route>
     </Routes>
   );
