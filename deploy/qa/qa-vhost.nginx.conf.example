@@ -1,0 +1,27 @@
+# EXAMPLE ONLY — do NOT enable before reviewing the current production proxy.
+# QA is a *separate* virtual host pointing only to the loopback staging gateway.
+# A trusted HTTPS terminator must provide a VALID certificate for qa.jarvis.juninnzxtec.com.br.
+# Require administrative access controls at the edge (e.g. identity-aware access proxy)
+# in addition to the JARVIS application login and MFA.
+#
+# Insert in the EXISTING HTTPS virtual-host configuration only after operator review.
+# Do not duplicate listen/server_name blocks or replace the production vhost.
+#
+# server {
+#     listen 443 ssl http2;
+#     server_name qa.jarvis.juninnzxtec.com.br;
+#     ssl_certificate     /PATH/TO/VALID/QA/CERTIFICATE;
+#     ssl_certificate_key /PATH/TO/VALID/QA/PRIVATE_KEY;
+#
+#     # An approved edge access policy must restrict QA to authorized accounts.
+#     location / {
+#         proxy_pass http://127.0.0.1:18080;
+#         proxy_http_version 1.1;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Forwarded-Proto https;
+#         proxy_set_header X-Forwarded-For $remote_addr;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Request-Id $request_id;
+#         proxy_read_timeout 30s;
+#     }
+# }
