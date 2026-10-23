@@ -54,6 +54,6 @@ Qualquer ação de escrita em produção — inclusive restart/stop de container
 
 Cada agente terá checkout/worktree distinto e branch própria. A branch não substitui isolamento de diretório: duas aplicações nunca podem editar a mesma worktree. Alterações devem ser revisadas e integradas por uma única worktree de integração, com validação antes de qualquer publicação. Nenhum agente publica, faz merge ou implanta sem autorização separada.
 
-## Bloqueio atual
+## Estado da tentativa — 2026-10-23
 
-O usuário já autorizou conexão somente leitura e confirmou o endpoint `[VPS_ENDPOINT_REDACTED]:22014`. Ainda faltam o nome da conta não-root existente e fingerprint SHA256 da host key obtido por canal confiável. Portanto, não foi criado alias operacional, não houve tentativa de login e não houve mudança remota. A tarefa fica bloqueada somente nesses dados; autorização para criar usuário/chave na VPS ou conceder privilégios não está incluída.
+O usuário confirmou endpoint/porta, conta `ubuntu`, fingerprint ED25519 via Contabo e autorizou somente leitura. A fingerprint foi comparada à entrada local de host conhecida sem ler chave privada. A tentativa SSH com `StrictHostKeyChecking=yes` conectou no TCP, mas não recebeu banner e expirou; a tentativa seguinte foi resetada antes da autenticação. Isso não indica se usuário/chave são válidos, pois a autenticação não começou. Nenhum comando remoto foi executado. O próximo passo é executar o diagnóstico read-only pelo console Contabo; não reiniciar SSH nem alterar firewall/Fail2ban sem causa comprovada e autorização específica.

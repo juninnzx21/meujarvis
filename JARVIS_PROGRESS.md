@@ -541,6 +541,23 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - `docs/jarvis/STAGING_VPS_RUNBOOK.md`: check de recursos, exigência de conta SSH não-root e host key verificada, Environment staging, banco isolado, migração segura, smoke E2E e rollback.
 - **Não executado nesta sessão**: docker compose config na VPS, GitHub Actions, build/run/health real, snapshot, migração, DNS ou publicação. Nenhum gate existente promovido.
 
+## 2026-10-22 — staging — hardening local e acesso bloqueado
+
+- Compose isolado atualizado com rede interna para DB/backend/frontend, bridge separada só para gateway, health checks e limites máximos agregados de 1,216 MiB e 1,50 CPU para os quatro serviços. Publicação continua somente em `127.0.0.1:18080`; integrações pagas, WhatsApp e scheduler permanecem desativados.
+- Preflight local com Docker Compose 5.6.0 e valores sintéticos passou em dez asserções de isolamento; sem variáveis, a configuração falha fechado. Nenhum container foi iniciado.
+- Docker daemon Linux local indisponível; build, runtime e teste E2E de staging não puderam ser feitos. Sem acesso remoto: SSH config não existe e a fingerprint fornecida ainda precisa de confirmação independente. Não houve conexão à VPS.
+- Limites do Compose são tetos conservadores, não prova de capacidade da VPS. Revalidar memória/CPU/disco ao vivo e montar imagens fora da VPS antes de iniciar.
+
+## 2026-10-23 — confirmação CI, health checks e bloqueio SSH
+
+- GitHub Actions run `39858634807` para o commit `9aa5dd8fb415df128538d0c80762e609184e74db` concluiu `success`; PR #5 permanece aberto. O job é preflight de configuração e não iniciou containers.
+- Revisão dos health checks contra as imagens/código: backend e frontend usam Node 22 nas imagens finais (fetch embutido); frontend inicia `serve` na porta 5173; gateway Nginx Alpine usa `wget`; `/api/health` consulta DB e informa `readiness=ready` somente quando o banco responde.
+- Encontrado bloqueio para banco vazio: o Dockerfile iniciava `node dist/server.js`, sem migrations. O Compose de staging agora valida protocolo, host `postgres`, porta 5432, usuário/banco `jarvis_staging` e ausência de overrides antes de rodar `prisma migrate deploy`; esta migration está configurada somente no stack de staging e não foi executada.
+- `docker compose config --quiet` e configuração JSON passaram com valores sintéticos. Nove testes do guard: destino staging exato aceito; localhost/túnel, `testprod`, porta/usuário/host incorretos, overrides `host`/`hostaddr` e URL inválida rejeitados. Nenhum build/container foi iniciado pois o daemon Docker Linux local não está disponível.
+- Usuário confirmou fingerprint via Contabo, conta `ubuntu` e autorização somente leitura. SSH em modo estrito conectou no TCP, mas expirou sem banner SSH; a tentativa seguinte recebeu `Connection reset`, antes de autenticação/comandos. Causa permanece desconhecida; diagnóstico do console Contabo pendente. VPS e produção inalteradas.
+- Próximos passos: executar diagnóstico read-only no console autenticado Contabo; depois retestar SSH e inventariar capacidade/containers. Implantar staging somente após capacidade confirmada e gate operacional. PR #5 sem merge/deploy.
+- Após o commit `54a45a8d748e316a40a99b1a5f812cbaa0dddf81`, GitHub Actions run `39923141675` concluiu `success` no workflow de preflight. Continua sendo validação estática/sintética, sem build ou runtime.
+
 ## 2026-10-22 — LIFE-001 — correção de validação do frontend
 
 - GitHub Actions run `39635859317` do PR draft #2 falhou somente no job `validate`/frontend; `android` e `desktop` passaram. A falha era a consulta ambígua do botão porque a suíte não limpava o DOM entre testes.
@@ -576,3 +593,5 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - Inspecionados `.github/workflows/deploy-plan.yml` (plan-only/fail-closed) e `release-downloads.yml` (publicação por tags, gate de ancestralidade/CI no SHA exato). Nenhum deploy da VPS existe; settings externos de branch protection, tags e Environment permanecem não verificados.
 - Criado `docs/jarvis/RELEASE_APPROVAL_DESIGN.md` com identidade imutável SHA+digest, checagem de CI/branch, aprovação admin com MFA step-up, expiração, consumo único, auditoria append-only e gates separados de backup/rollback/GitHub Environment. É somente desenho; nenhuma funcionalidade de aprovação ou deploy foi implementada.
 - Próximas tarefas: revisão independente do desenho e decisão de TTL/política de aprovador; desbloquear staging com Docker/segredos sintéticos e obter conta/fingerprint SSH confiáveis; depois implementar APIs/UI de approval em escopo separado. Nenhum merge, release, deploy, VPS, scheduler ou chamada paga.
+
+- Sincronização da branch de staging com o HEAD atual da base do PR #2 foi feita no commit de merge local `602829aa`, preservando a base e permitindo revisão incremental. O commit de implementação permanece `0fe8441`.

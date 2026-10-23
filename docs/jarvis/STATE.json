@@ -154,10 +154,12 @@
     "OBS-001/OBS-002: revisão independente do código sem achado P2 aberto conhecido; falta smoke operacional somente leitura no ambiente ativo.",
     "AUTH-001: hardening local passou em testes e re-revisão direcionada; CI remoto da branch e verificação protegida da chave TOTP no runtime ainda pendentes.",
     "AI-001: inelegível até OBS-001 atingir DONE_VERIFIED; provedores reais/custo não testados.",
-    "VPS-ACCESS-001: endpoint [VPS_ENDPOINT_REDACTED]:22014 confirmado pelo usuário; faltam conta SSH não-root e fingerprint SHA256 da host key por canal confiável. Nenhuma conexão feita.",
+    "VPS-ACCESS-001: usuário confirmou endpoint, conta ubuntu e fingerprint ED25519 via Contabo; SSH read-only conectou TCP mas falhou no banner/reset antes da autenticação. Nenhum comando remoto executado.",
     "CI/CD: branch codex/agent-sync-v1-20261017 não encontrada no GitHub; commit atual não tem CI remoto e não foi publicado. PR #1 aponta para outro branch/head.",
     "Produção: não há workflow de deploy; regras de branch/environment GitHub, VPS/Compose/healthcheck e restore/rollback em staging não foram verificados.",
-    "Agent Sync/scheduler permanecem pausados; OPENAI_API_KEY ausente; nenhuma chamada paga, push, merge, deploy ou mudança VPS."
+    "Agent Sync/scheduler permanecem pausados; OPENAI_API_KEY ausente; nenhuma chamada paga, push, merge, deploy ou mudança VPS.",
+    "Staging VPS: fingerprint e conta ubuntu confirmadas pelo proprietário; acesso SSH ainda falha antes da autenticação e aguarda diagnóstico no console Contabo.",
+    "Staging runtime: Docker Desktop Linux daemon unavailable locally; no container/build/E2E/backup/rollback validation."
   ],
   "lastCommit": "dd27c5770354c893e379040ccaf0e9f545f84084",
   "nextTaskId": null,
@@ -171,7 +173,7 @@
     "worktree": "E:\\jarvis-home-assistant\\.codex-worktrees\\jarvis-auth-001-20261017"
   },
   "vpsAccess": {
-    "status": "BLOCKED_PENDING_NON_ROOT_ACCOUNT_AND_TRUSTED_HOST_FINGERPRINT",
+    "status": "BLOCKED_PENDING_INDEPENDENT_HOST_FINGERPRINT_AND_ACCOUNT_CONFIRMATION",
     "proposal": "docs/jarvis/VPS_ACCESS.md",
     "dedicatedKeyDetected": true,
     "privateKeyContentRead": false,
@@ -185,7 +187,11 @@
     ],
     "readOnlyConnectionAuthorized": true,
     "endpoint": "[VPS_ENDPOINT_REDACTED]:22014",
-    "endpointConfirmedByUser": true
+    "endpointConfirmedByUser": true,
+    "knownHostEntryPresent": true,
+    "hostFingerprintIndependentlyVerified": false,
+    "usernameFromPastedPrompt": "ubuntu",
+    "usernameIndependentlyConfirmed": false
   },
   "lastRunnerCheck": {
     "dryRun": "DRY_RUN_OK; Codex authenticated; OPENAI_API_KEY absent; eligibleTaskIds empty; scheduler/production disabled; no cycle.",
@@ -501,10 +507,10 @@
     "productionReady": false
   },
   "nextLocalCheckpoint": {
-    "task": "RELEASE-APPROVAL-001",
-    "status": "DESIGN_READY_FOR_INDEPENDENT_REVIEW",
-    "nextTaskId": "LIFE-001-TIMEZONE-001",
-    "reason": "PR #2 head 815a79ebc8c8767174a7c7b5bd1335f7560a8810 CI run 39852514814 passed validate, desktop and android. Artifacts are present, unexpired, and metadata links them to the same SHA; binaries were not inspected. Docker Linux daemon is unavailable, blocking staging, authenticated E2E, backup, restore and rollback. VPS read-only remains blocked until a non-root username and trusted SHA256 host fingerprint are supplied. Release approval remains a design only."
+    "task": "STAGING-VPS-ACCESS-001",
+    "status": "PREPARATION_COMPLETE_BLOCKED_REMOTE_IDENTITY",
+    "nextTaskId": "STAGING-DEPLOY-001",
+    "reason": "Local Compose preflight with synthetic values passed and fail-closed behavior confirmed. Remote access awaits independent host fingerprint/account confirmation. No containers started; local Docker Linux daemon unavailable."
   },
   "life001Checkpoint": {
     "timestampUtc": "2026-10-22T21:15:00Z",
@@ -555,5 +561,32 @@
     "push": "NOT_PERFORMED_HISTORY_PRIVACY_REVIEW_REQUIRED",
     "schedulerEnabled": false,
     "paidCycleStarted": false
+  },
+  "stagingVps": {
+    "status": "PREPARED_LOCALLY_NOT_DEPLOYED",
+    "compose": "docker-compose.staging.yml",
+    "project": "jarvis3staging",
+    "hostBind": "127.0.0.1:18080",
+    "network": "private internal app network plus gateway-only bridge",
+    "resourceLimits": "postgres 384MiB/0.50 CPU; backend 512MiB/0.60 CPU; frontend 192MiB/0.25 CPU; gateway 128MiB/0.15 CPU",
+    "healthChecks": "postgres, backend readiness+database, frontend, gateway",
+    "localComposePreflight": "PASS with synthetic values; fail closed without required staging variables; ten isolation assertions passed",
+    "dockerDaemon": "UNAVAILABLE_DOCKER_DESKTOP_LINUX_PIPE",
+    "remoteAudit": "BLOCKED_SSH_PREAUTH_BANNER_TIMEOUT_AND_RESET",
+    "remoteAccount": "ubuntu confirmed by owner; authentication not reached",
+    "hostFingerprint": "confirmed by owner via Contabo and matched to local known-host key; no private key read",
+    "sshAttempt": "TCP connected; banner exchange timed out; next attempt reset before authentication; no remote command ran",
+    "containersStarted": false,
+    "migrationApplied": false,
+    "stagingE2e": "NOT_RUN",
+    "backupRestoreRollback": "NOT_RUN",
+    "productionTouched": false,
+    "pullRequest": "https://github.com/juninnzx21/meujarvis/pull/5",
+    "commit": "0fe8441097e40e298660604af66e87c486511fce",
+    "implementationCommit": "0fe8441097e40e298660604af66e87c486511fce",
+    "branchSyncCommit": "602829aa1e63d851c073009758849b52c62d051d",
+    "remoteCi": "PASS run 39923141675 for 54a45a8d748e316a40a99b1a5f812cbaa0dddf81; static preflight and synthetic URL guard tests only",
+    "stagingMigrationGuard": "PASS 9 synthetic cases: exact staging target accepted; localhost/tunnel, testprod, wrong port/user/host, host/hostaddr override, invalid URL rejected; no migration executed",
+    "documentationCommit": "d9ce4305018ebf1f255a76577b059074cff9b9c7"
   }
 }
