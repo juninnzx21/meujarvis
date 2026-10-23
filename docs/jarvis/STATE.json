@@ -585,7 +585,7 @@
     "commit": "0fe8441097e40e298660604af66e87c486511fce",
     "implementationCommit": "0fe8441097e40e298660604af66e87c486511fce",
     "branchSyncCommit": "602829aa1e63d851c073009758849b52c62d051d",
-    "remoteCi": "PASS run 39858634807 for 9aa5dd8fb415df128538d0c80762e609184e74db; static preflight only",
+    "remoteCi": "PASS run 39923141675 for 54a45a8d748e316a40a99b1a5f812cbaa0dddf81; static preflight and synthetic URL guard tests only",
     "stagingMigrationGuard": "PASS 9 synthetic cases: exact staging target accepted; localhost/tunnel, testprod, wrong port/user/host, host/hostaddr override, invalid URL rejected; no migration executed",
     "documentationCommit": "pending local checkpoint"
   }

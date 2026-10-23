@@ -556,6 +556,7 @@ Não reescreva nem remova entradas antigas. Cada execução acrescenta um bloco 
 - `docker compose config --quiet` e configuração JSON passaram com valores sintéticos. Nove testes do guard: destino staging exato aceito; localhost/túnel, `testprod`, porta/usuário/host incorretos, overrides `host`/`hostaddr` e URL inválida rejeitados. Nenhum build/container foi iniciado pois o daemon Docker Linux local não está disponível.
 - Usuário confirmou fingerprint via Contabo, conta `ubuntu` e autorização somente leitura. SSH em modo estrito conectou no TCP, mas expirou sem banner SSH; a tentativa seguinte recebeu `Connection reset`, antes de autenticação/comandos. Causa permanece desconhecida; diagnóstico do console Contabo pendente. VPS e produção inalteradas.
 - Próximos passos: executar diagnóstico read-only no console autenticado Contabo; depois retestar SSH e inventariar capacidade/containers. Implantar staging somente após capacidade confirmada e gate operacional. PR #5 sem merge/deploy.
+- Após o commit `54a45a8d748e316a40a99b1a5f812cbaa0dddf81`, GitHub Actions run `39923141675` concluiu `success` no workflow de preflight. Continua sendo validação estática/sintética, sem build ou runtime.
 
 ## 2026-10-22 — LIFE-001 — correção de validação do frontend
 
