@@ -1,0 +1,106 @@
+name: JARVIS public downloads
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate release tag
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^v([0-9]+\.[0-9]+\.[0-9]+)$') {
+            throw "Release tag must use vMAJOR.MINOR.PATCH; received '$env:GITHUB_REF_NAME'."
+          }
+          "JARVIS_VERSION=$($Matches[1])" >> $env:GITHUB_ENV
+          "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - name: Validate and build the Windows companion
+        working-directory: desktop
+        run: |
+          npm ci
+          npm version "$env:JARVIS_VERSION" --no-git-tag-version --allow-same-version
+          npm run validate
+          npm run dist:win -- --config.productName="JARVIS $env:JARVIS_VERSION Desktop"
+      - name: Stage Windows installer
+        id: stage
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          $installer = Get-ChildItem desktop/release -Filter '*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'The Windows installer was not generated.' }
+          $asset = "JARVIS-$env:JARVIS_VERSION-Desktop-Setup-x64.exe"
+          Copy-Item -LiteralPath $installer.FullName -Destination "release-assets/$asset"
+          "asset=$asset" >> $env:GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-windows-${{ github.ref_name }}
+          path: release-assets/${{ steps.stage.outputs.asset }}
+          if-no-files-found: error
+          retention-days: 3
+
+  publish-release:
+    needs: build-windows-installer
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+      - name: Require release commit to be in main history
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
+            echo "Release tag does not point to a commit reachable from main." >&2
+            exit 1
+          }
+          runs=$(gh run list --repo "$GITHUB_REPOSITORY" --branch main --commit "$GITHUB_SHA" --event push --limit 100 \
+            --json workflowName,event,headBranch,headSha,conclusion)
+          ci_success=$(printf '%s' "$runs" | python3 -c 'import json, os, sys; runs=json.load(sys.stdin); sha=os.environ["GITHUB_SHA"]; print("true" if any(r.get("workflowName")=="JARVIS CI" and r.get("event")=="push" and r.get("headBranch")=="main" and r.get("headSha")==sha and r.get("conclusion")=="success" for r in runs) else "false")')
+          if [[ "$ci_success" != "true" ]]; then
+            echo "No successful JARVIS CI push run for this exact main commit; release publication is blocked." >&2
+            exit 1
+          fi
+      - name: Validate release tag and Android asset
+        id: release
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+          else
+            echo "Release tag must use vMAJOR.MINOR.PATCH." >&2
+            exit 1
+          fi
+          android_asset="release-assets/JARVIS-${version}-Android.apk"
+          test -s "$android_asset" || { echo "Missing version-matched signed APK: $android_asset" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "android_asset=$android_asset" >> "$GITHUB_OUTPUT"
+          echo "windows_asset=JARVIS-${version}-Desktop-Setup-x64.exe" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: jarvis-windows-${{ github.ref_name }}
+          path: release-assets
+      - name: Generate release checksums
+        run: cd release-assets && sha256sum "${{ steps.release.outputs.windows_asset }}" "${{ steps.release.outputs.android_asset }}" > SHA256SUMS.txt
+      - name: Publish public release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "release-assets/${{ steps.release.outputs.windows_asset }}" "release-assets/${{ steps.release.outputs.android_asset }}" release-assets/SHA256SUMS.txt --verify-tag --title "JARVIS ${{ steps.release.outputs.version }}" --notes "JARVIS ${{ steps.release.outputs.version }} for Windows x64 and Android. The Android APK must be a signed, version-matched asset committed as ${{ steps.release.outputs.android_asset }}. The Windows installer is not Authenticode-signed and may trigger Windows SmartScreen."

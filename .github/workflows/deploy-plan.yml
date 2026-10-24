@@ -1,0 +1,49 @@
+name: JARVIS deployment plan (no publishing)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Target whose deployment gates should be reviewed
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      enable_real_deploy:
+        description: Reserved; real deployment is not implemented and this must remain false
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-deploy-plan-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  deployment-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce fail-closed deployment gate
+        shell: bash
+        env:
+          TARGET: ${{ inputs.target }}
+          ENABLE_REAL_DEPLOY: ${{ inputs.enable_real_deploy }}
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Deployment plans may run only from main; no deployment was attempted." >&2
+            exit 1
+          fi
+          if [[ "$ENABLE_REAL_DEPLOY" == "true" ]]; then
+            echo "Real deployment is not implemented. This workflow cannot publish to any target." >&2
+            exit 1
+          fi
+          case "$TARGET" in
+            staging|production) ;;
+            *) echo "Unknown deployment target; no deployment was attempted." >&2; exit 1 ;;
+          esac
+          echo "PLAN_ONLY target=$TARGET commit=$GITHUB_SHA"
+          echo "No SSH, secrets, migrations, backup, restart, or remote command was used."

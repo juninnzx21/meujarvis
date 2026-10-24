@@ -15,7 +15,7 @@ function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-async function runtimeConfig(userId?: string) {
+async function runtimeConfig(userId?: string, allowEnvironmentFallback = true) {
   if (userId) {
     const rows = await prisma.setting.findMany({ where: { userId, key: { in: Object.values(keys) } } });
     const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
@@ -23,6 +23,7 @@ async function runtimeConfig(userId?: string) {
     const token = asString(decryptSettingValue(keys.token, settings[keys.token]));
     if (url || token) return { url, token, source: "settings" as const };
   }
+  if (!allowEnvironmentFallback) return { url: "", token: "", source: "settings" as const };
   if (homeAssistantService.configured && (!env.HOME_ASSISTANT_URL || !env.HOME_ASSISTANT_TOKEN)) {
     return { url: "http://home-assistant.test", token: "test-token", source: "env" as const };
   }
@@ -36,17 +37,32 @@ export const homeAssistantService = {
   async runtimeConfig(userId?: string) {
     return runtimeConfig(userId);
   },
-  async status(userId?: string) {
+  async status(userId?: string, includeEnvironmentDetails = false) {
     const config = await runtimeConfig(userId);
     const configured = Boolean(config.url && config.token);
+    const exposeDetails = config.source !== "env" || includeEnvironmentDetails;
+    if (!exposeDetails) {
+      return {
+        configured: null,
+        status: "unknown",
+        urlConfigured: null,
+        tokenConfigured: null,
+        tokenMasked: ""
+      };
+    }
     return {
       configured,
       status: configured ? "configured" : "not_configured",
       source: config.source,
       urlConfigured: Boolean(config.url),
       tokenConfigured: Boolean(config.token),
-      tokenMasked: maskSecret(config.token)
+      tokenMasked: exposeDetails ? maskSecret(config.token) : ""
     };
+  },
+  async healthStatusForUser(userId: string) {
+    const config = await runtimeConfig(userId, false);
+    const configured = Boolean(config.url && config.token);
+    return { configured, status: configured ? "configured" : "not_configured" };
   },
   async saveConfig(userId: string, input: { url: string; token?: string }) {
     const current = await runtimeConfig(userId);

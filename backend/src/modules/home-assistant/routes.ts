@@ -8,7 +8,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 const router = Router();
 router.use(authMiddleware);
 
-router.get("/status", asyncHandler(async (req, res) => res.json(await homeAssistantService.status(req.user!.id))));
+router.get("/status", asyncHandler(async (req, res) => res.json(await homeAssistantService.status(req.user!.id, req.user!.role === "admin"))));
 router.post("/test-connection", asyncHandler(async (req, res) => res.json(await homeAssistantService.testConnection(req.user!.id))));
 router.get("/entities", asyncHandler(async (req, res) => res.json(await homeAssistantService.entities(req.user!.id))));
 router.post("/call-service", validate(z.object({ domain: z.string(), service: z.string(), data: z.record(z.unknown()).default({}), confirmed: z.boolean().optional() })), asyncHandler(async (req, res) => {

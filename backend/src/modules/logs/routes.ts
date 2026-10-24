@@ -4,6 +4,7 @@ import type { Prisma, SystemLogLevel } from "@prisma/client";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { prisma } from "../../prisma/client.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { sanitizeSystemLog } from "../../services/systemLogService.js";
 
 const router = Router();
 router.use(authMiddleware);
@@ -59,7 +60,7 @@ router.get("/", asyncHandler(async (req, res) => {
     select: { id: true, level: true, module: true, action: true, message: true, metadata: true, createdAt: true },
     take
   });
-  res.json({ logs });
+  res.json({ logs: logs.map(sanitizeSystemLog) });
 }));
 
 router.get("/summary", asyncHandler(async (req, res) => {
@@ -98,8 +99,8 @@ router.get("/summary", asyncHandler(async (req, res) => {
     since: since.toISOString(),
     levels: byLevel.reduce<Record<string, number>>((acc, item) => ({ ...acc, [item.level]: item._count._all }), {}),
     modules: byModule.map((item) => ({ module: item.module, total: item._count._all })),
-    recentIssues,
-    latest,
+    recentIssues: recentIssues.map(sanitizeSystemLog),
+    latest: latest ? sanitizeSystemLog(latest) : null,
     watchedModules: defaultModules
   });
 }));

@@ -9,7 +9,7 @@ export class KnowledgePlannerService {
     if (intent.startsWith("finance.")) base.push("summarizeFinance", "listPendingImports", "detectDuplicates");
     if (intent.startsWith("document.")) base.push("searchDocuments", "listDocuments");
     if (intent === "integration.configure" || intent === "deploy.help") base.push("getIntegrationStatus", "getRecentLogs");
-    if (intent === "whatsapp.configure") base.push("getWhatsappStatus", "getWebhookUrl");
+    if (intent === "whatsapp.configure") base.push("getWhatsappStatus");
     if (intent === "n8n.workflow") base.push("getN8nStatus", "listWorkflows");
     if (intent === "home.action") base.push("getHomeStatus", "listEntities", "prepareSafeAction");
     if (mode === "deep") base.push("searchMemories");

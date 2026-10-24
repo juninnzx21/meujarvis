@@ -28,11 +28,29 @@ export function IntegrationsPage() {
   const urls = data.urls || {};
 
   async function load() {
-    const res = await api.get("/integrations/status");
-    setData(res.data);
+    const [integrations, evolution] = await Promise.all([
+      api.get("/integrations/status"),
+      api.get("/whatsapp/evolution/status").catch(() => ({ data: { connectionState: "unknown" } }))
+    ]);
+    const connectionState = evolution.data.connectionState || "unknown";
+    const liveStatus = { ...integrations.data.providers?.whatsapp, connectionState, status: connectionState };
+    setData({
+      ...integrations.data,
+      providers: {
+        ...integrations.data.providers,
+        whatsapp: liveStatus,
+        evolution: { ...integrations.data.providers?.evolution, ...liveStatus }
+      }
+    });
   }
 
-  useEffect(() => { load().catch(() => setMessage("Nao foi possivel carregar as integracoes.")); }, []);
+  useEffect(() => {
+    let active = true;
+    const refresh = () => { if (active) load().catch(() => setMessage("Nao foi possivel carregar as integracoes.")); };
+    refresh();
+    const interval = window.setInterval(refresh, 15000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, []);
 
   async function test(provider: string) {
     setMessage("");

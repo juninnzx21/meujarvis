@@ -45,10 +45,11 @@ router.post("/send", validate(z.object({ content: z.string().min(1), conversatio
     });
   }
 
+  const history = await prisma.message.findMany({ where: { conversationId: conversation.id, role: { in: ["user", "assistant"] } }, orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } });
   const userMessage = await prisma.message.create({ data: { conversationId: conversation.id, role: "user", content } });
-  const result = await brainService.ask({ userId: req.user!.id, message: content, source: "chat", mode: mode ?? "normal", allowExternalAI: true, allowTools: true });
+  const result = await brainService.ask({ userId: req.user!.id, message: content, source: "chat", mode: mode ?? "normal", allowExternalAI: true, allowTools: true, history: history.reverse().map((item) => ({ role: item.role as "user" | "assistant", content: item.content })) });
   const assistantMessage = await prisma.message.create({
-    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, agent: result.agent, confidence: result.confidence, needsConfirmation: result.needsConfirmation } }
+    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, agent: result.agent, confidence: result.confidence, needsConfirmation: result.needsConfirmation, usedSources: result.usedSources } }
   });
   res.json({ conversation, userMessage, assistantMessage, reply: result.reply, intent: result.intent, agent: result.agent, confidence: result.confidence, usedSources: result.usedSources, usedTools: result.usedTools, needsConfirmation: result.needsConfirmation, draftAction: result.draftAction, suggestedNextActions: result.suggestedNextActions });
 }));
@@ -65,16 +66,17 @@ router.post("/stream", validate(z.object({ content: z.string().min(1), conversat
     });
   }
 
+  const history = await prisma.message.findMany({ where: { conversationId: conversation.id, role: { in: ["user", "assistant"] } }, orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } });
   await prisma.message.create({ data: { conversationId: conversation.id, role: "user", content } });
-  const result = await brainService.ask({ userId: req.user!.id, message: content, source: "chat", mode: mode ?? "normal", allowExternalAI: true, allowTools: true });
+  const result = await brainService.ask({ userId: req.user!.id, message: content, source: "chat", mode: mode ?? "normal", allowExternalAI: true, allowTools: true, history: history.reverse().map((item) => ({ role: item.role as "user" | "assistant", content: item.content })) });
   const assistantMessage = await prisma.message.create({
-    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, agent: result.agent, streamingFallback: true } }
+    data: { conversationId: conversation.id, role: "assistant", content: result.reply, metadata: { intent: result.intent, agent: result.agent, streamingFallback: true, usedSources: result.usedSources } }
   });
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-  res.write(`event: metadata\ndata: ${JSON.stringify({ conversationId: conversation.id, messageId: assistantMessage.id, intent: result.intent, agent: result.agent })}\n\n`);
+  res.write(`event: metadata\ndata: ${JSON.stringify({ conversationId: conversation.id, messageId: assistantMessage.id, intent: result.intent, agent: result.agent, usedSources: result.usedSources })}\n\n`);
   res.write(`event: token\ndata: ${JSON.stringify({ content: result.reply })}\n\n`);
   res.write(`event: done\ndata: ${JSON.stringify({ ok: true })}\n\n`);
   res.end();

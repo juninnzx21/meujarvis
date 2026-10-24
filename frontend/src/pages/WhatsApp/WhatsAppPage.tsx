@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Copy, FlaskConical, LogOut, QrCode, RefreshCw, Save, Send, ShieldCheck, Trash2, Wifi } from "lucide-react";
 import { StatusPill } from "../../components/StatusPill";
 import { api, friendlyError } from "../../services/api";
@@ -30,13 +30,6 @@ export function WhatsAppPage() {
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef<number | undefined>();
 
-  const connectionLabel = useMemo(() => {
-    const state = evolution.connectionState || "unknown";
-    if (state === "connected") return "connected/open";
-    if (state === "disconnected") return "disconnected";
-    return state;
-  }, [evolution.connectionState]);
-
   async function load() {
     const [statusRes, configRes, evolutionRes] = await Promise.all([
       api.get("/whatsapp/status"),
@@ -55,7 +48,13 @@ export function WhatsAppPage() {
 
   useEffect(() => {
     load().catch((error) => setMessage(friendlyError(error)));
+    const statusInterval = window.setInterval(() => {
+      api.get("/whatsapp/evolution/status")
+        .then((response) => setEvolution((current) => ({ ...current, ...response.data })))
+        .catch(() => setEvolution((current) => ({ ...current, connectionState: "unknown", message: "Estado da sessão não verificado." })));
+    }, 15000);
     return () => {
+      window.clearInterval(statusInterval);
       if (pollingRef.current) window.clearInterval(pollingRef.current);
     };
   }, []);
@@ -251,7 +250,7 @@ export function WhatsAppPage() {
         <div className="glass space-y-4 rounded-2xl p-5">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-xl font-black text-white">2. Instancia e QR Code</h3>
-            <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-slate-200">{connectionLabel}</span>
+            <StatusPill status={evolution.connectionState || "unknown"} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={createInstance} className="btn btn-ghost"><Wifi size={18} /> Criar instancia</button>

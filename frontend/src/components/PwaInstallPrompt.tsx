@@ -38,8 +38,8 @@ export function PwaInstallPrompt() {
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-400/15 text-cyanx"><Download size={18} /></div>
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-white">Instalar JARVIS no celular</p>
-          <p className="mt-1 text-sm text-slate-400">Use como app PWA, com atalhos para voz, chat, tarefas, financeiro e status.</p>
+          <p className="font-bold text-white">Instalar JARVIS neste dispositivo</p>
+          <p className="mt-1 text-sm text-slate-400">Abra em uma janela própria com atalhos para voz, chat, tarefas e status.</p>
           <div className="mt-3 flex gap-2">
             <button className="btn btn-primary px-3 py-2 text-sm" onClick={install}>Instalar</button>
             <button className="btn btn-ghost px-3 py-2 text-sm" onClick={dismiss}>Agora nao</button>

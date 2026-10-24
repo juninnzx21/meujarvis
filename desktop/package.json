@@ -1,0 +1,34 @@
+{
+  "name": "jarvis-desktop-companion",
+  "version": "2.0.0",
+  "author": "Juninnzxtec",
+  "private": true,
+  "description": "Companion desktop seguro do JARVIS para Windows",
+  "main": "dist/main.js",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "dist:win": "npm run build && electron-builder --win nsis --x64",
+    "validate": "npm run typecheck && npm run build && node --test test/*.test.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "electron": "44.7.2",
+    "electron-builder": "26.15.3",
+    "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "br.com.juninnzxtec.jarvis.desktop",
+    "productName": "JARVIS 2.0 Desktop",
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "assets/**/*", "package.json"],
+    "win": { "icon": "assets/jarvis.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    }
+  }
+}
