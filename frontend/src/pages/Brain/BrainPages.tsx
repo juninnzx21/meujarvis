@@ -16,7 +16,7 @@ type BrainAsk = {
   agent: string;
   intent: string;
   confidence: number;
-  usedSources: Array<{ type: string; title: string; excerpt: string }>;
+  usedSources: Array<{ type: string; title: string; excerpt: string; url?: string }>;
   usedTools: Array<{ tool: string; status: string; message?: string }>;
   needsConfirmation: boolean;
   suggestedNextActions: string[];
@@ -105,8 +105,8 @@ export function BrainPage() {
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <h3 className="mb-2 font-bold text-white">Fontes internas</h3>
-              {result.usedSources.length ? result.usedSources.map((source) => <p key={`${source.type}-${source.title}`} className="mb-2 rounded-xl bg-white/5 p-3 text-sm text-slate-300">{source.title}<br /><span className="text-slate-500">{source.excerpt}</span></p>) : <p className="text-sm text-slate-500">Nenhuma fonte especifica.</p>}
+              <h3 className="mb-2 font-bold text-white">Fontes consultadas</h3>
+              {result.usedSources.length ? result.usedSources.map((source) => <p key={`${source.type}-${source.title}`} className="mb-2 rounded-xl bg-white/5 p-3 text-sm text-slate-300">{source.url ? <a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-cyan-200 underline">{source.title}</a> : source.title}<br /><span className="text-slate-500">{source.excerpt}</span></p>) : <p className="text-sm text-slate-500">Nenhuma fonte especifica.</p>}
             </div>
             <div>
               <h3 className="mb-2 font-bold text-white">Ferramentas</h3>

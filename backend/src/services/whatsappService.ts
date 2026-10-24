@@ -5,6 +5,7 @@ import { prisma } from "../prisma/client.js";
 import { openAiService } from "./openAiService.js";
 import { writeSystemLog } from "./systemLogService.js";
 import { decryptSettingValue, encryptSettingValue, maskSecret } from "./encryptionService.js";
+import { normalizeWhatsAppConnectionState } from "../modules/whatsapp/connectionState.js";
 
 const keys = {
   apiUrl: "whatsapp_evolution_api_url",
@@ -73,7 +74,7 @@ function detectAttachment(message: any, body: Record<string, any>) {
 
 export const whatsappService = {
   configured: Boolean(env.EVOLUTION_API_URL && env.EVOLUTION_API_KEY && env.EVOLUTION_INSTANCE),
-  async runtimeConfig(userId?: string): Promise<WhatsAppRuntimeConfig> {
+  async runtimeConfig(userId?: string, allowEnvironmentFallback = true): Promise<WhatsAppRuntimeConfig> {
     if (userId) {
       const rows = await prisma.setting.findMany({
         where: { userId, key: { in: Object.values(keys) } }
@@ -92,6 +93,7 @@ export const whatsappService = {
         };
       }
     }
+    if (!allowEnvironmentFallback) return { apiUrl: "", apiKey: "", instance: "", autoReply: false, source: "settings" };
     return {
       apiUrl: env.EVOLUTION_API_URL,
       apiKey: env.EVOLUTION_API_KEY,
@@ -103,8 +105,22 @@ export const whatsappService = {
   isConfigured(config: WhatsAppRuntimeConfig) {
     return Boolean(config.apiUrl && config.apiKey && config.instance);
   },
-  async status(userId?: string) {
+  async status(userId?: string, includeEnvironmentDetails = false) {
     const config = await this.runtimeConfig(userId);
+    const exposeDetails = config.source !== "env" || includeEnvironmentDetails;
+    if (!exposeDetails) {
+      return {
+        configured: null,
+        autoReply: null,
+        status: "unknown",
+        apiUrlConfigured: null,
+        apiKeyConfigured: null,
+        instanceConfigured: null,
+        instance: "",
+        apiUrl: "",
+        apiKeyMasked: ""
+      };
+    }
     return {
       configured: this.isConfigured(config),
       autoReply: config.autoReply,
@@ -113,13 +129,18 @@ export const whatsappService = {
       apiUrlConfigured: Boolean(config.apiUrl),
       apiKeyConfigured: Boolean(config.apiKey),
       instanceConfigured: Boolean(config.instance),
-      instance: config.instance || "",
-      apiUrl: config.apiUrl || "",
-      apiKeyMasked: maskSecret(config.apiKey)
+      instance: exposeDetails ? config.instance || "" : "",
+      apiUrl: exposeDetails ? config.apiUrl || "" : "",
+      apiKeyMasked: exposeDetails ? maskSecret(config.apiKey) : ""
     };
   },
-  async getConfig(userId: string) {
-    return this.status(userId);
+  async healthStatusForUser(userId: string) {
+    const config = await this.runtimeConfig(userId, false);
+    const configured = this.isConfigured(config);
+    return { configured, status: configured ? "configured" : "not_configured" };
+  },
+  async getConfig(userId: string, includeEnvironmentDetails = false) {
+    return this.status(userId, includeEnvironmentDetails);
   },
   async saveConfig(userId: string, input: { apiUrl: string; apiKey?: string; instance: string; autoReply: boolean }) {
     const current = await this.runtimeConfig(userId);
@@ -144,10 +165,10 @@ export const whatsappService = {
     });
     return this.status(userId);
   },
-  async clearConfig(userId: string) {
+  async clearConfig(userId: string, includeEnvironmentDetails = false) {
     await prisma.setting.deleteMany({ where: { userId, key: { in: Object.values(keys) } } });
     await writeSystemLog({ userId, module: "whatsapp", action: "config_clear", message: "Configuracao WhatsApp/Evolution removida" });
-    return this.status(userId);
+    return this.status(userId, includeEnvironmentDetails);
   },
   isValidPhone(phone: string) {
     return /^\d{10,15}$/.test(phone);
@@ -228,7 +249,7 @@ export const whatsappService = {
       buffer = Buffer.from(response.data);
     }
     if (!buffer || buffer.length === 0) return { status: "audio_unavailable", text: "", message: "Recebi o audio, mas nao consegui baixar/transcrever. Envie em texto ou reenvie o audio." };
-    const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" });
+    const transcribed = await openAiService.transcribeAudio({ buffer, mimeType: inbound.mimeType, filename: "whatsapp-audio.ogg" }, userId);
     if (transcribed.text) {
       await writeSystemLog({ userId, module: "whatsapp", action: "audio_transcribed", message: "Audio WhatsApp transcrito com sucesso", metadata: { phone: inbound.cleanPhone, bytes: buffer.length } });
     }
@@ -248,8 +269,20 @@ export const whatsappService = {
         headers: { apikey: config.apiKey },
         timeout: 15000
       });
-      await writeSystemLog({ userId, module: "whatsapp", action: "test_connection", message: "Conexao Evolution API testada", metadata: { status: response.status } });
-      return { status: "success", data: response.data };
+      const connectionState = normalizeWhatsAppConnectionState(response.data);
+      await writeSystemLog({ userId, module: "whatsapp", action: "test_connection", message: "Estado da sessao WhatsApp consultado", metadata: { httpStatus: response.status, connectionState } });
+      return {
+        status: connectionState,
+        connectionState,
+        reachable: true,
+        message: connectionState === "connected"
+          ? "WhatsApp conectado à Evolution API."
+          : connectionState === "disconnected"
+            ? "Evolution API respondeu, mas a sessão do WhatsApp está desconectada. Leia o QR Code para reconectar."
+            : connectionState === "connecting"
+              ? "Evolution API respondeu; o WhatsApp ainda está conectando."
+              : "Evolution API respondeu, mas não foi possível confirmar a sessão do WhatsApp."
+      };
     } catch (error) {
       const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
       const message = statusCode === 404

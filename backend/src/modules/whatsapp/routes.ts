@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { authMiddleware } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
@@ -79,6 +80,25 @@ function maskPhoneForLog(phone: string) {
   return `***${digits.slice(-4)}`;
 }
 
+async function loadWhatsAppConversation(userId: string, phone: string, firstMessage: string) {
+  const phoneHash = createHash("sha256").update(phone.replace(/\D/g, "")).digest("hex").slice(0, 24);
+  const key = `whatsapp_conversation_${phoneHash}`;
+  const saved = await prisma.setting.findUnique({ where: { userId_key: { userId, key } }, select: { value: true } });
+  let conversation = typeof saved?.value === "string"
+    ? await prisma.conversation.findFirst({ where: { id: saved.value, userId } })
+    : null;
+  if (!conversation) {
+    conversation = await prisma.conversation.create({ data: { userId, title: `WhatsApp: ${firstMessage.slice(0, 36)}` } });
+    await prisma.setting.upsert({
+      where: { userId_key: { userId, key } },
+      update: { value: conversation.id },
+      create: { userId, key, value: conversation.id }
+    });
+  }
+  const history = await prisma.message.findMany({ where: { conversationId: conversation.id, role: { in: ["user", "assistant"] } }, orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } });
+  return { conversation, history: history.reverse().map((item) => ({ role: item.role as "user" | "assistant", content: item.content })) };
+}
+
 const configSchema = z.object({
   apiUrl: z.string().url("Informe a URL da Evolution API.").transform((value) => value.replace(/\/+$/, "")),
   apiKey: z.string().optional().refine((value) => !value || !/^https?:\/\//i.test(value), "API key nao pode ser uma URL. Cole a chave da Evolution API."),
@@ -98,13 +118,13 @@ const resetInstanceSchema = optionalInstanceSchema.extend({
   confirmation: z.literal("RESETAR EVOLUTION")
 });
 
-router.get("/status", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.status(req.user!.id))));
-router.get("/config", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.getConfig(req.user!.id))));
+router.get("/status", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.status(req.user!.id, req.user!.role === "admin"))));
+router.get("/config", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.getConfig(req.user!.id, req.user!.role === "admin"))));
 router.put("/config", authMiddleware, validate(configSchema), asyncHandler(async (req, res) => {
   res.json(await whatsappService.saveConfig(req.user!.id, req.body));
 }));
 router.delete("/config", authMiddleware, asyncHandler(async (req, res) => {
-  res.json(await whatsappService.clearConfig(req.user!.id));
+  res.json(await whatsappService.clearConfig(req.user!.id, req.user!.role === "admin"));
 }));
 router.post("/test-connection", authMiddleware, asyncHandler(async (req, res) => res.json(await whatsappService.testConnection(req.user!.id))));
 router.post("/configure-webhook", authMiddleware, asyncHandler(async (req, res) => {
@@ -278,14 +298,21 @@ router.post("/webhook", asyncHandler(async (req, res) => {
         await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, financeReply, admin.id);
       } else {
         const localReply = await getLocalWhatsAppReply(content);
-        const response: { reply: string } = localReply
-          ? { reply: localReply }
-          : await withTimeout<{ reply: string }>(
-            brainService.ask({ userId: admin.id, message: content, source: "whatsapp", mode: "quick", allowExternalAI: true, allowTools: true }).then((response) => ({ reply: response.reply })),
-            8000,
-            { reply: "Recebi seu comando, mas a IA demorou para responder. Tente de novo em instantes ou use um comando direto como status do sistema." }
+        const whatsappConversation = localReply ? null : await loadWhatsAppConversation(admin.id, inbound.cleanPhone || inbound.phone, content);
+        if (whatsappConversation) await prisma.message.create({ data: { conversationId: whatsappConversation.conversation.id, role: "user", content } });
+        const response: { reply: string; sources?: Array<{ type: string; title: string; url?: string }> } = localReply
+          ? { reply: localReply, sources: [] }
+          : await withTimeout<{ reply: string; sources?: Array<{ type: string; title: string; url?: string }> }>(
+            brainService.ask({ userId: admin.id, message: content, source: "whatsapp", mode: "quick", allowExternalAI: true, allowTools: true, history: whatsappConversation?.history }).then((result) => ({ reply: result.reply, sources: result.usedSources })),
+            50000,
+            { reply: "A pesquisa ou resposta demorou mais que o limite. Tente novamente em instantes.", sources: [] }
           );
-        await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, response.reply, admin.id);
+        const webSources = (response.sources ?? []).filter((source) => source.type === "web" && source.url).slice(0, 3);
+        const messageWithSources = webSources.length
+          ? `${response.reply}\n\nFontes consultadas:\n${webSources.map((source) => `• ${source.title}: ${source.url}`).join("\n")}`
+          : response.reply;
+        if (whatsappConversation) await prisma.message.create({ data: { conversationId: whatsappConversation.conversation.id, role: "assistant", content: messageWithSources, metadata: { source: "whatsapp", usedSources: webSources } } });
+        await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, messageWithSources, admin.id);
       }
     } else if (inbound.hasAudio && !content) {
       await safeSendWhatsApp(inbound.cleanPhone || inbound.phone, "Recebi seu audio, mas nao consegui transcrever agora. Pode me enviar em texto?", admin.id);

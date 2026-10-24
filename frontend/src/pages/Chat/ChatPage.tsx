@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Send, ThumbsDown, ThumbsUp } from "lucide-react";
-import { api } from "../../services/api";
+import { api, friendlyError } from "../../services/api";
 import type { Message } from "../../types";
 
 type BrainMeta = {
@@ -8,6 +8,7 @@ type BrainMeta = {
   intent?: string;
   confidence?: number;
   needsConfirmation?: boolean;
+  usedSources?: Array<{ type: string; title: string; excerpt?: string; url?: string }>;
 };
 
 export function ChatPage() {
@@ -16,6 +17,7 @@ export function ChatPage() {
   const [content, setContent] = useState("");
   const [mode, setMode] = useState<"quick" | "normal" | "deep">("normal");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api.get("/chat/conversations").then((res) => {
@@ -32,13 +34,18 @@ export function ChatPage() {
     if (!content.trim()) return;
     const optimistic: Message = { id: crypto.randomUUID(), role: "user", content, createdAt: new Date().toISOString() };
     setMessages((current) => [...current, optimistic]);
+    setError("");
     setLoading(true);
     const text = content;
     setContent("");
     try {
-      const res = await api.post("/chat/send", { content: text, conversationId, mode });
+      const res = await api.post("/chat/send", { content: text, conversationId, mode }, { timeout: 90000 });
       setConversationId(res.data.conversation.id);
       setMessages((current) => [...current, res.data.assistantMessage]);
+    } catch (requestError) {
+      setMessages((current) => current.filter((message) => message.id !== optimistic.id));
+      setContent(text);
+      setError(friendlyError(requestError) || "JARVIS não conseguiu concluir a resposta. Confira a conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -56,6 +63,7 @@ export function ChatPage() {
       <div className="glass flex min-h-0 flex-col rounded-2xl">
         <div className="border-b border-white/10 p-5"><h2 className="text-2xl font-black text-white">Chat com JARVIS</h2></div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+          {error && <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</p>}
           {messages.map((message) => (
             <div key={message.id} className={`max-w-3xl rounded-2xl p-4 ${message.role === "user" ? "ml-auto bg-cyan-400/15 text-cyan-50" : "bg-white/5 text-slate-100"}`}>
               <p className="whitespace-pre-wrap">{message.content}</p>
@@ -66,6 +74,12 @@ export function ChatPage() {
                   {message.metadata.needsConfirmation && <span className="rounded-full bg-yellow-400/10 px-2 py-1 text-yellow-100">confirmacao</span>}
                   <button type="button" onClick={() => sendFeedback("good")} className="rounded-full bg-white/5 px-2 py-1 hover:bg-white/10"><ThumbsUp size={12} /></button>
                   <button type="button" onClick={() => sendFeedback("bad")} className="rounded-full bg-white/5 px-2 py-1 hover:bg-white/10"><ThumbsDown size={12} /></button>
+                </div>
+              )}
+              {message.role === "assistant" && message.metadata?.usedSources?.some((source) => source.type === "web" && source.url) && (
+                <div className="mt-3 border-t border-white/10 pt-2 text-xs text-cyan-100">
+                  <p className="mb-1 font-semibold">Fontes consultadas</p>
+                  {message.metadata.usedSources.filter((source) => source.type === "web" && source.url).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="mr-3 inline-block underline">{source.title}</a>)}
                 </div>
               )}
             </div>
@@ -79,7 +93,7 @@ export function ChatPage() {
             <option value="deep">Deep</option>
           </select>
           <input className="input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Digite um comando ou mensagem..." />
-          <button className="btn btn-primary"><Send size={18} /></button>
+          <button className="btn btn-primary" disabled={loading || !content.trim()} aria-label="Enviar mensagem"><Send size={18} /></button>
         </form>
       </div>
       <aside className="glass rounded-2xl p-5">

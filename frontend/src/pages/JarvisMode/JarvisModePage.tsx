@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Activity, Bot, FileText, Mic, Send, Square, WalletCards, Workflow } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api, friendlyError } from "../../services/api";
@@ -20,6 +20,8 @@ export function JarvisModePage() {
   const [status, setStatus] = useState("online");
   const [error, setError] = useState("");
   const [health, setHealth] = useState<Record<string, any>>({});
+  const [sources, setSources] = useState<Array<{ type: string; title: string; url?: string }>>([]);
+  const conversationIdRef = useRef("");
   const speechSupported = isSpeechRecognitionSupported();
 
   useEffect(() => {
@@ -40,9 +42,13 @@ export function JarvisModePage() {
     setStatus("processando");
     setError("");
     try {
-      const res = await api.post("/voice/process", { text: command });
+      const res = await api.post("/voice/process", { text: command, ...(conversationIdRef.current ? { conversationId: conversationIdRef.current } : {}) });
+      if (res.data.conversationId) {
+        conversationIdRef.current = res.data.conversationId;
+      }
       const nextReply = res.data.reply || "Comando processado.";
       setReply(nextReply);
+      setSources(Array.isArray(res.data.usedSources) ? res.data.usedSources : []);
       speakJarvis(nextReply);
       setStatus("falando");
       window.setTimeout(() => setStatus("online"), 900);
@@ -98,6 +104,7 @@ export function JarvisModePage() {
       <div className="glass rounded-2xl p-5">
         <p className="text-sm text-slate-400">Resposta</p>
         <p className="mt-2 text-lg text-white">{reply}</p>
+        {sources.some((source) => source.type === "web" && source.url) && <div className="mt-3 border-t border-white/10 pt-3"><p className="mb-2 text-sm font-semibold text-slate-300">Fontes consultadas</p>{sources.filter((source) => source.type === "web" && source.url).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="mr-3 inline-block text-sm text-cyan-200 underline">{source.title}</a>)}</div>}
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         {shortcuts.map(({ to, label, icon: Icon }) => (

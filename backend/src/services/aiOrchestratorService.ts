@@ -97,7 +97,9 @@ export const aiOrchestratorService = {
     }
 
     if (intent.name === "health.check") {
-      const health = await getHealth(true);
+      // This command is user-scoped; never attach system-wide integration
+      // configuration to an authenticated user's response.
+      const health = await getHealth(true, userId, false);
       return { reply: `Status do sistema: app ok, banco ${health.database}, OpenAI ${health.openaiConfigured ? "configurada" : "nao configurada"}, n8n ${health.n8nConfigured ? "configurado" : "nao configurado"}, WhatsApp ${health.whatsappConfigured ? "configurado" : "nao configurado"}, Home Assistant ${health.homeAssistantConfigured ? "configurado" : "nao configurado"}.`, intent: "health.check", data: health };
     }
 
@@ -136,7 +138,7 @@ export const aiOrchestratorService = {
       { role: "system", content: `Ferramentas disponiveis para chamadas futuras: ${toolSummary}. Nesta versao, execute somente pelas regras seguras do backend.` },
       { role: "system", content: `Memorias relevantes: ${memories.map((m) => `${m.title}: ${m.content}`).join(" | ") || "nenhuma"}` },
       { role: "user", content }
-    ]);
+    ], userId);
     const safeResponse = isLocalFallbackReply(response) ? buildMemoryFallbackReply(content, memories) || response : response;
     await writeSystemLog({ userId, module: "chat", action: "reply", message: "Resposta do JARVIS gerada" });
     return { reply: safeResponse, intent: "chat.normal" };

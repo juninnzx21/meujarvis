@@ -15,7 +15,7 @@ export class IntentRouterService {
       match(text, /lembre que|guarde que|salve como memoria|atualize minha preferencia/, "memory.create", 0.88, "memoria", "memory write keyword"),
       match(text, /o que voce sabe sobre mim|meus projetos|minha stack|minhas prioridades|minhas preferencias/, "memory.query", 0.9, "memoria", "personal profile keyword"),
       match(text, /crie uma tarefa|criar tarefa|me lembre de|tarefas? de hoje|tarefas? pendentes/, /crie|criar|me lembre/.test(text) ? "task.create" : "task.query", 0.82, "tarefas", "task keyword"),
-      match(text, /status|saude|sistema|health|online/, "system.status", 0.92, "sistema", "status keyword"),
+      match(text, /status|saude|health|(?:esta|ta|ficou) (?:fora do ar|offline|online)|(?:meu )?servidor|vps|containers?|docker|como (?:esta|ta) (?:meu )?sistema|sistema (?:esta|ta) (?:funcionando|online|offline)/, "system.status", 0.92, "sistema", "status query"),
       match(text, /quanto entrou|quanto saiu|saldo|financeiro|lucro|categoria|duplicata|extrato|ofx|csv|pj do inter/, /extrato|ofx|csv|importar/.test(text) ? "finance.statement.import" : "finance.query", 0.9, "financeiro", "finance keyword"),
       match(text, /documento|arquivo|rag|pdf|resuma|quais documentos/, "document.query", 0.82, "documentos", "document keyword"),
       match(text, /codex|prompt|codigo|programa|debug|typescript|laravel|react|vue|node|php/, /prompt|codex/.test(text) ? "codex.prompt" : "code.help", 0.84, "programacao", "developer keyword"),

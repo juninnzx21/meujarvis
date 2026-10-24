@@ -1,5 +1,6 @@
 import { prisma } from "../prisma/client.js";
 import { getHealth } from "./healthService.js";
+import { sanitizeAutomationLog, sanitizeSystemLog } from "./systemLogService.js";
 
 export async function buildDailySummary(userId: string) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -9,15 +10,15 @@ export async function buildDailySummary(userId: string) {
     prisma.memory.findMany({ where: { userId, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.automationLog.findMany({ where: { automation: { userId }, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.systemLog.findMany({ where: { userId, level: { in: ["error", "warning", "security"] }, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 10 }),
-    getHealth(true)
+    getHealth(true, userId)
   ]);
 
   return {
     openTasks,
     doneTasks,
     recentMemories: memories,
-    automationLogs,
-    recentErrors: errors,
+    automationLogs: automationLogs.map(sanitizeAutomationLog),
+    recentErrors: errors.map(sanitizeSystemLog),
     integrations: "integrations" in health ? health.integrations : {},
     recommendations: [
       openTasks.length ? "Priorize as tarefas urgentes e vencidas antes de criar novas automacoes." : "Nenhuma tarefa aberta critica encontrada.",
@@ -43,10 +44,10 @@ export async function buildTaskReport(userId: string) {
 
 export async function buildSystemReport(userId: string) {
   const [health, logs] = await Promise.all([
-    getHealth(true),
+    getHealth(true, userId),
     prisma.systemLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 })
   ]);
-  return { health, logs, recommendations: health.database === "ok" ? ["Banco operacional."] : ["Banco requer atencao imediata."] };
+  return { health, logs: logs.map(sanitizeSystemLog), recommendations: health.database === "ok" ? ["Banco operacional."] : ["Banco requer atencao imediata."] };
 }
 
 export async function buildActivityReport(userId: string) {
@@ -55,5 +56,5 @@ export async function buildActivityReport(userId: string) {
     prisma.message.findMany({ where: { conversation: { userId } }, orderBy: { createdAt: "desc" }, take: 20 }),
     prisma.routineRun.findMany({ where: { routine: { userId } }, orderBy: { createdAt: "desc" }, take: 20 })
   ]);
-  return { logs, messages, routineRuns: routines, recommendations: ["Use a Central de Comandos para transformar atividades repetidas em rotinas."] };
+  return { logs: logs.map(sanitizeSystemLog), messages, routineRuns: routines, recommendations: ["Use a Central de Comandos para transformar atividades repetidas em rotinas."] };
 }

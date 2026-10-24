@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Activity, Banknote, Bell, Bot, Brain, Cable, FileText, Gauge, Home, Landmark, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PieChart, PlaySquare, ScrollText, Settings, Share2, Smartphone, WalletCards } from "lucide-react";
+import { Activity, Banknote, Bell, Bot, Brain, Cable, Download, FileText, Gauge, Home, Landmark, Laptop, ListChecks, ListTodo, LogOut, Menu, MessageSquare, Mic, PackageCheck, PieChart, PlaySquare, ScrollText, Settings, ShieldCheck, Share2, Smartphone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
+import { JarvisFloatingAssistant } from "../components/JarvisFloatingAssistant";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
@@ -8,11 +9,14 @@ import { api } from "../services/api";
 const items = [
   { to: "/", label: "Dashboard", icon: Gauge },
   { to: "/mobile-assistant", label: "Assistente Mobile", icon: Smartphone },
+  { to: "/install", label: "Instalar JARVIS", icon: Download },
+  { to: "/downloads", label: "Central de Downloads", icon: PackageCheck },
   { to: "/jarvis-mode", label: "Modo JARVIS", icon: Bot },
   { to: "/brain", label: "Cerebro IA", icon: Brain },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/voice", label: "Voz", icon: Mic },
   { to: "/commands", label: "Comandos", icon: PlaySquare },
+  { to: "/computer", label: "Computador", icon: Laptop },
   { to: "/routines", label: "Rotinas", icon: Activity },
   { to: "/reports", label: "Relatorios", icon: ScrollText },
   { to: "/documents", label: "Documentos", icon: FileText },
@@ -33,7 +37,8 @@ const items = [
   { to: "/settings", label: "Configuracoes", icon: Settings },
   { to: "/settings/voice", label: "Voz Premium", icon: Mic },
   { to: "/logs", label: "Logs", icon: ScrollText },
-  { to: "/status", label: "Status", icon: Activity }
+  { to: "/status", label: "Status", icon: Activity },
+  { to: "/qa/releases", label: "Aprovação QA", icon: ShieldCheck }
 ];
 
 const mobileItems = [
@@ -59,12 +64,12 @@ export function AppLayout() {
         <div className="mb-8 flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400/15 text-cyanx"><Bot /></div>
           <div>
-            <h1 className="font-black text-white">JARVIS Home AI</h1>
+            <h1 className="font-black text-white">JARVIS 2.0</h1>
             <p className="text-xs text-slate-400">Casa, rotina e automacoes</p>
           </div>
         </div>
         <nav className="space-y-1">
-          {items.map(({ to, label, icon: Icon }) => (
+          {items.filter((item) => item.to !== "/qa/releases" || (user?.role === "admin" && (window.location.hostname === "qa.jarvis.juninnzxtec.com.br" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))).map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-cyan-400/15 text-cyan-100" : "text-slate-300 hover:bg-white/5"}`}>
               <Icon size={18} /> {label}
               {to === "/notifications" && unreadCount > 0 && <span className="ml-auto rounded-full bg-cyan-400 px-2 py-0.5 text-xs font-black text-slate-950">{unreadCount}</span>}
@@ -103,6 +108,7 @@ export function AppLayout() {
         </div>
       </nav>
       <PwaInstallPrompt />
+      <JarvisFloatingAssistant />
     </div>
   );
 }
