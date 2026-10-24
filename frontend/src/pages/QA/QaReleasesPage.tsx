@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ClipboardCheck, ExternalLink, LockKeyhole, ShieldAlert } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { api } from "../../services/api";
+import { parseCandidates, type ReleaseCandidate } from "./releaseCandidates";
 
 /**
  * QA console remains read-only until trusted GitHub provenance, verified author
@@ -11,6 +14,25 @@ export function QaReleasesPage() {
   const { user } = useAuth();
   const qaHost = window.location.hostname === "qa.jarvis.juninnzxtec.com.br" ||
     window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  const allowed = qaHost && user?.role === "admin";
+  const [candidates, setCandidates] = useState<ReleaseCandidate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setCandidates([]);
+    if (!allowed) return () => controller.abort();
+    setLoading(true);
+    setFailed(false);
+    void api.get("/releases/candidates", { signal: controller.signal })
+      .then(({ data }) => {
+        if (!controller.signal.aborted) setCandidates(parseCandidates(data));
+      })
+      .catch(() => { if (!controller.signal.aborted) setFailed(true); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [allowed, user?.id, refresh]);
 
   if (!qaHost || user?.role !== "admin") {
     return (
@@ -43,9 +65,32 @@ export function QaReleasesPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="glass rounded-2xl p-5">
           <h3 className="mb-3 text-lg font-bold text-white">Versões candidatas</h3>
-          <p className="text-slate-400">
-            Nenhuma versão foi carregada. A listagem da API ainda não está ligada a esta tela; não serão mostradas versões ou testes fictícios.
-          </p>
+          <button type="button" disabled={loading} onClick={() => setRefresh((value) => value + 1)} className="mb-4 text-cyan-100 underline disabled:opacity-50">Atualizar versões</button>
+          {loading && <p role="status" className="text-slate-300">Carregando versões…</p>}
+          {failed && <p role="alert" className="text-amber-100">Não foi possível consultar as versões. Verifique sua sessão e tente atualizar.</p>}
+          {!loading && !failed && candidates.length === 0 && <p className="text-slate-400">Nenhuma versão candidata registrada.</p>}
+          {!failed && candidates.map((candidate) => (
+            <article key={candidate.id} className="mb-4 min-w-0 rounded-xl border border-white/10 p-4 [overflow-wrap:anywhere]" aria-label={`Versão ${candidate.commitSha}`}>
+              <h4 className="font-bold text-white">{candidate.artifactName}</h4>
+              <dl className="mt-2 space-y-2 text-sm text-slate-300">
+                <div><dt>SHA</dt><dd className="font-mono">{candidate.commitSha}</dd></div>
+                <div><dt>Digest</dt><dd className="font-mono">{candidate.artifactDigest}</dd></div>
+                <div><dt>Branch / destino / estado</dt><dd>{candidate.sourceBranch} / {candidate.target} / {candidate.status}</dd></div>
+                <div><dt>Resultado informado da CI</dt><dd>{candidate.ciConclusion}</dd></div>
+                <div><dt>Origem verificada</dt><dd>{candidate.sourceVerifiedAt ? "Registrada na API" : "Pendente"}</dd></div>
+                <div><dt>Verificação dos testes obrigatórios</dt><dd>{candidate.checksVerifiedAt ? "Registrada na API" : "Pendente"}</dd></div>
+                <div><dt>Staging validado</dt><dd>{candidate.stagingValidatedAt ? "Registrado na API" : "Pendente"}</dd></div>
+                <div><dt>Rollback validado</dt><dd>{candidate.rollbackVerifiedAt ? "Registrado na API" : "Pendente"}</dd></div>
+              </dl>
+              {/^[0-9]{1,24}$/.test(candidate.workflowRunId) && <a className="mt-3 inline-block text-cyan-100 underline" href={`https://github.com/juninnzx21/meujarvis/actions/runs/${candidate.workflowRunId}`} target="_blank" rel="noopener noreferrer">Consultar execução da CI</a>}
+              <details className="mt-3 text-sm text-slate-300">
+                <summary>Histórico de decisões e auditoria</summary>
+                {candidate.approvalRequests.length === 0 && <p>Nenhuma decisão registrada.</p>}
+                {candidate.approvalRequests.map((request) => <p key={request.id}>{request.status} · Validade: {new Date(request.expiresAt).toLocaleString("pt-BR")}{request.decisionReason ? ` · ${request.decisionReason}` : ""}</p>)}
+                {candidate.auditEvents.map((event) => <p key={event.id}>{event.eventType} · {new Date(event.createdAt).toLocaleString("pt-BR")}</p>)}
+              </details>
+            </article>
+          ))}
           <a className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-100 underline"
              href="https://github.com/juninnzx21/meujarvis/pulls" target="_blank" rel="noopener noreferrer">
             Consultar pull requests no GitHub <ExternalLink size={15} />
@@ -68,7 +113,7 @@ export function QaReleasesPage() {
               Rejeitar
             </button>
           </div>
-          <p className="mt-3 text-xs text-slate-400">Controles desabilitados: falta comprovar a proveniência e integrar a listagem da API.</p>
+          <p className="mt-3 text-xs text-slate-400">Consulta integrada à API. Decisões continuam bloqueadas até validar proveniência, staging e o fluxo de publicação.</p>
         </div>
       </div>
     </section>

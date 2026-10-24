@@ -554,3 +554,9 @@ Branch codex/agent-sync-v1-20261017 está 93 commits à frente de origin/main e 
 ## JARVIS 3.0 — Meu Dia (2026-10-22)
 
 Dashboard ampliado para consultar resumo financeiro do mês e rotinas do usuário autenticado, junto às tarefas e notificações existentes. A visualização de rotinas não executa ações. Frontend validado localmente: typecheck, 56 testes e build aprovados. CI do PR #2 passou no SHA `1484b4a` (`validate`, `desktop`, `android`). Ainda pendem revisão e E2E autenticado/staging; timezone é o do navegador. Não é release nem deploy.
+
+
+## 2026-10-24 — REL-001: consulta de candidatos integrada
+A branch codex/release-console-integration-20261023 foi criada de origin/main (ee4f987) e integrou o histórico local existente de QA (f584187) com merge sem reescrita. A página QA agora consulta GET /releases/candidates usando autenticação existente, valida a resposta com Zod e mostra SHA, digest, destino, CI, evidências pendentes e histórico. Requisições são canceladas na saída/troca de usuário; falhas não viram listas vazias; URLs de CI usam origem fixa. Aprovar/rejeitar continuam desabilitados, sem consumidor de deploy.
+Validação local: frontend validate PASS (62 testes, typecheck e build; aviso de bundle >500 kB); backend validate PASS (127 testes, 60 pulados por ausência de banco de integração; Prisma generate, typechecks e build). Revisão independente do incremento: sem achados acionáveis, 6 testes focados PASS com API simulada. Não representa E2E, staging ou produção verificados. Nenhuma migration, SSH ou deploy executado.
+Pendências: PostgreSQL descartável, proveniência confiável GitHub, vínculo de identidade, permissão específica de aprovação, decisões no painel, staging com backup/restore/rollback e consumidor protegido. Scheduler permanece desativado e orçamento de APIs pagas R$0. Acesso VPS depende da resolução do incidente de identidade SSH registrado anteriormente.

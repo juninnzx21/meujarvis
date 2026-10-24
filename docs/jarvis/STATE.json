@@ -541,11 +541,21 @@
     "implementation": "PARTIAL: schema, migration and authenticated API routes are local; no trusted GitHub provenance adapter or UI integration",
     "approvalTtlMinutes": 30,
     "approverQuorum": 1,
-    "targets": ["qa", "production"],
+    "targets": [
+      "qa",
+      "production"
+    ],
     "auditRetention": "UNDECIDED; automatic deletion disabled",
     "approverRequirements": "admin with MFA, distinct from verified source author and candidate requester",
     "ownerDecisions": "TTL and quorum confirmed 2026-10-23",
-    "remainingDesignGates": ["trusted GitHub/OIDC provenance adapter", "verified OAuth binding for GitHub author and approver identities", "protected-branch/checks evidence source", "audit retention policy", "database integration/concurrency tests", "independent security review"],
+    "remainingDesignGates": [
+      "trusted GitHub/OIDC provenance adapter",
+      "verified OAuth binding for GitHub author and approver identities",
+      "protected-branch/checks evidence source",
+      "audit retention policy",
+      "database integration/concurrency tests",
+      "independent security review"
+    ],
     "productionDeploy": "NOT_IMPLEMENTED",
     "productionTouched": false
   },
@@ -612,7 +622,10 @@
     "approvalPolicy": {
       "ttlMinutes": 30,
       "approverQuorum": 1,
-      "targets": ["qa", "production"],
+      "targets": [
+        "qa",
+        "production"
+      ],
       "requiresAdmin": true,
       "requiresMfa": true,
       "selfApprovalAllowed": false,
@@ -628,5 +641,25 @@
     "deployConsumer": "NOT_IMPLEMENTED",
     "approvalAuditRetention": "UNDECIDED; no automatic deletion",
     "schedulerEnabled": false
+  },
+  "releaseConsoleIntegration20261024": {
+    "branch": "codex/release-console-integration-20261023",
+    "status": "CODE_VALIDATED_LOCAL_NOT_STAGING",
+    "frontendTestsPassed": 62,
+    "backendTestsPassed": 127,
+    "backendTestsSkipped": 60,
+    "independentReview": "no actionable findings; 6 mocked UI tests passed",
+    "readOnlyApiIntegrated": true,
+    "productionDeployEnabled": false,
+    "stagingVerified": false,
+    "schedulerEnabled": false,
+    "paidApiBudgetBRL": 0,
+    "blockers": [
+      "disposable PostgreSQL integration",
+      "trusted provenance and identity",
+      "SSH host integrity",
+      "staging backup restore rollback",
+      "protected deploy consumer"
+    ]
   }
 }
